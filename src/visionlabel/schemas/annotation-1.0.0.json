@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:visionlabel:annotation:1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project_id",
+    "image_id",
+    "asset_sha256",
+    "width",
+    "height",
+    "class_schema_id",
+    "revision",
+    "verified_empty",
+    "image_labels",
+    "shapes",
+    "created_by",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "project_id": {
+      "$ref": "#/$defs/uuid"
+    },
+    "image_id": {
+      "$ref": "#/$defs/uuid"
+    },
+    "asset_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "height": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "class_schema_id": {
+      "$ref": "#/$defs/uuid"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "verified_empty": {
+      "type": "boolean"
+    },
+    "image_labels": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/uuid"
+      }
+    },
+    "shapes": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/rectangle"
+          },
+          {
+            "$ref": "#/$defs/polygon"
+          }
+        ]
+      }
+    },
+    "created_by": {
+      "$ref": "#/$defs/uuid"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verified_empty": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "shapes": {
+            "maxItems": 0
+          },
+          "image_labels": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "coordinate": {
+      "type": "number",
+      "minimum": 0
+    },
+    "attributes": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      }
+    },
+    "rectangle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "class_id",
+        "x1",
+        "y1",
+        "x2",
+        "y2",
+        "attributes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "type": {
+          "const": "rectangle"
+        },
+        "class_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "x1": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "y1": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "x2": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "y2": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "attributes": {
+          "$ref": "#/$defs/attributes"
+        }
+      }
+    },
+    "polygon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "class_id",
+        "points",
+        "attributes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "type": {
+          "const": "polygon"
+        },
+        "class_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "points": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 10000,
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "prefixItems": [
+              {
+                "$ref": "#/$defs/coordinate"
+              },
+              {
+                "$ref": "#/$defs/coordinate"
+              }
+            ],
+            "items": false
+          }
+        },
+        "attributes": {
+          "$ref": "#/$defs/attributes"
+        }
+      }
+    }
+  }
+}

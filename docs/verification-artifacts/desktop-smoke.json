@@ -1,0 +1,20 @@
+{
+  "result": "passed",
+  "checks": [
+    "rendered desktop",
+    "real HTTP login/import",
+    "rectangle drag",
+    "save revision 1",
+    "navigate/reload persisted geometry",
+    "delete/undo",
+    "change class/save revision 2",
+    "explicit recovery restore/save revision 3",
+    "2-second autosave/revision 4",
+    "rendered full-image crosshair and select/pan/outside-image suppression",
+    "Team & users: create account, assign annotator role, update account through real HTTP",
+    "Project members: pick account directly from dropdown",
+    "segmentation: click vertices, Enter finish, drag vertex, save/reload exact geometry",
+    "rendered Statistics / QC uses saved polygon annotations"
+  ],
+  "human_mouse_dpi_acceptance": "not performed"
+}

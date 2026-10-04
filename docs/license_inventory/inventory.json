@@ -1,0 +1,2058 @@
+{
+  "python": "3.12.10",
+  "platform": "Windows x64",
+  "scope": "Installed Python distributions. See native-review.md for bundled native component evidence and remaining release checks.",
+  "errors": [],
+  "packages": [
+    {
+      "name": "alembic",
+      "version": "1.20.0",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/alembic/licenses/LICENSE",
+          "sha256": "6e68d94a03a0e3e327ddf3e86d1ebedc14eece3922022618fc246a36296fd0cc"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/3f/27/78a89b55b0904d222183164e079b4ca56208e94eff1d35ad1f1ad5be9b06/alembic-1.20.0-py3-none-any.whl",
+          "hash": "sha256:77eb101048d95f982c0353e9233404889dcd7a6fc244c107836c0e2fc9cf7d9d"
+        }
+      ]
+    },
+    {
+      "name": "annotated-doc",
+      "version": "0.0.5",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/annotated-doc/licenses/LICENSE",
+          "sha256": "fff170779a6acbf65abdb405c087f1cee1786691e4a96a4034517e4a504a0cdf"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/3e/30/e900b21425a860e195f32e37657aa1f7c7f2b1bfb26f03ca209b90933c06/annotated_doc-0.0.5-py3-none-any.whl",
+          "hash": "sha256:117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101"
+        }
+      ]
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/annotated-types/licenses/LICENSE",
+          "sha256": "fe1049884b1a0d9342901e88e07f32925d24b3121d9972b6a6805fb9824b095d"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl",
+          "hash": "sha256:f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
+        }
+      ]
+    },
+    {
+      "name": "anyio",
+      "version": "4.15.1",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/anyio/licenses/LICENSE",
+          "sha256": "5361ac9dc58f2ef5fd2e9b09c68297c17f04950909bbc8023bdb82eacf22c2b0"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/12/b8/4bd346e22b28902df4d651910f5242c28d84e4a5c2435ca5c3f797ed7e2e/anyio-4.15.1-py3-none-any.whl",
+          "hash": "sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101"
+        }
+      ]
+    },
+    {
+      "name": "attrs",
+      "version": "26.1.0",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/attrs/licenses/LICENSE",
+          "sha256": "882115c95dfc2af1eeb6714f8ec6d5cbcabf667caff8729f42420da63f714e9f"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl",
+          "hash": "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309"
+        }
+      ]
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22",
+      "scope": "runtime",
+      "license": "MPL-2.0",
+      "policy": "user-approved exception",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/certifi/licenses/LICENSE",
+          "sha256": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl",
+          "hash": "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775"
+        }
+      ]
+    },
+    {
+      "name": "click",
+      "version": "8.5.0",
+      "scope": "runtime",
+      "license": "BSD-3-Clause",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/click/licenses/LICENSE.txt",
+          "sha256": "9a8ad106a394e853bfe21f42f4e72d592819a22805d991b5f3275029292b658d"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl",
+          "hash": "sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360"
+        }
+      ]
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "scope": "development",
+      "license": "BSD-3-Clause",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/colorama/licenses/LICENSE.txt",
+          "sha256": "cac35c02686e5d04a5a7140bfb3b36e73aed496656e891102e428886d7930318"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl",
+          "hash": "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+        }
+      ]
+    },
+    {
+      "name": "dearpygui",
+      "version": "2.3.1",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/dearpygui/licenses/LICENSE",
+          "sha256": "dc6855c85f2761ee4d61114bb921a3a3be35b38fafdc7719a2ac33bc50d2f6b3"
+        }
+      ],
+      "native_files": [
+        {
+          "path": "dearpygui/_dearpygui.pyd",
+          "sha256": "15bd4975fcf5e246fbbffc90b8e8736b16ef0dfa264b81f80590ea60217b1278"
+        },
+        {
+          "path": "dearpygui/vcruntime140_1.dll",
+          "sha256": "f8bc270449ca6bb6345e88be3632d465c0a7595197c7954357dc5066ed50ae44"
+        }
+      ],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/20/f1/6f30c7eafa25755105d0c26049a95c89cc5c82b68971e1cc8ffea36b748a/dearpygui-2.3.1-cp312-cp312-macosx_13_0_arm64.whl",
+          "hash": "sha256:6b1efd675a358176b3b76c039587a543d407d8fbb2cc3643a527e0ab7c0f5577"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/cc/03/fa76c31087b6ebbc13948de6d9d3bc9ed9946824b13d9d1089356b54249c/dearpygui-2.3.1-cp312-cp312-manylinux1_x86_64.whl",
+          "hash": "sha256:364b5b6a0953999fec764d529d9bb0b2cc6ab6ed06188e0ded28237c1475ca98"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/f2/ef/657ec68a79664cd28d98d590eed85103c6ffc1e23e7d3c4e5aedb7ee887d/dearpygui-2.3.1-cp312-cp312-manylinux2014_aarch64.whl",
+          "hash": "sha256:199dffebda245c9f59aa7c10c3b7f62963237c5f744150ad9be409b27a2661d3"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/77/be/e67e5a04439f15e60cf596092a31b2a907272288954e47f5ced43c0b1678/dearpygui-2.3.1-cp312-cp312-win_amd64.whl",
+          "hash": "sha256:26ed9197cdb30099c665bd1b23724e0dba60ad06b71344ecca7e52748c21874b"
+        }
+      ]
+    },
+    {
+      "name": "fastapi",
+      "version": "0.142.2",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/fastapi/licenses/LICENSE",
+          "sha256": "4ec89ffc81485b97fec584b2d4a961032eeffe834453894fd9c1274906cc744e"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/a0/b6/78aaf9141fb46742928c113f3cf6ef2259d538cb02b604b7656c1dc9883c/fastapi-0.142.2-py3-none-any.whl",
+          "hash": "sha256:bd5f4d81f1e93a88bcd77caf4dfe3c2dbffc3805407a0007e9a114c18b3a670b"
+        }
+      ]
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/h11/licenses/LICENSE.txt",
+          "sha256": "37db5bb85926db28a427a25867f10b1232003aea1be69ccb851138adb8e6f361"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl",
+          "hash": "sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86"
+        }
+      ]
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "scope": "runtime",
+      "license": "BSD-3-Clause",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/httpcore/licenses/LICENSE.md",
+          "sha256": "fdcb59154c74cbaba16a11242f7740bea9f23d6feb5547917d8c5f94a80392a5"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/7e/f5/f66802a942d491edb555dd61e3a9961140fd64c90bce1eafd741609d334d/httpcore-1.0.9-py3-none-any.whl",
+          "hash": "sha256:2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55"
+        }
+      ]
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "scope": "runtime",
+      "license": "BSD-3-Clause",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/httpx/licenses/LICENSE.md",
+          "sha256": "4ec59d544f12b5f539a3a716fd321ac58ccd8030b465221f2c880200cdf28d8d"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl",
+          "hash": "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad"
+        }
+      ]
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "scope": "runtime",
+      "license": "BSD-3-Clause",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/idna/licenses/LICENSE.md",
+          "sha256": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl",
+          "hash": "sha256:ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c"
+        }
+      ]
+    },
+    {
+      "name": "iniconfig",
+      "version": "2.3.0",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/iniconfig/licenses/LICENSE",
+          "sha256": "3409fa91f7ace557894632676656e32264fe5ef7581535725dc9a23774551bd4"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl",
+          "hash": "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12"
+        }
+      ]
+    },
+    {
+      "name": "jsonschema",
+      "version": "4.26.0",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/jsonschema/licenses/COPYING",
+          "sha256": "4f92a015a13c4d1a040bef018aa13430b4f1bc73b41b16bb846c346766de7439"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl",
+          "hash": "sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce"
+        }
+      ]
+    },
+    {
+      "name": "jsonschema-specifications",
+      "version": "2025.9.1",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/jsonschema-specifications/licenses/COPYING",
+          "sha256": "42dcd63495f87b4eb7c7757afa379bb55a53f94afd7a5f657d9adf57236e515c"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl",
+          "hash": "sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe"
+        }
+      ]
+    },
+    {
+      "name": "mako",
+      "version": "1.4.3",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/mako/licenses/LICENSE",
+          "sha256": "8c1d171bc5d341ad9cd33d5e2c39b96a82c7bd49b3ae89a470c37e5822232054"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/6d/a0/053d6af3e8f871e0073b4a36732d9e65be77a72e5434c31b94f6af78a6bb/mako-1.4.3-py3-none-any.whl",
+          "hash": "sha256:723296007c870bfd6b3f0c3230dba7198096e5269297ebf5e4eff9e7ffa39d4f"
+        }
+      ]
+    },
+    {
+      "name": "markupsafe",
+      "version": "3.0.4",
+      "scope": "runtime",
+      "license": "BSD-3-Clause",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/markupsafe/licenses/LICENSE.txt",
+          "sha256": "4631ec0db5fd90a547e336817264c6798214338146f8ac94b4a57f96ee8c9ec4"
+        }
+      ],
+      "native_files": [
+        {
+          "path": "markupsafe/_speedups.cp312-win_amd64.pyd",
+          "sha256": "a1bf1fb566f920b5670dca3b31acb0148636cfff8aa8108d938f91550358b231"
+        }
+      ],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/81/09/4c59d56b8461ae8eb0d8ba34bb25b7e618547044679d58a82ef9b2479fc1/markupsafe-3.0.4-cp312-cp312-macosx_10_13_x86_64.whl",
+          "hash": "sha256:61631e08084be9e21a8967ec3139c7616ed7c5e9368e05c86d1b39562c8a57b6"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/a2/f0/d6613774d86fbf6d145751d43c59875e47a6f9f17daee0aef173bd36d90e/markupsafe-3.0.4-cp312-cp312-macosx_11_0_arm64.whl",
+          "hash": "sha256:0930db9bdc62d22944e10b066448bb65dc9abe9112880c7cab8da54db4284d5f"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/0d/f2/8f18e0b806eb13c1f8d07d917a720831ead54253a6dec011fbc78098a6f8/markupsafe-3.0.4-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl",
+          "hash": "sha256:6a45c3d514f2436064db00d7fc8778d888f0236ebfed649b53d13a59e69ad51b"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/60/ce/fa07dbe8a5675558fa36dea033e19995bc783de2dec5f540ccb9030b06aa/markupsafe-3.0.4-cp312-cp312-manylinux2014_armv7l.manylinux_2_17_armv7l.manylinux_2_31_armv7l.whl",
+          "hash": "sha256:1e1451fab512d1bcc3dc26988ec1edb0b82c2db909132872cd9356070a6b63df"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/85/40/be87c01f3868ec217f8a2015089d71c22c8c5a75324822e5ed1cdd87210d/markupsafe-3.0.4-cp312-cp312-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl",
+          "hash": "sha256:bd3ce56ae2cbae3ba82b683bc425cd7e48d2ed8b10f3e818186b6f5646d9271c"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/4f/a7/aeedb5140afa41fc74c225e9184ab96723a6e873b6ee1c9fede7283456d8/markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+          "hash": "sha256:8e124f974786f831d6043728e38296969d3579db8896fe004682f5758e613581"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/c3/fc/e91352bb08c6a59da3ef0909d457bf95a5f5908fbf151b30a06d9dbcfbb4/markupsafe-3.0.4-cp312-cp312-manylinux_2_31_riscv64.manylinux_2_39_riscv64.whl",
+          "hash": "sha256:c02e8f18bdedba082cef725942ac823b9b60656db07f7e265cb31618dfd00d77"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/5d/f8/bffee5e7d2a3deb59748a797650a48af7e672025cf641a79344a771ad106/markupsafe-3.0.4-cp312-cp312-musllinux_1_2_aarch64.whl",
+          "hash": "sha256:9f098115c247e11d138ab83a28fa0323c77015007ea2df73ba5fd714dfefd67c"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/ed/59/b853d6628ecb4d658e1d637224846d5e9bb4adf4f8df97f3be9f29dce2ec/markupsafe-3.0.4-cp312-cp312-musllinux_1_2_armv7l.whl",
+          "hash": "sha256:d5f93ebbeb8032d47e349328ec8662d973d9b05a70b3c35df1f91fe419b84749"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/09/b2/1506df394f0f075797c418d0301498f49e43be194e3ffcb49e6fe6ccf022/markupsafe-3.0.4-cp312-cp312-musllinux_1_2_ppc64le.whl",
+          "hash": "sha256:64511c54db4e4987aef4c41923235927428729e8174c5dba488429be70a998ed"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/c7/81/5ed69cda630ac69ef60d06c09ba5a7f84ff66a2e28cf986fd5614ab3c6e6/markupsafe-3.0.4-cp312-cp312-musllinux_1_2_riscv64.whl",
+          "hash": "sha256:e1a622f13970d81f95d0c72f9dc090dce9085fccfa4c9f2174377ee32bd15786"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/0c/fe/fb1e79be0fea60aa32602ebefc9c35a82bb42b4df157285ab7dfec12341a/markupsafe-3.0.4-cp312-cp312-musllinux_1_2_x86_64.whl",
+          "hash": "sha256:c9a7f43c0b202b334cc9184af09bb8f21d3a209e038efaf106936fb69e6b026e"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/c8/52/7632a53360671a9b750cdbabaf9cdd89f18b42248b8e4cb42c0b0296e459/markupsafe-3.0.4-cp312-cp312-win32.whl",
+          "hash": "sha256:f0ec3b750b59375eab5b0fb2b9254810c00a3375be6d789899f1055a1d556237"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/3f/bf/62495e180b7000aaf30000fff849e933f74264638057176cf46852500adc/markupsafe-3.0.4-cp312-cp312-win_amd64.whl",
+          "hash": "sha256:11935df9bf455ed0c04eb87bcd720f02b1fe5e02128a9430f23aed6f93336fc7"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/c5/8e/4c24208776a65878d656996945aacfbfe010d3720d1a98fc0eb8491fc03b/markupsafe-3.0.4-cp312-cp312-win_arm64.whl",
+          "hash": "sha256:a4bbd2d87dd233b9fc5812160c3d0ffbe42edc22a26ce0469f58479ede633fe9"
+        }
+      ]
+    },
+    {
+      "name": "mypy",
+      "version": "1.15.0",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/mypy/LICENSE",
+          "sha256": "ea563cc7079537e603443c22ad8eab3ff650a486224108bf0c76b2e6c86699d2"
+        }
+      ],
+      "native_files": [
+        {
+          "path": "3204bda914b7f2c6f497__mypyc.cp312-win_amd64.pyd",
+          "sha256": "50b0fbb13f526dd9e980200bc1cf01ae0f8e623e800a54b009ff3b82de64a5be"
+        },
+        {
+          "path": "mypy/__init__.cp312-win_amd64.pyd",
+          "sha256": "fc67360faef5df809a1eaaa368dc6959bdebb0f0609a38caa8e1d0c4c5cab0ea"
+        },
+        {
+          "path": "mypy/api.cp312-win_amd64.pyd",
+          "sha256": "67d99bcf1b64691ce6da8a9b131ece06dc5fbe55180fcc24b388a04392b9042f"
+        },
+        {
+          "path": "mypy/applytype.cp312-win_amd64.pyd",
+          "sha256": "c0bd9193f403cf2cf7f059c1149bff6f7fd6d2d19e10c67c687d48f44b8fb839"
+        },
+        {
+          "path": "mypy/argmap.cp312-win_amd64.pyd",
+          "sha256": "cd8be70c822e8b4a17a02e7cdec89b3bc33c8d7bf1b8aea1a650e22229dba3f6"
+        },
+        {
+          "path": "mypy/binder.cp312-win_amd64.pyd",
+          "sha256": "e6b8dea342a6a74eb8fcd1feb5db1cb35ac8cdc00dbf9650a651351662446838"
+        },
+        {
+          "path": "mypy/build.cp312-win_amd64.pyd",
+          "sha256": "b145fc4d0b99381d4e92c49d8072961b4e7768bcd3e49ac1cdc9b8c5d3497d1a"
+        },
+        {
+          "path": "mypy/checker.cp312-win_amd64.pyd",
+          "sha256": "2d1feeb661fec30f444e7cd232cd56d7e0af6b3334e85aef7dc21e471e215f20"
+        },
+        {
+          "path": "mypy/checkexpr.cp312-win_amd64.pyd",
+          "sha256": "c492cac3f9390838b7b507ea4b3b8f3a5fcdcf6a4025610a2029623487efa2de"
+        },
+        {
+          "path": "mypy/checkmember.cp312-win_amd64.pyd",
+          "sha256": "2ca061a843c44acd2e7c8357fdfcc5622be87d0ba7c4b6b801ba877a1fc7b9c5"
+        },
+        {
+          "path": "mypy/checkpattern.cp312-win_amd64.pyd",
+          "sha256": "5ff701ecd722ad264c18941c0f7f4b184b4adabd5db82a34e388e075b1302bbe"
+        },
+        {
+          "path": "mypy/checkstrformat.cp312-win_amd64.pyd",
+          "sha256": "d3b294bd4da9cd260a3276ad58cf5b1532beed9cf7b9496e24de9e6ddf913756"
+        },
+        {
+          "path": "mypy/config_parser.cp312-win_amd64.pyd",
+          "sha256": "8c70f1ff315f2784480d388aea26ef827d0bbc382df6aac0c0234481dc94a212"
+        },
+        {
+          "path": "mypy/constant_fold.cp312-win_amd64.pyd",
+          "sha256": "c87704d52d023e4479ced811b558688ffdbc6f752a78358f48be0bddee98602c"
+        },
+        {
+          "path": "mypy/constraints.cp312-win_amd64.pyd",
+          "sha256": "bb289fe08f97a2d6fddc9bfd270d41305de64a4fb738d05529daa5a0ad516e56"
+        },
+        {
+          "path": "mypy/copytype.cp312-win_amd64.pyd",
+          "sha256": "8a0b1893d1b0aabb0a971e2338f8822938a25e2908517390ce7bea03da88d152"
+        },
+        {
+          "path": "mypy/defaults.cp312-win_amd64.pyd",
+          "sha256": "0a2841dff7ab3f957d95ea0675ba56944976a3506886ba1c60b513cc77badbdf"
+        },
+        {
+          "path": "mypy/dmypy/__init__.cp312-win_amd64.pyd",
+          "sha256": "00761d9aa8d545d6583e297f25e99932b45f40541e1c14c0a725e3094a0d6f7c"
+        },
+        {
+          "path": "mypy/dmypy/client.cp312-win_amd64.pyd",
+          "sha256": "f4abd8696d3f8586f4eb260b4307591cadc73a617127a717225f729788d405d9"
+        },
+        {
+          "path": "mypy/dmypy_os.cp312-win_amd64.pyd",
+          "sha256": "6681665e5129058617444d1a1651019d5201c9d391a64086460d3b2b11668a84"
+        },
+        {
+          "path": "mypy/dmypy_server.cp312-win_amd64.pyd",
+          "sha256": "1eb396c570b370901ddc0141167eade4edadf189e035d70053dbe9959e868bba"
+        },
+        {
+          "path": "mypy/dmypy_util.cp312-win_amd64.pyd",
+          "sha256": "c1526e1ba821c575b51eaac3bc0b59c649e9842f8137bf559730cb47eca93c3e"
+        },
+        {
+          "path": "mypy/erasetype.cp312-win_amd64.pyd",
+          "sha256": "4edc7f0badedc9ad94b24a9dc5321bff5f72c33a88c4eedb7853cf2760d81053"
+        },
+        {
+          "path": "mypy/error_formatter.cp312-win_amd64.pyd",
+          "sha256": "99e03d9fe667881dc268be4660b0c5c2e6e13375bc1eee79ff1c64f8283482a7"
+        },
+        {
+          "path": "mypy/errorcodes.cp312-win_amd64.pyd",
+          "sha256": "b39086ff7aceafbe5772e72d599f87f1739e0563ee5e2567fc4daa260f8eb018"
+        },
+        {
+          "path": "mypy/errors.cp312-win_amd64.pyd",
+          "sha256": "df0c6f0ae4a1921542d55fbf8b89f145ddd8583dc4ca14ea88b1e9b8742fd476"
+        },
+        {
+          "path": "mypy/evalexpr.cp312-win_amd64.pyd",
+          "sha256": "d3db07fe1bcf031a8f8c73681aa12ed2411d74392997ddfe588f2b055e81b314"
+        },
+        {
+          "path": "mypy/expandtype.cp312-win_amd64.pyd",
+          "sha256": "30990d243aea5fce2898288e7ea728bd0782ed3ea0f9086552a560255161ec20"
+        },
+        {
+          "path": "mypy/exprtotype.cp312-win_amd64.pyd",
+          "sha256": "29f5295c70402314d4ae61b41d261bede357261a0621784761435589492ecbd6"
+        },
+        {
+          "path": "mypy/fastparse.cp312-win_amd64.pyd",
+          "sha256": "483b55c26f75425d8c94fa96253a1de321e014f8c52f469c1cf1931953f68f28"
+        },
+        {
+          "path": "mypy/find_sources.cp312-win_amd64.pyd",
+          "sha256": "c9626dc8c9c21c4d636df8ede0e0224945edf57251996a7b289c3ece79a64254"
+        },
+        {
+          "path": "mypy/fixup.cp312-win_amd64.pyd",
+          "sha256": "3639c21aac5b364523516341ca67bdaa2a174602f32fbbc8cadfe530ed0db75e"
+        },
+        {
+          "path": "mypy/freetree.cp312-win_amd64.pyd",
+          "sha256": "2420c776f8b692d654d8de30f74372b1f4c6b6a8bd8de5a2b407bff328fd098c"
+        },
+        {
+          "path": "mypy/fscache.cp312-win_amd64.pyd",
+          "sha256": "2462a12973223537c28509ba53536a6e751712c14e2628405032ca059dfee2de"
+        },
+        {
+          "path": "mypy/fswatcher.cp312-win_amd64.pyd",
+          "sha256": "e9938feb5ecdd2d495671d7bb3452bd3f569cd556ccf47f6be4fc02d4727c352"
+        },
+        {
+          "path": "mypy/gclogger.cp312-win_amd64.pyd",
+          "sha256": "22ac185418858b3334e057367f21e6bef8975f5a588a05f8efa795b0473e6897"
+        },
+        {
+          "path": "mypy/git.cp312-win_amd64.pyd",
+          "sha256": "a35f875de1d852cf14e7ee9b41a93004d1ad8d75ba5f4fca6c15c1fcc79fefaf"
+        },
+        {
+          "path": "mypy/graph_utils.cp312-win_amd64.pyd",
+          "sha256": "138daf75891a5294418884929134dcb725971f0ddbd765dd384a96c21d2233f5"
+        },
+        {
+          "path": "mypy/indirection.cp312-win_amd64.pyd",
+          "sha256": "263274ef8f84ac36b17dc337e6b0cfde3a9646137155347011a0c4c2038d258c"
+        },
+        {
+          "path": "mypy/infer.cp312-win_amd64.pyd",
+          "sha256": "2c735665601dadc018928062a228658432c4b03b6f1c74533cc80803d0e4525b"
+        },
+        {
+          "path": "mypy/inspections.cp312-win_amd64.pyd",
+          "sha256": "92e65bca3779c9ae1670143a9bfd20dc8e258408626160c7613d7f04f7cd532f"
+        },
+        {
+          "path": "mypy/ipc.cp312-win_amd64.pyd",
+          "sha256": "0405814fa84a0b50ebf3ec07ae01fb3d905d9cd38078f7f6c67df27175c59728"
+        },
+        {
+          "path": "mypy/join.cp312-win_amd64.pyd",
+          "sha256": "db0209ddb2d57a237c1bf2be9deef3660e50a0ce2107635bcd456b38cd631c3f"
+        },
+        {
+          "path": "mypy/literals.cp312-win_amd64.pyd",
+          "sha256": "595c1b60139ce49ebdfb98f1cba8b05fb898c39998b7d1432cc366d81fa2ccf7"
+        },
+        {
+          "path": "mypy/lookup.cp312-win_amd64.pyd",
+          "sha256": "6be012e47b43a96c01fb0a1c5892f4482f43048d06e28338c2f82ea10ee2db06"
+        },
+        {
+          "path": "mypy/main.cp312-win_amd64.pyd",
+          "sha256": "eb430a0c054d0f1daeddb6ea756c3159d7b4c57f0f6b255db06423ae720186b2"
+        },
+        {
+          "path": "mypy/maptype.cp312-win_amd64.pyd",
+          "sha256": "9db78ba5bfd7ed865641da72369eff60f1d79ed42d5ffb0d67d19ad9ff8b311f"
+        },
+        {
+          "path": "mypy/meet.cp312-win_amd64.pyd",
+          "sha256": "95ae60c690d1603647090880b8a9ef95afa142e08d49c181427ed2013af01b18"
+        },
+        {
+          "path": "mypy/memprofile.cp312-win_amd64.pyd",
+          "sha256": "43ce52de7db6e2b8f2e3f49ad376a05372ab42b2bc521cc3882469700b251721"
+        },
+        {
+          "path": "mypy/message_registry.cp312-win_amd64.pyd",
+          "sha256": "78aa57790f8845a7323bc4c0a7919d2b26c556b4b4a007acb6e6bcca2419972e"
+        },
+        {
+          "path": "mypy/messages.cp312-win_amd64.pyd",
+          "sha256": "38a1dc5e2b7e4234e54d2116ac7ab2fdb13d64995ae371c74abd3b6e05781bbc"
+        },
+        {
+          "path": "mypy/metastore.cp312-win_amd64.pyd",
+          "sha256": "a37457a379e7a87dd38e6704663d0df4b48bb7b0e6819de032ec95ad0e28702c"
+        },
+        {
+          "path": "mypy/mixedtraverser.cp312-win_amd64.pyd",
+          "sha256": "fc9904381755ff0220e2145bfc1d8c5e0cdafd3524356aaaa40031fa66adef8b"
+        },
+        {
+          "path": "mypy/modulefinder.cp312-win_amd64.pyd",
+          "sha256": "9437ad9b6b2ead66a04439c24fc3f1f44dc3b4089582a71aa8e9a792dca06b11"
+        },
+        {
+          "path": "mypy/moduleinspect.cp312-win_amd64.pyd",
+          "sha256": "165cda4d67f15c22f4df5ac991291be553f5d9be93991cc15579fac09e3d9194"
+        },
+        {
+          "path": "mypy/mro.cp312-win_amd64.pyd",
+          "sha256": "b4d86d1e1babd5375d08f896ddaa14c4685140c190e803f83670480617b8a39f"
+        },
+        {
+          "path": "mypy/nodes.cp312-win_amd64.pyd",
+          "sha256": "7546a416eb998b96f5aa40fc46ea540a1af9b01ae12f8798cb9407fb559fef26"
+        },
+        {
+          "path": "mypy/operators.cp312-win_amd64.pyd",
+          "sha256": "83fddd5a110b44ea8a8665b7108165b73b0b52d261c2b6f1b9ef1e6f32e6b201"
+        },
+        {
+          "path": "mypy/options.cp312-win_amd64.pyd",
+          "sha256": "24935b08efab2e6bbdc3c41d49d16bc7289f912f698bbd86bb1949a59f7e0ad5"
+        },
+        {
+          "path": "mypy/parse.cp312-win_amd64.pyd",
+          "sha256": "4e7d6277b2f85539e7694b7c158a78c0ddcc0e0513a0bfd045234f73db96d995"
+        },
+        {
+          "path": "mypy/partially_defined.cp312-win_amd64.pyd",
+          "sha256": "a95a83ae2a117d51a6bdabec3ca569bfef3f961caccb5e5f7472855eb4aa9c82"
+        },
+        {
+          "path": "mypy/patterns.cp312-win_amd64.pyd",
+          "sha256": "646e5cf61d0703a35539ae0961f245f098fd800cc2ce7288ce1652fe2703c36c"
+        },
+        {
+          "path": "mypy/plugin.cp312-win_amd64.pyd",
+          "sha256": "5ca0a9e7b5ea2727846576cc7361235fc2444503d3e67dc3362d1f8d20dffa03"
+        },
+        {
+          "path": "mypy/plugins/__init__.cp312-win_amd64.pyd",
+          "sha256": "6e0d6fdcd19cc9dc7ee8441d0fad7b203c5717c4dc494112f8d78f99813416d1"
+        },
+        {
+          "path": "mypy/plugins/attrs.cp312-win_amd64.pyd",
+          "sha256": "c20f5248b364f833d1a769f4c6ccddba6bfe32a3cc7a18141478ec03bbecf31e"
+        },
+        {
+          "path": "mypy/plugins/common.cp312-win_amd64.pyd",
+          "sha256": "19ffa9f0b39c1d4d111b517296a8f5634a3d528f5b54bde407132cae06b760d6"
+        },
+        {
+          "path": "mypy/plugins/ctypes.cp312-win_amd64.pyd",
+          "sha256": "f2ee133ebae19e7b57f629c820ddc403f918e7c19cbf1e13c0d3ade15afafce4"
+        },
+        {
+          "path": "mypy/plugins/dataclasses.cp312-win_amd64.pyd",
+          "sha256": "688a0e6d982b45455894515ba7e63dabaaa1c40be4659cf817fd16137378693c"
+        },
+        {
+          "path": "mypy/plugins/default.cp312-win_amd64.pyd",
+          "sha256": "8abd2a6a7e342e2c33d8b78f21992c1919b1553b5139783a5ff560f47e13631c"
+        },
+        {
+          "path": "mypy/plugins/enums.cp312-win_amd64.pyd",
+          "sha256": "26701d4a452e19b5a5cea757f89db3db3852b7e2017a8861e51f4f82a195d151"
+        },
+        {
+          "path": "mypy/plugins/functools.cp312-win_amd64.pyd",
+          "sha256": "a456b32617aa073ae70180f47b90a70cbdd7fb7f4d475b923f69c0652fbbc4ae"
+        },
+        {
+          "path": "mypy/plugins/proper_plugin.cp312-win_amd64.pyd",
+          "sha256": "b8eaa64e0aef495382cebe81cc6e0a8095f1fbbb74e54ea76820459940b3ce84"
+        },
+        {
+          "path": "mypy/plugins/singledispatch.cp312-win_amd64.pyd",
+          "sha256": "d73ee01f298c33ef50e24fe36792df9fb7f80a42711d476c7b1fede35448ddf5"
+        },
+        {
+          "path": "mypy/reachability.cp312-win_amd64.pyd",
+          "sha256": "24f00a7197096e3c9c0f1c640bfbd849685c1b8c2774b9c0199bbf00fe2227f8"
+        },
+        {
+          "path": "mypy/refinfo.cp312-win_amd64.pyd",
+          "sha256": "0e49deda416c4ed02dbe7408ee885c1653f82daf296a463dfd3a28fcd38b7599"
+        },
+        {
+          "path": "mypy/renaming.cp312-win_amd64.pyd",
+          "sha256": "9ae79ede7dab661f855f567471ceadcf834a21f7eb7754bc30b0b14c5a1d71a7"
+        },
+        {
+          "path": "mypy/report.cp312-win_amd64.pyd",
+          "sha256": "eacca40be9ac19e7d385151df2c8ee110386fede5d6ce1404018b29585ac2202"
+        },
+        {
+          "path": "mypy/scope.cp312-win_amd64.pyd",
+          "sha256": "ac8863392b13c13725624044666eaac8da39a60ef914c71f19120df862a3c458"
+        },
+        {
+          "path": "mypy/semanal.cp312-win_amd64.pyd",
+          "sha256": "5ba1e4f90a2fe26a89b78fed8bf185979ead1791406b95873a999a78479d474b"
+        },
+        {
+          "path": "mypy/semanal_classprop.cp312-win_amd64.pyd",
+          "sha256": "2b06221c9f6be01b68f4e97f638a1cc539ac7f9ea9a7630034ec826e009139c9"
+        },
+        {
+          "path": "mypy/semanal_enum.cp312-win_amd64.pyd",
+          "sha256": "f95ecc77a1ab35ed023feea7206488fa75a5e0b4460ba9535e7793c15a5f9372"
+        },
+        {
+          "path": "mypy/semanal_infer.cp312-win_amd64.pyd",
+          "sha256": "593edfaee54e98119897c04549f6342bf27c12af987029afaf39a554aefedf60"
+        },
+        {
+          "path": "mypy/semanal_main.cp312-win_amd64.pyd",
+          "sha256": "b4c0c34dd08b8ec0f0ea469d6691820bf53e7265e49343a1eb570507f1bee76e"
+        },
+        {
+          "path": "mypy/semanal_namedtuple.cp312-win_amd64.pyd",
+          "sha256": "bfee5c95244e2001834b1223a7a80be14d6b42d922d64cfad2f9eee80386a550"
+        },
+        {
+          "path": "mypy/semanal_newtype.cp312-win_amd64.pyd",
+          "sha256": "21dbf8c1b21b09599fdfa2c19b1ece47ec489434027fed9b6e22e5911af89051"
+        },
+        {
+          "path": "mypy/semanal_pass1.cp312-win_amd64.pyd",
+          "sha256": "0a30fc37d078dec02a53678dc0138efe7c60297a0599ea4b96558acaaaf65fa3"
+        },
+        {
+          "path": "mypy/semanal_shared.cp312-win_amd64.pyd",
+          "sha256": "8fef2d54e3511de06c614a54a6ae27f0b3aea384e0e06274f318afb3d8a75519"
+        },
+        {
+          "path": "mypy/semanal_typeargs.cp312-win_amd64.pyd",
+          "sha256": "e543fef1f2f0f30c7ef036115b2d5cba0c348f370e198cd7d21b3ccfba74c2c1"
+        },
+        {
+          "path": "mypy/semanal_typeddict.cp312-win_amd64.pyd",
+          "sha256": "dc3aaf867e9b5ec82e8a7a44f97d2e3fc010f11da84b55fcbe606f27e171e5a1"
+        },
+        {
+          "path": "mypy/server/__init__.cp312-win_amd64.pyd",
+          "sha256": "dc583737f2f0c8eb858c8ec2305ea4117e06851ff1865242b56472ab9ab11169"
+        },
+        {
+          "path": "mypy/server/astdiff.cp312-win_amd64.pyd",
+          "sha256": "c01bafb6be4b0bc8125a640e79ef64320ec4e200a4719d8e9788c9c2b60f6e0c"
+        },
+        {
+          "path": "mypy/server/astmerge.cp312-win_amd64.pyd",
+          "sha256": "cba7e7597ebd6b82a47e8b720abad1226d73505dc3ef5219561b31657fb3a82f"
+        },
+        {
+          "path": "mypy/server/aststrip.cp312-win_amd64.pyd",
+          "sha256": "01c892c768ff9b28cb1273a7883547dadd32ab5626950f423a29731ae0440e5d"
+        },
+        {
+          "path": "mypy/server/deps.cp312-win_amd64.pyd",
+          "sha256": "900864362fd6f5b14792e0e87589cc408dbebba1a93bd2292089b03460668019"
+        },
+        {
+          "path": "mypy/server/mergecheck.cp312-win_amd64.pyd",
+          "sha256": "70fe624feaa75acb1d0d349b80d2e2db18fa5bce7efb6ae763884691b87c3f83"
+        },
+        {
+          "path": "mypy/server/objgraph.cp312-win_amd64.pyd",
+          "sha256": "c7b9b0ddbb8ea56864d67f552b32d5ee2cb6ba60515e16237b93c19189b8d6ab"
+        },
+        {
+          "path": "mypy/server/subexpr.cp312-win_amd64.pyd",
+          "sha256": "81af32770673f6ba0d292956a0e843156134cf47bb791884b36c79a86325fcfb"
+        },
+        {
+          "path": "mypy/server/target.cp312-win_amd64.pyd",
+          "sha256": "22ecb1a109b87606937b899f9b866b6d6e793e9df3d7e25a507c559cd5e91a29"
+        },
+        {
+          "path": "mypy/server/trigger.cp312-win_amd64.pyd",
+          "sha256": "e811ad98fb1c56f3cd1ca0c394fc189adee86dd4f7da85d7b1d63ed9a7e19d70"
+        },
+        {
+          "path": "mypy/server/update.cp312-win_amd64.pyd",
+          "sha256": "7fe6aa134a8d8dccf99d74c9eb09310a9fc2d9253bd81c31093184fd1a349b71"
+        },
+        {
+          "path": "mypy/sharedparse.cp312-win_amd64.pyd",
+          "sha256": "697775a853c3f362ffdf4597f894a529795cd67213e01a9b82e5217154ab0343"
+        },
+        {
+          "path": "mypy/solve.cp312-win_amd64.pyd",
+          "sha256": "3feeb047aba873c449a8c2ae3d6e8dd707acc1ade26cc9e5c1dae22956feead9"
+        },
+        {
+          "path": "mypy/state.cp312-win_amd64.pyd",
+          "sha256": "efe1ff197389068460c011124d6f051630b57e9317f8c046ba8332cad6838ad8"
+        },
+        {
+          "path": "mypy/stats.cp312-win_amd64.pyd",
+          "sha256": "ca122dd9f6fec00c492f784854c04d144237506eb6d6c72a869e1247dd751ce8"
+        },
+        {
+          "path": "mypy/strconv.cp312-win_amd64.pyd",
+          "sha256": "0d2f22d2cb9eae0ef06165de2adf802ebe392bd903435258e8fdbc932efda7ad"
+        },
+        {
+          "path": "mypy/stubgen.cp312-win_amd64.pyd",
+          "sha256": "6b0a097ed8c797a5fe3145b98b2fb7cc6332b1950f62f5e4c519f0702166a957"
+        },
+        {
+          "path": "mypy/stubinfo.cp312-win_amd64.pyd",
+          "sha256": "388f7dae5b9e6cb8a6716182f3f0283f95699044441dab6c0ae138c1f140fa8a"
+        },
+        {
+          "path": "mypy/stubutil.cp312-win_amd64.pyd",
+          "sha256": "b75963509b530a0242c78bc4f1ea67798bd071e54955246dfb671e9377a21c8d"
+        },
+        {
+          "path": "mypy/subtypes.cp312-win_amd64.pyd",
+          "sha256": "083f05faec6ce5d9ad737a870c263c18973992e4bea6201830413f64859759ed"
+        },
+        {
+          "path": "mypy/suggestions.cp312-win_amd64.pyd",
+          "sha256": "e58d51a8e42528049357ac2a518de6b4a1c2d4257ffbc97d2c09efdb6d7bccb4"
+        },
+        {
+          "path": "mypy/test/visitors.cp312-win_amd64.pyd",
+          "sha256": "8930b3aacead538fde09feca3f1afd2f64e5dfd6c79ebcefb6b82f16e92d3fa7"
+        },
+        {
+          "path": "mypy/traverser.cp312-win_amd64.pyd",
+          "sha256": "d65b6068f426c4cc38c96a93d013717ae9f7f4a9dfe3fe33caffa2b088cfb25f"
+        },
+        {
+          "path": "mypy/treetransform.cp312-win_amd64.pyd",
+          "sha256": "c9a2b30a7c0780c5b7081478add5f3d0d099781a82af7e5882923f596bf78dbb"
+        },
+        {
+          "path": "mypy/tvar_scope.cp312-win_amd64.pyd",
+          "sha256": "95ece65187b66bd01b3c3019651a6073420ca29a48a772009b55d3792d467c57"
+        },
+        {
+          "path": "mypy/type_visitor.cp312-win_amd64.pyd",
+          "sha256": "788d9a3da942b8d2b520be266930bb38125541814be291f10e487abc67429bfb"
+        },
+        {
+          "path": "mypy/typeanal.cp312-win_amd64.pyd",
+          "sha256": "467e500236dd252638725bb86d1919fb7286fd805b94b7ee21ee60f6a5ca191f"
+        },
+        {
+          "path": "mypy/typeops.cp312-win_amd64.pyd",
+          "sha256": "a438723c3e8027d1c6949af3f06c1c8dc88b7f145cabd77072e89b4a992c1c1f"
+        },
+        {
+          "path": "mypy/types.cp312-win_amd64.pyd",
+          "sha256": "931b56bf7aa045edec8bd713138191a8c275e465fbd2a443a6c4b49d4ef3f8ee"
+        },
+        {
+          "path": "mypy/types_utils.cp312-win_amd64.pyd",
+          "sha256": "b4f487e34d2fab4dcbc5839ddf7ddb78ff469db57d4a218e2101582d4dd86ae8"
+        },
+        {
+          "path": "mypy/typestate.cp312-win_amd64.pyd",
+          "sha256": "34593b29416d77695593f0ffecc0d2860db8b792553b9bb99babde46f7c6316f"
+        },
+        {
+          "path": "mypy/typetraverser.cp312-win_amd64.pyd",
+          "sha256": "b35358c43393a7c80f5a6ed0530855f4b99f49c26632e82bba2c3f0c0c4c91fc"
+        },
+        {
+          "path": "mypy/typevars.cp312-win_amd64.pyd",
+          "sha256": "64e5bf4736487ed32c684a79115b6198573e06a1a96ae48f5ecc0e8e97807744"
+        },
+        {
+          "path": "mypy/typevartuples.cp312-win_amd64.pyd",
+          "sha256": "bfca27241c77dd324e8e959e2a9299e6d6ad53772cf12c1f2178d7b2e4d2b8e0"
+        },
+        {
+          "path": "mypy/util.cp312-win_amd64.pyd",
+          "sha256": "c89768df6a7d414860d3ac2a1f2f32533b9933cef16072e51fc971c7267e8e16"
+        },
+        {
+          "path": "mypy/visitor.cp312-win_amd64.pyd",
+          "sha256": "397b58a97c387fe43ad426151a5ec60982ac8a2b754b67b16c58316b65ee0691"
+        },
+        {
+          "path": "mypyc/__init__.cp312-win_amd64.pyd",
+          "sha256": "e06cb1954f283631debc47d66c640017fd5e570eac39768dba9b6161fab06d6d"
+        },
+        {
+          "path": "mypyc/analysis/__init__.cp312-win_amd64.pyd",
+          "sha256": "8919b6b91e35b910183aae2ce628f31da41992a42b773466aa82ef251f070312"
+        },
+        {
+          "path": "mypyc/analysis/attrdefined.cp312-win_amd64.pyd",
+          "sha256": "cb5a5a0908b7684c6d59f5c3949aa50c71d7faca971a16f1951a6718542351f4"
+        },
+        {
+          "path": "mypyc/analysis/blockfreq.cp312-win_amd64.pyd",
+          "sha256": "7495d4d7e347531425af56b4697ee19474f32ecce19c53b3b8056ab6738bf7ea"
+        },
+        {
+          "path": "mypyc/analysis/dataflow.cp312-win_amd64.pyd",
+          "sha256": "cc2036035cbf79fa1e668d5500e98059f056f3c88f02f1fdac77671c91ead427"
+        },
+        {
+          "path": "mypyc/analysis/ircheck.cp312-win_amd64.pyd",
+          "sha256": "1892ddb499c4d20d0ed4e5ba2ef7038506da0944bed047ffa8483a9ad78c85e9"
+        },
+        {
+          "path": "mypyc/analysis/selfleaks.cp312-win_amd64.pyd",
+          "sha256": "cd1c53bba5a1f2d792eef198cb22025f68f8467da5cef02df8749e26287136a3"
+        },
+        {
+          "path": "mypyc/build.cp312-win_amd64.pyd",
+          "sha256": "33f838f0873cc5a9e98c3be60940a1074d09b0af5f35a9352280433ff310a628"
+        },
+        {
+          "path": "mypyc/codegen/__init__.cp312-win_amd64.pyd",
+          "sha256": "00bb0e32a90d593b4351fb11a12513820a2edba13a61337eb153e5c53a28b2d2"
+        },
+        {
+          "path": "mypyc/codegen/cstring.cp312-win_amd64.pyd",
+          "sha256": "07502bb45630dc5d5fb2fb3fd6e9a92caabfb3472e1f87b66c97debf9a06a0d1"
+        },
+        {
+          "path": "mypyc/codegen/emit.cp312-win_amd64.pyd",
+          "sha256": "19eb077fb047531703d41b8c4c95ea6e14a9a1c91b2a1c1907d7b208c626b592"
+        },
+        {
+          "path": "mypyc/codegen/emitclass.cp312-win_amd64.pyd",
+          "sha256": "f621fd9e56720e6e893370f484acb7a85c4dde40e5400f9b4b7d1fde1e11057f"
+        },
+        {
+          "path": "mypyc/codegen/emitfunc.cp312-win_amd64.pyd",
+          "sha256": "fbcaa9e3cc0bd6ec64094da85b1d29380125c3630a82ddd55e1914c88bab17fb"
+        },
+        {
+          "path": "mypyc/codegen/emitmodule.cp312-win_amd64.pyd",
+          "sha256": "bea917a80d430d93dc80a29ea6b7a81e1a03e41ecf4de403da229aa02d920fea"
+        },
+        {
+          "path": "mypyc/codegen/emitwrapper.cp312-win_amd64.pyd",
+          "sha256": "2065a7e1f151c51b81f172cd419b351fdb6d66a9b598aa3bfbc80796b91d7cf7"
+        },
+        {
+          "path": "mypyc/codegen/literals.cp312-win_amd64.pyd",
+          "sha256": "6bdc5a065c3e97a22450922eeb145cc98ea45dd2b6bbab74d652d13261b38650"
+        },
+        {
+          "path": "mypyc/common.cp312-win_amd64.pyd",
+          "sha256": "81722e3623bc831975e3eafb4b1b057e4df0e25ffabfe053305612a05a228240"
+        },
+        {
+          "path": "mypyc/crash.cp312-win_amd64.pyd",
+          "sha256": "36ec928063768dae2748987f81e20c0f11b54aa888844955f227d484b78b7cc1"
+        },
+        {
+          "path": "mypyc/errors.cp312-win_amd64.pyd",
+          "sha256": "6714430be0890b88569148ac363d911903c252ea62b73a037d85a55e5c6604f5"
+        },
+        {
+          "path": "mypyc/ir/__init__.cp312-win_amd64.pyd",
+          "sha256": "b117e6af7b37f6b37bc4b0acecbc7f1fed4e631ef54693ef74559f629d245bec"
+        },
+        {
+          "path": "mypyc/ir/class_ir.cp312-win_amd64.pyd",
+          "sha256": "5b7ebc3318c384bab43cb80445cbf4a3fa6c81eeee5f9e8f0b6b9909de23f757"
+        },
+        {
+          "path": "mypyc/ir/func_ir.cp312-win_amd64.pyd",
+          "sha256": "e6df530d8c967244764689d107130097eb87c45a057e7adb53b50e34bd8ded77"
+        },
+        {
+          "path": "mypyc/ir/module_ir.cp312-win_amd64.pyd",
+          "sha256": "aab7ef363426204a72c4044a5629da5298f59fdd026698de3724ea1374c72b21"
+        },
+        {
+          "path": "mypyc/ir/ops.cp312-win_amd64.pyd",
+          "sha256": "c37eed6a4070485bd1f38cae03fc1058a60c16200e8c16afb6f6575cb2ab1667"
+        },
+        {
+          "path": "mypyc/ir/pprint.cp312-win_amd64.pyd",
+          "sha256": "c072b0be842fd6c243e41feabf49936b816c2cd2c75d05eeb81fb8524a8e0045"
+        },
+        {
+          "path": "mypyc/ir/rtypes.cp312-win_amd64.pyd",
+          "sha256": "8d30fd552c56b292931dc067f6d07347a6c3fc461fa26f98a21bcfe4130bb1ef"
+        },
+        {
+          "path": "mypyc/irbuild/__init__.cp312-win_amd64.pyd",
+          "sha256": "6f94819fe3fe558b2ff1bce0118080ee4d39ea2cd22895605f357efe71737471"
+        },
+        {
+          "path": "mypyc/irbuild/ast_helpers.cp312-win_amd64.pyd",
+          "sha256": "5297cb8ef376e5e706b326af18803566c931f043390ca9bf945caad9b486c107"
+        },
+        {
+          "path": "mypyc/irbuild/builder.cp312-win_amd64.pyd",
+          "sha256": "6a93e5b47b76e6b12952fa51469424c44384f7eac25b00b28fe3bef2235d445d"
+        },
+        {
+          "path": "mypyc/irbuild/callable_class.cp312-win_amd64.pyd",
+          "sha256": "5c6c45d377d103338baf8b151bbad82169107c0030dccb657a07823cbcc6ce25"
+        },
+        {
+          "path": "mypyc/irbuild/classdef.cp312-win_amd64.pyd",
+          "sha256": "8f7c1d902bfc5e94fee4dc161a4eca4fa0f6ce83513fab9d9a4153a3aec070c3"
+        },
+        {
+          "path": "mypyc/irbuild/constant_fold.cp312-win_amd64.pyd",
+          "sha256": "9a8f64f945db8c76c22c32123443abfc4035908249f61997eb9b39be1ab5c974"
+        },
+        {
+          "path": "mypyc/irbuild/context.cp312-win_amd64.pyd",
+          "sha256": "bdabda31ebb49e6062df49ac380e657f5295ab9e4af200155359d8af0f1d608b"
+        },
+        {
+          "path": "mypyc/irbuild/env_class.cp312-win_amd64.pyd",
+          "sha256": "923501793cad421289fea1040f9610b33feb9d19634dee6ee439aa6159c69dc7"
+        },
+        {
+          "path": "mypyc/irbuild/expression.cp312-win_amd64.pyd",
+          "sha256": "c73f150182e69de24dfd06158ca31dced1cbfa5d4a2aea1ab816ce07721efdf9"
+        },
+        {
+          "path": "mypyc/irbuild/for_helpers.cp312-win_amd64.pyd",
+          "sha256": "8a9a9d639e36bb5130ad7bda02660eea02c8dcccb0319049fcd7770545b33deb"
+        },
+        {
+          "path": "mypyc/irbuild/format_str_tokenizer.cp312-win_amd64.pyd",
+          "sha256": "8692923fcde7cd8c19648b96ded2fb60ffe83562eaff5c6e69cc3286d1802e97"
+        },
+        {
+          "path": "mypyc/irbuild/function.cp312-win_amd64.pyd",
+          "sha256": "a2f168627dbb0a512fcfc879b8180ed741ffc77e78566efb0ce2b5009522985e"
+        },
+        {
+          "path": "mypyc/irbuild/generator.cp312-win_amd64.pyd",
+          "sha256": "c33eb97dffe0eb8cc9352dd71972fa11229e9137321324b0ef61284a56abaa7d"
+        },
+        {
+          "path": "mypyc/irbuild/ll_builder.cp312-win_amd64.pyd",
+          "sha256": "269883449bc8c3ad7390a89cc8fd94a6107a3a7281bcccc1f118d508ede6a526"
+        },
+        {
+          "path": "mypyc/irbuild/main.cp312-win_amd64.pyd",
+          "sha256": "ef6aca87880b7d5fc895e371076ca0770e79e8ae552e67c156dc68cf67d53bd6"
+        },
+        {
+          "path": "mypyc/irbuild/mapper.cp312-win_amd64.pyd",
+          "sha256": "ce946fac7ee5d01ff9ab2c537b1bfdf87580c1e110daa684d7b1b1c24e03ea3c"
+        },
+        {
+          "path": "mypyc/irbuild/match.cp312-win_amd64.pyd",
+          "sha256": "6d3ee4e32992c5ca17a7c6937f7fef4bf719e4e5ea8ca01491aac2b9a59d7a28"
+        },
+        {
+          "path": "mypyc/irbuild/nonlocalcontrol.cp312-win_amd64.pyd",
+          "sha256": "cb7846c17fc7b8326556cf0ffca60475ad3586a35489b332c50609bcf790c4d7"
+        },
+        {
+          "path": "mypyc/irbuild/prebuildvisitor.cp312-win_amd64.pyd",
+          "sha256": "268167c38dfe84bed66f157460262b51cd46017c7d59d489d5c1d2bf1b86150e"
+        },
+        {
+          "path": "mypyc/irbuild/prepare.cp312-win_amd64.pyd",
+          "sha256": "ef49645a96da5235f40d187a0ef39c5ba462a86de368fc6ccf44c897e5864098"
+        },
+        {
+          "path": "mypyc/irbuild/specialize.cp312-win_amd64.pyd",
+          "sha256": "386bfca7216ae2fb997c2332aebeacb10649e2661a3891305a909091d7ec197d"
+        },
+        {
+          "path": "mypyc/irbuild/statement.cp312-win_amd64.pyd",
+          "sha256": "987787f2d1fe74bb488c36ea6d415c448de99b2eb0ac58762d9d5c307a41adbe"
+        },
+        {
+          "path": "mypyc/irbuild/targets.cp312-win_amd64.pyd",
+          "sha256": "95c764002c4ec64530ab5b148898edb04c896e6915c6ead77999f5f3fb2d6409"
+        },
+        {
+          "path": "mypyc/irbuild/util.cp312-win_amd64.pyd",
+          "sha256": "199a7a2d42960ab0878265e830e5f3b47574e7860ba0faad6f79e08e73aafcd0"
+        },
+        {
+          "path": "mypyc/irbuild/visitor.cp312-win_amd64.pyd",
+          "sha256": "1827a78af10c4b50fd586237b74c10c2dc291d92161c40af8e0a0d6f5ee14704"
+        },
+        {
+          "path": "mypyc/irbuild/vtable.cp312-win_amd64.pyd",
+          "sha256": "ee968d732a5ba4ac60338d5a11753252a86156f317c65d3900ee97bc4590dd31"
+        },
+        {
+          "path": "mypyc/lower/__init__.cp312-win_amd64.pyd",
+          "sha256": "63880a58e617031f2f97992384337d16f8caa4b5950da2996d620a66efacaddf"
+        },
+        {
+          "path": "mypyc/lower/int_ops.cp312-win_amd64.pyd",
+          "sha256": "964b49d2fcc11a37fe8009ba5717b9bc6ce1e909dda63a0f52e0924104584127"
+        },
+        {
+          "path": "mypyc/lower/list_ops.cp312-win_amd64.pyd",
+          "sha256": "d3dae6d6cf7874d76ea9fe53f36844e6ce699ae12bc09ce84c4f7511b9543ad0"
+        },
+        {
+          "path": "mypyc/lower/misc_ops.cp312-win_amd64.pyd",
+          "sha256": "8de084b6ae72ec83cabfa068def9632eae6427d58606e123469105ebd76c1095"
+        },
+        {
+          "path": "mypyc/lower/registry.cp312-win_amd64.pyd",
+          "sha256": "302b2e612c224d2b8d1204513f928f0e3dc662f2639c51ec74952e69dfd597d3"
+        },
+        {
+          "path": "mypyc/namegen.cp312-win_amd64.pyd",
+          "sha256": "dae890e54477231924fa67d57626cc4cde4b7ee80679434df3a592fe6dc8d71f"
+        },
+        {
+          "path": "mypyc/options.cp312-win_amd64.pyd",
+          "sha256": "bd7fcd7a530ace9d60e2d782fe7bf0c34e77f82fde84bf842308dea4ad7ba3ce"
+        },
+        {
+          "path": "mypyc/primitives/__init__.cp312-win_amd64.pyd",
+          "sha256": "7abc26c368f9b7d6f9cfb7f78a5a18415f24209eb5f730d9b433259359cb94e2"
+        },
+        {
+          "path": "mypyc/primitives/bytes_ops.cp312-win_amd64.pyd",
+          "sha256": "91f6e974cdbbd71229764f65c6cf7f8d1a4dc914ddeb471fed08d01badfedfc5"
+        },
+        {
+          "path": "mypyc/primitives/dict_ops.cp312-win_amd64.pyd",
+          "sha256": "9e57c147554b39d61905b2b89a10d9d3b1d53dbe632afed57b3d090b87b21778"
+        },
+        {
+          "path": "mypyc/primitives/exc_ops.cp312-win_amd64.pyd",
+          "sha256": "0f631f7cc198e4086e2af9dd5b9fcbc2d0afe5ddcd30fc747edfeece234e20a8"
+        },
+        {
+          "path": "mypyc/primitives/float_ops.cp312-win_amd64.pyd",
+          "sha256": "a24114d719aac17ea097be7e3c8d5cfbcf3ab029bc3d7079a39ffb8c8e3087be"
+        },
+        {
+          "path": "mypyc/primitives/generic_ops.cp312-win_amd64.pyd",
+          "sha256": "396edf5b0e21220bc0316a2c83742bb93f0eefd4cc7b6d99febaebd4b13ecce6"
+        },
+        {
+          "path": "mypyc/primitives/int_ops.cp312-win_amd64.pyd",
+          "sha256": "410e6bcc968116362b0cb94a49bf6afba1db1d178feb38fa98c1134e45f13b3b"
+        },
+        {
+          "path": "mypyc/primitives/list_ops.cp312-win_amd64.pyd",
+          "sha256": "64a918802e7e5311ff1ebbf978785b954cdf9f0a2a1118f44cd570e7a36cd2ad"
+        },
+        {
+          "path": "mypyc/primitives/misc_ops.cp312-win_amd64.pyd",
+          "sha256": "51d30263fe5d79b48d93a96741850147f12b760c73e5a558c3fc55115716bcbe"
+        },
+        {
+          "path": "mypyc/primitives/registry.cp312-win_amd64.pyd",
+          "sha256": "9865598ba604532bdcfd8ece69f97e6f1fabf548bcffe07f013acf07eb80b316"
+        },
+        {
+          "path": "mypyc/primitives/set_ops.cp312-win_amd64.pyd",
+          "sha256": "977e4f681569893bffd228cf44c647bcfc0257ed97d376cb090066aa74cf1954"
+        },
+        {
+          "path": "mypyc/primitives/str_ops.cp312-win_amd64.pyd",
+          "sha256": "bcdbf0ed077574bf462383fb7cdd1eb553657009ceb864ba208fca87a00237b3"
+        },
+        {
+          "path": "mypyc/primitives/tuple_ops.cp312-win_amd64.pyd",
+          "sha256": "29544f7af28f7d89ed0c87926b1c1915f780eb933e496af4c30608dbba34f3d6"
+        },
+        {
+          "path": "mypyc/rt_subtype.cp312-win_amd64.pyd",
+          "sha256": "627d0fd49b107ac40bfc9b5fcf196493bbb2878e776f46cbc9555b904d991cbb"
+        },
+        {
+          "path": "mypyc/sametype.cp312-win_amd64.pyd",
+          "sha256": "2eec9ba8afc0d31d31db9a6d37411803dcae27dfce5f3d346d9acb4865dfd1c5"
+        },
+        {
+          "path": "mypyc/subtype.cp312-win_amd64.pyd",
+          "sha256": "cd987b3ca546ae5d0d9849f0f950a7b38514088238f22b2ef43259b721b1a982"
+        },
+        {
+          "path": "mypyc/transform/__init__.cp312-win_amd64.pyd",
+          "sha256": "b32e463d6f352d542e981a6e6a51f1d99fea0c660051ded43807adc983928f95"
+        },
+        {
+          "path": "mypyc/transform/copy_propagation.cp312-win_amd64.pyd",
+          "sha256": "6cbf071c0a10dadedec7e74bf3a4c7a47b71584bdcbfef2878d66ebf51b88e0c"
+        },
+        {
+          "path": "mypyc/transform/exceptions.cp312-win_amd64.pyd",
+          "sha256": "d0f5af8005b11d47c8e6accded9bbb7ef4c4ca4256eb42b2146e5cf0fb3ee0f6"
+        },
+        {
+          "path": "mypyc/transform/flag_elimination.cp312-win_amd64.pyd",
+          "sha256": "c3389942d68942a34ba9182d5efb904dae7c3a01e5fdf5de8ff3054bda6f0002"
+        },
+        {
+          "path": "mypyc/transform/ir_transform.cp312-win_amd64.pyd",
+          "sha256": "b0a2b34a0a45b3bc153d955563abe1056c20724b4d0faa81fc92b6c77f9773a2"
+        },
+        {
+          "path": "mypyc/transform/lower.cp312-win_amd64.pyd",
+          "sha256": "785db7c0f28cc0186ef9c8f0611e5528a20ed046c88f38f53c2f147a0f9353ce"
+        },
+        {
+          "path": "mypyc/transform/refcount.cp312-win_amd64.pyd",
+          "sha256": "387605f7022f59d5bfe10ee1e4feda038ed1c6a5eb26a5b0ad20ff1d0c190067"
+        },
+        {
+          "path": "mypyc/transform/uninit.cp312-win_amd64.pyd",
+          "sha256": "86bc9584ef0331f138e03b765ce5952fd1630ce663812a702c9263e0dacd3cb1"
+        }
+      ],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/98/3a/03c74331c5eb8bd025734e04c9840532226775c47a2c39b56a0c8d4f128d/mypy-1.15.0-cp312-cp312-macosx_10_13_x86_64.whl",
+          "hash": "sha256:aea39e0583d05124836ea645f412e88a5c7d0fd77a6d694b60d9b6b2d9f184fd"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/f0/1a/41759b18f2cfd568848a37c89030aeb03534411eef981df621d8fad08a1d/mypy-1.15.0-cp312-cp312-macosx_11_0_arm64.whl",
+          "hash": "sha256:2f2147ab812b75e5b5499b01ade1f4a81489a147c01585cda36019102538615f"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/12/7e/873481abf1ef112c582db832740f4c11b2bfa510e829d6da29b0ab8c3f9c/mypy-1.15.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl",
+          "hash": "sha256:ce436f4c6d218a070048ed6a44c0bbb10cd2cc5e272b29e7845f6a2f57ee4464"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/b3/d0/92ae4cde706923a2d3f2d6c39629134063ff64b9dedca9c1388363da072d/mypy-1.15.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl",
+          "hash": "sha256:8023ff13985661b50a5928fc7a5ca15f3d1affb41e5f0a9952cb68ef090b31ee"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/46/8b/df49974b337cce35f828ba6fda228152d6db45fed4c86ba56ffe442434fd/mypy-1.15.0-cp312-cp312-musllinux_1_2_x86_64.whl",
+          "hash": "sha256:1124a18bc11a6a62887e3e137f37f53fbae476dc36c185d549d4f837a2a6a14e"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/13/50/da5203fcf6c53044a0b699939f31075c45ae8a4cadf538a9069b165c1050/mypy-1.15.0-cp312-cp312-win_amd64.whl",
+          "hash": "sha256:171a9ca9a40cd1843abeca0e405bc1940cd9b305eaeea2dda769ba096932bb22"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/09/4e/a7d65c7322c510de2c409ff3828b03354a7c43f5a8ed458a7a131b41c7b9/mypy-1.15.0-py3-none-any.whl",
+          "hash": "sha256:5469affef548bd1895d86d3bf10ce2b44e33d86923c29e4d675b3e323437ea3e"
+        }
+      ]
+    },
+    {
+      "name": "mypy-extensions",
+      "version": "1.1.0",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/mypy-extensions/licenses/LICENSE",
+          "sha256": "a50450da1d53cd777b80ced77c58ff96abe0ccd879706bd142c3ec20e245f0b4"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/79/7b/2c79738432f5c924bef5071f933bcc9efd0473bac3b4aa584a6f7c1c8df8/mypy_extensions-1.1.0-py3-none-any.whl",
+          "hash": "sha256:1be4cccdb0f2482337c4743e60421de3a356cd97508abadd57d47403e94f5505"
+        }
+      ]
+    },
+    {
+      "name": "opentelemetry-api",
+      "version": "1.45.0",
+      "scope": "runtime",
+      "license": "Apache-2.0",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/opentelemetry-api/licenses/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/44/b9/040d1a1c7836922828e6480cd2366bb8fe0ebf75b413d2bb51a9b0e7f78f/opentelemetry_api-1.45.0-py3-none-any.whl",
+          "hash": "sha256:80e068aba7cd56c8b58512d6a36f8d25cb1dfaa0c0a4cc1c938ccf9f362d9cb3"
+        }
+      ]
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "scope": "development",
+      "license": "Apache-2.0 OR BSD-2-Clause",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/packaging/licenses/LICENSE",
+          "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48"
+        },
+        {
+          "path": "docs/license_inventory/notices/packaging/licenses/LICENSE.APACHE",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+        },
+        {
+          "path": "docs/license_inventory/notices/packaging/licenses/LICENSE.BSD",
+          "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl",
+          "hash": "sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
+        }
+      ]
+    },
+    {
+      "name": "pluggy",
+      "version": "1.6.0",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/pluggy/licenses/LICENSE",
+          "sha256": "d6b65e6c213a5d0b577911d34d6e5949b9f59d76c238c5071a2f3fc16cfb2606"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl",
+          "hash": "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746"
+        }
+      ]
+    },
+    {
+      "name": "pydantic",
+      "version": "2.13.5",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/pydantic/licenses/LICENSE",
+          "sha256": "a9e186f3ca16b5eef84318e7a701721351a00cb7b8ae3a4394b67b49e3529ef3"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/eb/47/c95ffc2009878c7aac0c5e08528022dcb885933252a88b5f170058014464/pydantic-2.13.5-py3-none-any.whl",
+          "hash": "sha256:346a034f080da3755d8e9cb5e00e8b07de1d39e4f6e2c87d8ab7cafa0b269a73"
+        }
+      ]
+    },
+    {
+      "name": "pydantic-core",
+      "version": "2.46.5",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/pydantic-core/licenses/LICENSE",
+          "sha256": "fbe7f615f18d135c07000e5a86325db27f42c7729699ef166ac1f7a3f4586bf4"
+        }
+      ],
+      "native_files": [
+        {
+          "path": "pydantic_core/_pydantic_core.cp312-win_amd64.pyd",
+          "sha256": "28fd1266fb9946fe61775505a13c0bf803f6932b51b306a0032687393d9a558b"
+        }
+      ],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/82/3f/76358795aa7a8c6d4f36e2cb828ad1c90ee118e1393a9281664f5aade9d4/pydantic_core-2.46.5-cp312-cp312-macosx_10_12_x86_64.whl",
+          "hash": "sha256:b9fe6fb92520e3fd61f2e49000b6911b188824f089b75973ea06d6267f0b476d"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/db/50/26b091836076ce4cb2fac264186936acc069e0595772cfd02a563bc4761a/pydantic_core-2.46.5-cp312-cp312-macosx_11_0_arm64.whl",
+          "hash": "sha256:a39ac25a9a2fa4072efdb429833c4a4c8009a51ff9eea3eeae131713cd27991e"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/09/f0/2a8ce3849e299d44e2d2c196b6082643a3235565a735cb51db7a6261f614/pydantic_core-2.46.5-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+          "hash": "sha256:4fdc8b93a41521988916eeaa271173fcca7fa0803d62f87675aac8dcec1c8e29"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/87/46/ac0dc8bdd9e6048183a14eb127764e7ad9240021c17513074a4711b0e31e/pydantic_core-2.46.5-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl",
+          "hash": "sha256:b98134087d9de723658d17a42c7d0da8d6e2ef08015dee7dc93889047315f5e4"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/c4/c2/339de5bef7be36301a2231eaa52e62163742c2281f11b5f4892bc79785cd/pydantic_core-2.46.5-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl",
+          "hash": "sha256:e652ab17569c94bff5475520f907b7148b8c24036a8ebbe5cf7cf7493d28579a"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/7b/a0/9ff22b797724262da14427abaed4dd1d864a139693fc5e7809114376a716/pydantic_core-2.46.5-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl",
+          "hash": "sha256:d925f3d9afd05a8c0fb3a1031463a8d59ebe5e2afad297e29c78be19e13b4e62"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/c0/a4/eb9409ec0736e50aa70a412f16c204ed149516846912f7e6724d4c73ee53/pydantic_core-2.46.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+          "hash": "sha256:0fc5be0abd4a407e200d844b404e33639a554e7bd0d448e7b9ae181be4789ac2"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/c0/02/7f6156ffc926857f1c37c07d9a388682865a81830ab6a1b637082c25e399/pydantic_core-2.46.5-cp312-cp312-manylinux_2_31_riscv64.whl",
+          "hash": "sha256:816ff0a6550ffc06c098ccd2e0698600f9aa7da192a79eaa6f9af504a35db869"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/92/b1/e781d357ebe09fc929f995700f1b3503e8897f1cece183ecb1300d4d67e9/pydantic_core-2.46.5-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.whl",
+          "hash": "sha256:c7ea57fc63aa7da93a1bd2d644e6577befae10c52c4e36377635eea1056a74f5"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/70/0a/644597d84ab400e50609c192120b85c9681c22d3a20461b9060a79be0a7a/pydantic_core-2.46.5-cp312-cp312-musllinux_1_1_aarch64.whl",
+          "hash": "sha256:efd62a42486f1bda5d24cb4f63d15a3c7768375fe83d36f9417b4ad7a2fb20b3"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/1e/ee/ca3b7b3a4b3769ffe9ce9432a7c9be755de9593a46d3b0d54d0409323e44/pydantic_core-2.46.5-cp312-cp312-musllinux_1_1_armv7l.whl",
+          "hash": "sha256:2bc9419666990c06d7397831f2126a1ecc3594aaa3ff7de5bf2d066802f4e07b"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/ce/52/39fa1f451486019524ca685020390e7ca351832fd874530ba30c8628e6dc/pydantic_core-2.46.5-cp312-cp312-musllinux_1_1_x86_64.whl",
+          "hash": "sha256:18a09e1e1011b462f2e32774f25859ef1223d5c2b0546a633cf56654710721e0"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/81/5e/468fc630568c61dcef3cd47ad32ffbeed9af643f49208d1ea86ab4f890c4/pydantic_core-2.46.5-cp312-cp312-win32.whl",
+          "hash": "sha256:5cb482e9e84c851f4e623fe4acc1ced89168cf1fe18f7089db4548c8f5bbb65b"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/cf/c9/4c19f41b84cf6b622a72fbeed7665b25d47a187d68d47d0d430c07f23268/pydantic_core-2.46.5-cp312-cp312-win_amd64.whl",
+          "hash": "sha256:5e81740c09e310f5aa5cbd3e434a01c154d4bef93241c7877b39f211d2b78ba8"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/af/dd/0c1a050299147c746e5256db16d645ab5efd4f78c59937d581a0524e74a2/pydantic_core-2.46.5-cp312-cp312-win_arm64.whl",
+          "hash": "sha256:f7b0ec93a2893de856652154d73b7ba622f26fa97726487dcac373de5f4c6084"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/df/dd/053c2e4303f791f3b8f8a14ab0b22008e8eb21d868c0c90b4f9be705b76a/pydantic_core-2.46.5-graalpy312-graalpy250_312_native-macosx_10_12_x86_64.whl",
+          "hash": "sha256:013d6f3483d81e02e7c328831808f336c8596ee33b4bd4026b9ffb1e960b8942"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/d7/dd/a18df751a5e37dd51bfad7f68e766999125bebe68c9e1d10a493ad01bd63/pydantic_core-2.46.5-graalpy312-graalpy250_312_native-macosx_11_0_arm64.whl",
+          "hash": "sha256:e9c134bb666dd54b778b9fc0d2b50cbb7f979b9e3716f26a88c9ab3b6fc1dd0f"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/b7/13/01d40f9d07ce8a779fd6e0bd8ad4fba91309500dd67b869e2e219d261a6d/pydantic_core-2.46.5-graalpy312-graalpy250_312_native-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+          "hash": "sha256:347ec774390c87326a2e4929d58d3f7e8763a104d5d35f4cd595a4c952366433"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/fa/04/c81d4841331c2178b6fb09ae225425e110ed72d990c9fe556c4ec03d1013/pydantic_core-2.46.5-graalpy312-graalpy250_312_native-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+          "hash": "sha256:8e24d8f05fa2d28513d94e877e9c75ad66175376209b3977f916e240e623193c"
+        }
+      ]
+    },
+    {
+      "name": "pygments",
+      "version": "2.21.0",
+      "scope": "development",
+      "license": "BSD-2-Clause",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/pygments/licenses/LICENSE",
+          "sha256": "a9d66f1d526df02e29dce73436d34e56e8632f46c275bbdffc70569e882f9f17"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl",
+          "hash": "sha256:2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9"
+        }
+      ]
+    },
+    {
+      "name": "pytest",
+      "version": "8.4.2",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/pytest/licenses/LICENSE",
+          "sha256": "ca836a5f9ecca3b2f350230faa20a48fb8b145653b5568d784862df864706b9b"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/a8/a4/20da314d277121d6534b3a980b29035dcd51e6744bd79075a6ce8fa4eb8d/pytest-8.4.2-py3-none-any.whl",
+          "hash": "sha256:872f880de3fc3a5bdc88a11b39c9710c3497a547cfa9320bc3c5e62fbf272e79"
+        }
+      ]
+    },
+    {
+      "name": "referencing",
+      "version": "0.37.0",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/referencing/licenses/COPYING",
+          "sha256": "42dcd63495f87b4eb7c7757afa379bb55a53f94afd7a5f657d9adf57236e515c"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/2c/58/ca301544e1fa93ed4f80d724bf5b194f6e4b945841c5bfd555878eea9fcb/referencing-0.37.0-py3-none-any.whl",
+          "hash": "sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231"
+        }
+      ]
+    },
+    {
+      "name": "rpds-py",
+      "version": "2026.6.3",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/rpds-py/licenses/LICENSE",
+          "sha256": "8bcb72c82ea8ae74802293c41d93ad7d51434001b0ae45a603a5af0f507aee0a"
+        }
+      ],
+      "native_files": [
+        {
+          "path": "rpds/rpds.cp312-win_amd64.pyd",
+          "sha256": "8b4b68653e93ffc61124c96fa85fcb3c4f9c8e3059a3706dcfc671af1f0caa1c"
+        }
+      ],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/5c/be/2e8974163072e7bab7df1a5acd54c4498e75e35d6d18b864d3a9d5dadc92/rpds_py-2026.6.3-cp312-cp312-macosx_10_12_x86_64.whl",
+          "hash": "sha256:a0811d33247c3d6128a3001d763f2aa056bb3425204335400ac54f89eec3a0d0"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/a4/73/319dfa745dd668efe89309141ded489126461fcecd2b8f3a3cda185129b6/rpds_py-2026.6.3-cp312-cp312-macosx_11_0_arm64.whl",
+          "hash": "sha256:538949e262e46caa31ac01bdb3c1e8f642622922cacbabbae6a8445d9dc33eaf"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/21/63/4239893be1c4d09b709b1a8f6be4188f0870084ff547f46606b8a75f1b03/rpds_py-2026.6.3-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+          "hash": "sha256:55927d532399c2c646100ff7feb48eaa940ad70f42cd68e1328f3ded9f81ca24"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/1c/ca/9c5de382225234ceb37b1844ebdb140db12b2a278bb9efe2fcd19f6c82ce/rpds_py-2026.6.3-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl",
+          "hash": "sha256:f56f1695bc5c0871cbc33dc0130fcf503aab0c57dcc5a6700a4f49eba4f2652e"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/87/dc/863f69d1bf04ade34b7fe0d59b9fdf6f0135fe2d7cbca74f1d665589559d/rpds_py-2026.6.3-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl",
+          "hash": "sha256:270b293dae9058fc9fcedab50f13cebf46fb8ed1d1d54e0521a9da5d6b211975"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/ce/ef/eac16a12048b45ec7c7fa94f2be3438a5f26bf9cc8580b18a1cfd609b7f6/rpds_py-2026.6.3-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl",
+          "hash": "sha256:127565fead0a10943b282957bd5447804ff3160ad79f2ad2635e6d249e380680"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/04/8f/d2f3f532616be4d06c316ef119683e832bd3d41e112bf3a88f4151c95b17/rpds_py-2026.6.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+          "hash": "sha256:ecabd69db66de867690f9797f2f8fa27ba501bbc24540cbdbdc649cd15888ba6"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/e3/29/41a7b0e98a4b44cd676ab7598419623373eb43b20be68c084935c1a8cf88/rpds_py-2026.6.3-cp312-cp312-manylinux_2_31_riscv64.whl",
+          "hash": "sha256:58eadac9cd119677b60e1cf8ac4052f35949d71b8a9e5556efccbe82533cf22a"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/2e/05/ecda0bec46f9a1565090bcdc941d023f6a25aff85fda28f89f8d19878152/rpds_py-2026.6.3-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.whl",
+          "hash": "sha256:7491ee23305ac3eb59e492b6945881f5cd77a6f731061a3f25b77fd40f9e99a4"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/68/a8/6ed52f03ee6cb854ce78785cc9a9a672eb880e83fd7224d471f667d151f1/rpds_py-2026.6.3-cp312-cp312-musllinux_1_2_aarch64.whl",
+          "hash": "sha256:2c99f7e8ccb3dd6e3e4bfeac657a7b208c9bac8075f4b078c02d7404c34107fa"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/8f/d6/156c0d3eea27ba09b92562ba2364ba124c0a061b199e17eac637cd25a5e2/rpds_py-2026.6.3-cp312-cp312-musllinux_1_2_i686.whl",
+          "hash": "sha256:62698275682bf121181861295c9181e789030a2d516071f5b8f3c23c170cd0fc"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/f1/31/774212ed989c62f7f310220089f9b0a3fb8f40f5443d1727abd5d9f52bc9/rpds_py-2026.6.3-cp312-cp312-musllinux_1_2_x86_64.whl",
+          "hash": "sha256:a214c993455f99a89aaeadc9b21241900037adc9d97203e374d75513c5911822"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/c9/50/22f73127a41f1ce4f87fe39aadfb9a126345801c274aa93ae88456249327/rpds_py-2026.6.3-cp312-cp312-win32.whl",
+          "hash": "sha256:501f9f04a588d6a09179368c57071301445191767c64e4b52a6aa9871f1ef5ed"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/04/3a/f0ee4d4dde9d3b69dedf1b5f74e7a40017046d55052d173e418c6a94f960/rpds_py-2026.6.3-cp312-cp312-win_amd64.whl",
+          "hash": "sha256:2c958bf94822e9290a40aaf2a822d4bc5c88099093e3948ad6c571eca9272e5f"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/f3/83/3382fe37f809b59f02aac04dbc4e765b480b46ee0227ed516e3bdc4d3dfc/rpds_py-2026.6.3-cp312-cp312-win_arm64.whl",
+          "hash": "sha256:22bffe6042b9bcb0822bcd1955ec00e245daf17b4344e4ed8e9551b976b63e96"
+        }
+      ]
+    },
+    {
+      "name": "ruff",
+      "version": "0.16.10",
+      "scope": "development",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/ruff/licenses/LICENSE",
+          "sha256": "2597d854122b77ddc71971564ca2350a37608575ce324adc5650a2b2051c8f18"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/2f/21/ebce22e1d90cdb2cd691026b9c6e9bec6499f0b396089481755b5d49efff/ruff-0.16.10-py3-none-linux_armv6l.whl",
+          "hash": "sha256:488b0fe3f3574210e5cf80d9f59b9e3ab17a127a8155de3f307b392589cfb511"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/cb/98/a54de85876a8b2612bfa0d84c7b9abfb39c6a3354aee7800b09c1649b9e3/ruff-0.16.10-py3-none-macosx_10_12_x86_64.whl",
+          "hash": "sha256:e748ff95c934c4e978783b8e687bc174e7bd84e8ad24e3243e1ecfcda5e0282d"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/9f/16/1a5a4a2657effe4806110f2b907313802f1367fcdbb29e8122766e407fab/ruff-0.16.10-py3-none-macosx_11_0_arm64.whl",
+          "hash": "sha256:3031a4a2e8e7b8a46f70be45f198c35a11ece509a94b80334d8d397a33c67550"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/6e/fb/470085af734da396e68cd80fb0a3e7c109a459716ae59588c0f6fab8a17d/ruff-0.16.10-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+          "hash": "sha256:494401c86df4c4c25f69b9419605d944467ee98c42fb6ad405ef4fa40b8fb67d"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/57/de/f10cffe4f88a37ea6615ec460f01bf76f0bc1477737a35d9ee61a630a78b/ruff-0.16.10-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl",
+          "hash": "sha256:d203abc0ff2b773ee33d00ab8df0bb67046fbc7c07b119332f08b9b345cf8221"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/ff/44/3fdcedf83ae60ef837dd239170e480dce606a9142cfa2db911afdf855fd9/ruff-0.16.10-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl",
+          "hash": "sha256:bd83d1235a5258d318477bc5b576303974cbdef5df0c01a1bff14efcc23bd12a"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/c1/62/02e76a5574002153618eafbb70e159468addc72a5d2c488e65cbb4639d2d/ruff-0.16.10-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl",
+          "hash": "sha256:bc2610fb269fa56dd8a68669ae470fa6272902668c0fc2ebc3aa112b2633d5b8"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/6b/c4/cde27d47ad8d4126c587e608c67c46e7feac11763f606d261a1bc8a489e6/ruff-0.16.10-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl",
+          "hash": "sha256:3e70175e29cc94c26ea296c80e470180b744b7419026898e58f520c6ab32578e"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/e4/03/17234145f302a645a123e8c3bb2411ecf4669fbc350de3b0d803230a1729/ruff-0.16.10-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+          "hash": "sha256:f33f43a864a8483eebd160e713336c8bab02c934feaff0a33cf5ccb41546d09a"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/71/29/2493af60240ee7644b38a4b821f5f9c3b5a4fa3178770fe1d0c685217395/ruff-0.16.10-py3-none-manylinux_2_31_riscv64.whl",
+          "hash": "sha256:1dfc6f0088149fb6a362c1c446bcbb3fd2157b3852fe2fa68409276eab9ad9b3"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/2e/9a/f56b28f3b143bb9e518c34fb89ab191b626bca8b70dbf8af0d2e2d473572/ruff-0.16.10-py3-none-musllinux_1_2_aarch64.whl",
+          "hash": "sha256:6553498afc35f580f036030795810b9e6bcea31604b0fd9e8d352795473042e3"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/c2/c4/fca37362848ea4d4d80712df13632e645e7c7cfb1bdedf140699ac7a090b/ruff-0.16.10-py3-none-musllinux_1_2_armv7l.whl",
+          "hash": "sha256:a3b8471dea115d37f123882be852bed13403746d3a76c11de4a19ec5f9ff5a03"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/7d/c7/e0bc57664d6e0c61fd22f620af260fe9662d7e1ddb320ea7f160e76ef165/ruff-0.16.10-py3-none-musllinux_1_2_i686.whl",
+          "hash": "sha256:92e59a70bcbd9d3a5483656da906ec28edfdacfce00afd99edb8b4e9d15644be"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/21/aa/5c9f3b68737c0e4a33a1db5dfab44f7b786d96ca91a7233112ddab1e6dc2/ruff-0.16.10-py3-none-musllinux_1_2_x86_64.whl",
+          "hash": "sha256:7ae7375f803b5520dc9f546bed7e3a0acb70b91812e9bb4b19927de22f25b77d"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/78/fa/0f9c2020dc316c53d983be011720b8157cc052b97e3f4dfa7db6d0f880a6/ruff-0.16.10-py3-none-win32.whl",
+          "hash": "sha256:2a12e01cb9156c10c466f63b46eaae5ecea28dfbd21b5836353ae498e7d1349a"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/99/29/cfb0df9448d4d4ad48c2de029ada9ebd71baa6da983a6c77ee6c6cd0fe82/ruff-0.16.10-py3-none-win_amd64.whl",
+          "hash": "sha256:97f2015c92aa97105b0eab19eb5d224884399281cfc5da86a92db4ab5e7fb2ca"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/fc/05/c16957eb287c3fc062e032619a25868d93d408a844b725bcf514f7a378ff/ruff-0.16.10-py3-none-win_arm64.whl",
+          "hash": "sha256:25a65fe998c4e6861ec079ada5826a2fc605e6cbccbe9dcd7fac1f54e791621b"
+        }
+      ]
+    },
+    {
+      "name": "sqlalchemy",
+      "version": "2.1.3",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/sqlalchemy/licenses/LICENSE",
+          "sha256": "9bb754071e711cf75728b9051b170bfb8f9e3b879c08386c96a36989c42cd5f1"
+        }
+      ],
+      "native_files": [
+        {
+          "path": "sqlalchemy/engine/_processors_cy.cp312-win_amd64.pyd",
+          "sha256": "0bb3fed0ceaba7fd0022414919dfbe4c9f471d771d1c435c8969e59a628bd20b"
+        },
+        {
+          "path": "sqlalchemy/engine/_result_cy.cp312-win_amd64.pyd",
+          "sha256": "338c2cdb2b6d22c12148190d9ec38b8cda22924f5cc3edc57f448d8d7fe430a3"
+        },
+        {
+          "path": "sqlalchemy/engine/_row_cy.cp312-win_amd64.pyd",
+          "sha256": "0afd4b16bf461c57c8352d5e245c83d4670f3030aa50a8cfbab37db1a4cce149"
+        },
+        {
+          "path": "sqlalchemy/engine/_util_cy.cp312-win_amd64.pyd",
+          "sha256": "4627b7079aed651c72e20d96b0d1ac0dfc9d6cc93c06616a208b56f1aaa52143"
+        },
+        {
+          "path": "sqlalchemy/sql/_cache_key_cy.cp312-win_amd64.pyd",
+          "sha256": "6b92f566a251ee34fa0a8108103d0ea68ac317a77c1a24d7ab21fa70534f6932"
+        },
+        {
+          "path": "sqlalchemy/sql/_util_cy.cp312-win_amd64.pyd",
+          "sha256": "ac72662d7d8286bbf3f1ba7f1ff93253a65a42d7d6bda4b5837ba38ed6269dbe"
+        },
+        {
+          "path": "sqlalchemy/util/_collections_cy.cp312-win_amd64.pyd",
+          "sha256": "00b82ba45eb9e42ef6e72aed61b4e9f462a149e144ae35eeb21704bb8af47966"
+        },
+        {
+          "path": "sqlalchemy/util/_immutabledict_cy.cp312-win_amd64.pyd",
+          "sha256": "79a61ae76bc57e96ea92c76a28a00aafcb93de0b9bf0d48ce8d81b7872fb1d8b"
+        }
+      ],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/1a/5f/4dddd8758e6725419c2a21319cd5615ec37c0e7abb54c05ec09839ffbaa0/sqlalchemy-2.1.3-cp312-cp312-macosx_11_0_arm64.whl",
+          "hash": "sha256:7089cd2408cdae671c0775991e91349532d44f91fccc3248aada4b2243600da8"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/4e/96/6bcb70507e44bf48e790181809daa86f3d6813738e3d2bca7e50c671d2f7/sqlalchemy-2.1.3-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl",
+          "hash": "sha256:565da0a28051cc4ac6f3ae6e9f33cae707ac6b102eac077ebdaada05226f8e3d"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/ab/1c/d306dbb3bcb7d529099fbcc7e4a4bdf99059622ca53311831ac6349b5b31/sqlalchemy-2.1.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+          "hash": "sha256:f68fb01c2bea9d6e362f37f8109974d285718880ee59eefff1c9a11e5e5df6a9"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/b9/8e/e424c5bc13387c8923d1e36db0205fc73d21f93358ba6b386aca5c65c2c3/sqlalchemy-2.1.3-cp312-cp312-manylinux_2_31_riscv64.manylinux_2_39_riscv64.whl",
+          "hash": "sha256:6a60162b10e59cde7037b65ee52c45ff106f183b454d3763351534d18c109641"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/40/c0/815e27b5e2a27c118c4cbe90188bb9aa09292fb58867dc14a17bbad0c776/sqlalchemy-2.1.3-cp312-cp312-musllinux_1_2_aarch64.whl",
+          "hash": "sha256:314407ce02091e80ec295c2392ad04573a08fa9517359a99b63bdfdb041e6c55"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/d0/37/26be272c44efbadff873675086aca27197e4e39e5100099a0d3bd84c7e8f/sqlalchemy-2.1.3-cp312-cp312-musllinux_1_2_riscv64.whl",
+          "hash": "sha256:8212524da8426cc35b99d573447f7e13e94eaf4ae31fcc0f84132222c0e7d904"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/d5/ea/1f670e25011ccf022baeaa86476295f8a0c603957175a4b4c7ed57062dfc/sqlalchemy-2.1.3-cp312-cp312-musllinux_1_2_x86_64.whl",
+          "hash": "sha256:2b7c7d6db0d967a9feedda37d1bbbbea2415e6d5e8e6ff7ef6e52990f33ae414"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/4d/1f/983b1b961a6fd5d9c7630ccf80f44cc63da4fddb0ac7d125f5720278550b/sqlalchemy-2.1.3-cp312-cp312-win32.whl",
+          "hash": "sha256:c663d71a0dbac51085074ad779d555a69af18f5ef01690c8206a92603df46cc9"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/8f/de/7cd2083ad8b6c6a905a9c70663588090fd23a3ecbda5d15bf558df7715fa/sqlalchemy-2.1.3-cp312-cp312-win_amd64.whl",
+          "hash": "sha256:f097f4efb9ba48f3069b17998abd8bbe2131b7f5d3c00ab7b69101d68bd976f4"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/ae/d0/b09299052f0f0f7366f46d63056a2e20399976e670bf8f399cfb59b83adb/sqlalchemy-2.1.3-cp312-cp312-win_arm64.whl",
+          "hash": "sha256:7cdc5952525055fcddbbd4ca6c53812e228b6478cc95bdd7bbb24708ed045740"
+        },
+        {
+          "url": "https://files.pythonhosted.org/packages/e5/12/23d8fb7ed90e5b674006ace415ede1c60cdfc38ace50968b59ef42c22754/sqlalchemy-2.1.3-py3-none-any.whl",
+          "hash": "sha256:6f0cf4debd86cb5623a50310784bd005c215761ca7f618d0d4f46193d033675a"
+        }
+      ]
+    },
+    {
+      "name": "starlette",
+      "version": "1.7.0",
+      "scope": "runtime",
+      "license": "BSD-3-Clause",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/starlette/licenses/LICENSE.md",
+          "sha256": "dcb95677a02240243187e964f941847d19b17821cf99e5afae684fab328c19bf"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/4e/d6/1ec1b290f9e0fb067899b61e1d37a30c923068bad260b216dbe37a7d2967/starlette-1.7.0-py3-none-any.whl",
+          "hash": "sha256:67f8e99895493dd2911a03f11314af6ceebeae4e704bb9f43dfc6a9db151c93e"
+        }
+      ]
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "scope": "runtime",
+      "license": "PSF-2.0",
+      "policy": "user-approved exception",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/typing-extensions/licenses/LICENSE",
+          "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+          "hash": "sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+        }
+      ]
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4",
+      "scope": "runtime",
+      "license": "MIT",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/typing-inspection/licenses/LICENSE",
+          "sha256": "804b59b25f2c31bd278f9202a19ae49a3945aa2664387e2d0a128c7cacc61ec3"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl",
+          "hash": "sha256:65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
+        }
+      ]
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.54.0",
+      "scope": "runtime",
+      "license": "BSD-3-Clause",
+      "policy": "baseline",
+      "notices": [
+        {
+          "path": "docs/license_inventory/notices/uvicorn/licenses/LICENSE.md",
+          "sha256": "efe1acf3e62fb99c288b0ec73e5a773b7268ef4320fe757ea994214e4b63c371"
+        }
+      ],
+      "native_files": [],
+      "source": {
+        "registry": "https://pypi.org/simple"
+      },
+      "locked_artifacts": [
+        {
+          "url": "https://files.pythonhosted.org/packages/38/0c/b54a4fdd7f90a3af8b02ebc9ce6712c2c208b7926a2f7bad95c33ebbe943/uvicorn-0.54.0-py3-none-any.whl",
+          "hash": "sha256:505bdb0f318731d45f1f712071fc781a8981f6847a31c902c9f5e652d4f67faf"
+        }
+      ]
+    }
+  ]
+}

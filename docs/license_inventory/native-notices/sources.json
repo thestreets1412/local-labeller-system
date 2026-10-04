@@ -1,0 +1,50 @@
+[
+  {
+    "file": "imgui-MIT.txt",
+    "source": "https://raw.githubusercontent.com/ocornut/imgui/3912b3d9a9c1b3f17431aebafd86d2f40ee6e59c/LICENSE.txt",
+    "source_sha256": "c80c5789748d955c4a650562baa0d750494e2c7128c2ca66aaebe2e3c4e198bf",
+    "notice_sha256": "c80c5789748d955c4a650562baa0d750494e2c7128c2ca66aaebe2e3c4e198bf"
+  },
+  {
+    "file": "implot-MIT.txt",
+    "source": "https://raw.githubusercontent.com/epezent/implot/4707b245fbcd69075b1a8a74fa8d2435561b3134/LICENSE",
+    "source_sha256": "38bd30c2111fe7e3d8fb86d8607491239659eff1df1b1004b9a8349e20a91967",
+    "notice_sha256": "38bd30c2111fe7e3d8fb86d8607491239659eff1df1b1004b9a8349e20a91967"
+  },
+  {
+    "file": "imnodes-MIT.txt",
+    "source": "https://raw.githubusercontent.com/hoffstadt/DearPyGui/v2.3.1/thirdparty/imnodes/LICENSE.md",
+    "source_sha256": "b7e20dc32020807b0525c1f8f84a15a9f52693a58974b38354d3f4819b9b5174",
+    "notice_sha256": "b7e20dc32020807b0525c1f8f84a15a9f52693a58974b38354d3f4819b9b5174"
+  },
+  {
+    "file": "ImGuiFileDialog-MIT.txt",
+    "source": "https://raw.githubusercontent.com/hoffstadt/DearPyGui/v2.3.1/thirdparty/ImGuiFileDialog/LICENSE",
+    "source_sha256": "6daf130d02115d8a87f9c337f332f79c0c68ce09fab1e90914b60b5b500effdc",
+    "notice_sha256": "6daf130d02115d8a87f9c337f332f79c0c68ce09fab1e90914b60b5b500effdc"
+  },
+  {
+    "file": "FreeType-FTL.txt",
+    "source": "https://raw.githubusercontent.com/freetype/freetype/8cf046c38d4c6ada76ba070562beff0d5041f795/docs/FTL.TXT",
+    "source_sha256": "08c135755dd589039470f1fdbb400daaabaaa50d0b366d19cebff4d22986baa1",
+    "notice_sha256": "08c135755dd589039470f1fdbb400daaabaaa50d0b366d19cebff4d22986baa1"
+  },
+  {
+    "file": "FreeType-LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/freetype/freetype/8cf046c38d4c6ada76ba070562beff0d5041f795/docs/LICENSE.TXT",
+    "source_sha256": "fd056de4196903a676208ef58cfddafc7d583d1f28fa2e44c309cf84a59e62fb",
+    "notice_sha256": "fd056de4196903a676208ef58cfddafc7d583d1f28fa2e44c309cf84a59e62fb"
+  },
+  {
+    "file": "stb_image-MIT.txt",
+    "source": "https://raw.githubusercontent.com/hoffstadt/DearPyGui/v2.3.1/thirdparty/stb/stb_image.h",
+    "source_sha256": "eeccfabe6f486817569b3fc8f508a7bec7e3f116d676c3d123435314fdd2592c",
+    "notice_sha256": "f7e9ed73812898371959e214ac4d82df98152c658f2270f7e9766d833d155e71"
+  },
+  {
+    "file": "stb_image_write-MIT.txt",
+    "source": "https://raw.githubusercontent.com/hoffstadt/DearPyGui/v2.3.1/thirdparty/stb/stb_image_write.h",
+    "source_sha256": "24d110c51536eea49b99b3ef9eb717e3587338358d41b2596d5b1d1c0b0a18b8",
+    "notice_sha256": "f7e9ed73812898371959e214ac4d82df98152c658f2270f7e9766d833d155e71"
+  }
+]

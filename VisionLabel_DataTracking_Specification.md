@@ -1,8 +1,9 @@
 # VisionLabel + DataTracking — Product & Engineering Specification
 
-**Spec version:** 1.0.0  
+**Spec version:** 1.0.6
 **วันที่:** 3 ตุลาคม 2026 (Asia/Bangkok)  
 **ภาษาเอกสาร:** ไทย; identifiers, API และ schema ใช้ภาษาอังกฤษ  
+**ภาษาซอฟต์แวร์:** English-only สำหรับข้อความที่ระบบสร้างใน UI, menus, tooltips, dialogs, validation/error messages และ installer; v1 ไม่มี Thai localization หรือ language switcher ข้อมูลที่ผู้ใช้ตั้งเองยังรองรับ Unicode
 **สถานะ:** Implementation baseline สำหรับสร้าง repository และพัฒนาทีละ phase  
 **เจ้าของระบบ:** ทีม Computer Vision ภายในองค์กร ขนาดเริ่มต้น 2–10 คน
 
@@ -110,6 +111,8 @@ Dear PyGui ระบุ MIT ใน [LICENSE](https://github.com/hoffstadt/DearPy
 
 - Source ของโครงการใหม่เลือก **MIT** พร้อม copyright notice ของผู้พัฒนา
 - Third-party application dependencies ต้องเป็น MIT, BSD-2-Clause, BSD-3-Clause หรือ Apache-2.0
+- ข้อยกเว้นเฉพาะรายการที่ผู้ใช้อนุมัติวันที่ 3 ตุลาคม 2026: certifi (MPL-2.0), typing_extensions (PSF-2.0) และส่วนประกอบ NumPy (0BSD, Zlib, CC0-1.0); ต้องเก็บ license notices และบันทึก exact versions/artifacts ใน inventory ไม่ถือว่าอนุญาต license เหล่านี้ให้ dependency อื่นโดยอัตโนมัติ
+- ผู้ใช้อนุมัติเพิ่มเติมวันเดียวกัน: FreeType ที่ bundle มากับ Dear PyGui ใช้ FreeType License (FTL) พร้อม attribution/notices; ไม่เลือก GPL alternative
 - ข้อยกเว้นที่เป็นส่วนหนึ่งของ baseline: Python runtime ภายใต้ PSF license และ SQLite public domain เนื่องจากเป็น runtime/DB ที่ตกลงใช้แล้ว ไม่อ้างว่าสองรายการนี้เป็น MIT/BSD/Apache ([SQLite copyright](https://www.sqlite.org/copyright.html))
 - ห้าม GPL/AGPL/LGPL dependency ใน distributed core; ห้ามคัดลอก implementation จากโครงการดังกล่าวมาทำ exporter/importer
 - License expression แบบ OR เลือก permissive branch ได้ถ้ามีหลักฐาน; แบบ AND ต้องตรวจทุกองค์ประกอบ
@@ -318,7 +321,7 @@ Review binding คือ `(image_id, annotation_revision, annotation_sha256, sch
 | Space + drag / wheel | Pan / Zoom about cursor |
 | Escape / Enter | Cancel / Finish polygon |
 
-Shortcuts ต้องไม่ทำงานขณะพิมพ์ comment/search; Thai filenames/class names แสดงได้ด้วย font ที่ผ่าน license policy; status ใช้ text/icon ร่วมกับสี
+Shortcuts ต้องไม่ทำงานขณะพิมพ์ comment/search; ข้อความที่ระบบสร้างทั้งหมดใช้ภาษาอังกฤษ ส่วน filenames/class names และข้อมูลที่ผู้ใช้ตั้งเองรองรับ Unicode ด้วย font ที่ผ่าน license policy; status ใช้ English text/icon ร่วมกับสี ไม่ทำ Thai localization ใน v1
 
 <a id="section-8"></a>
 
@@ -1115,6 +1118,8 @@ Default schedule nightly และก่อน migration/release ใหญ่; r
 
 แบ่ง phase ตาม functional slices ที่ใช้งานและตรวจสอบได้ ปรับจากลำดับ brainstorm โดยวาง API/storage/hash/review invariants ตั้งแต่ต้น เพื่อไม่ให้ prototype ที่เขียนไฟล์ตรงกลายเป็นฐานของ multi-user system โดยไม่ตั้งใจ
 
+**ลำดับความสำคัญที่ยืนยันกับผู้ใช้:** เน้น rectangle annotation ที่ใช้งานคล่องก่อน โดย Phase 1 ทำ import→claim→rectangle→save→reload แล้วปรับ create/select/move/resize/delete, zoom/pan, shortcuts, undo/redo และ autosave/recovery ให้พร้อมใช้งาน ก่อนขยายไป workflow ของ phase ถัดไป ข้อกำหนด classification และ exit gate เดิมของ Phase 1 ยังคงอยู่
+
 ### Phase 0 — Contracts และ foundation
 
 **Deliverables:** repository, pinned environment/license inventory, domain/schema package, migrations skeleton, storage abstraction, config, architectural tests, synthetic fixtures, decision records
@@ -1147,6 +1152,8 @@ Default schedule nightly และก่อน migration/release ใหญ่; r
 
 **Depends on:** Phase2
 
+**ลำดับงานที่ผู้ใช้ปรับ:** ผู้ใช้ทดสอบ account/membership increment ของ Phase2 แล้ว และขอเริ่ม Phase3 บนคอมส่วนตัว โดยยอมให้เลื่อนเฉพาะการทดสอบที่ทำไม่ได้ในบ้าน (สองเครื่อง/LAN/SMB) ไปทดสอบที่บริษัท งาน implementation ที่ยังค้างใน Phase2 ไม่ถือว่าเสร็จ เริ่ม polygon และ working QC ที่เป็นอิสระก่อนได้ แต่ reviewed segmentation และ immutable approved release ยังต้องเชื่อม PR10 review evidence ให้ครบ รายละเอียด requirement IDs และงานค้างอยู่ใน `docs/phase3-plan.md`
+
 **Deliverables:** polygon editor/validation, reviewed segmentation, QC/statistics, class schema migration, immutable release pipeline, version browser/diff และ snapshot manifests
 
 **งาน:** ตรึง revision/schema/group/approval evidence; failure recovery ระหว่าง publish; initial backup/restore command ต้องมีสำหรับข้อมูลจริง
@@ -1157,6 +1164,8 @@ Default schedule nightly และก่อน migration/release ใหญ่; r
 
 **Depends on:** Phase3
 
+**ลำดับงานที่ผู้ใช้ปรับเพิ่มเติม:** ผู้ใช้ขอเริ่ม Phase4 ต่อก่อน immutable release ใน Phase3 เสร็จ จึงทำ deterministic split engine และ standalone diagnostics preview ที่ทดสอบด้วย frozen synthetic projection ได้ก่อน โดย preview ไม่ใช่ canonical split และไม่ยืนยัน release provenance งาน PR15 ส่วน GUI, released-version verification และ immutable persistence ยังต้องเชื่อม PR10/PR13 ให้ครบก่อนใช้กับ dataset จริง รายละเอียดอยู่ใน `docs/phase4-plan.md`
+
 **Deliverables:** random/stratified/group/stratified_group, seed/ratios UI, group validation, diagnostics preview, immutable split manifests, optional pinned test assignments
 
 **งาน:** deterministic algorithm/golden assignments, rare-class infeasibility, leakage tests, tolerance handling และ split comparison
@@ -1164,6 +1173,8 @@ Default schedule nightly และก่อน migration/release ใหญ่; r
 **Exit gate:** rerun inputs เดิมได้ assignments/hash เดิม; no group/hash leakage; actual percentages/class counts แสดงครบ; infeasible constraints ไม่ถูก relax เงียบ ๆ
 
 ### Phase 5 — Export และ legacy migration
+
+**ลำดับงานที่ผู้ใช้ปรับเพิ่มเติม:** เริ่ม PR16 format conversion และ PR17 legacy dry-run ที่ทดสอบแยกได้ก่อน โดยรายงาน preview ไม่ใช่ canonical export/import งาน released-version verification, immutable split integration, publication และ canonical import ยังต้องทำครบก่อนผ่าน Phase5 exit gate ดู `docs/phase5-plan.md`
 
 **Depends on:** Phase4
 
@@ -1175,11 +1186,13 @@ Default schedule nightly และก่อน migration/release ใหญ่; r
 
 ### Phase 6 — Production hardening และ handover
 
+**ลำดับงานที่ผู้ใช้ปรับเพิ่มเติม:** ผู้ใช้ขอเริ่ม Phase6 ต่อ จึง harden backup/restore และทำ offline development wheel kit พร้อมคู่มือที่ทดสอบบนเครื่องนี้ได้ก่อน ไม่ถือว่างาน integration ใน Phase2–5, Nuitka production packaging หรือ global DoD ผ่านแล้ว รายการงานค้างและหลักฐานอยู่ใน `docs/phase6-plan.md`
+
 **Depends on:** Phase5
 
 **Deliverables:** Nuitka Windows packages, service scripts, HTTPS setup guide, backup scheduling/restore drill, offline installer instructions, license/SBOM bundle, operator/user guides, performance report
 
-**งาน:** Windows clean-machine test, font/DPI/Thai paths, 10-client load, disk-full/disconnect/restart tests, cache/secret policies, migration rehearsal
+**งาน:** Windows clean-machine test, English UI/font/DPI/Unicode paths, 10-client load, disk-full/disconnect/restart tests, cache/secret policies, migration rehearsal
 
 **Exit gate:** global DoD ข้อ 19 ผ่าน; Engineer และ Junior ทำ end-to-end acceptance journey บนสองเครื่อง; blocked egress test ยืนยันไม่มี external runtime calls; restore บนเครื่องใหม่แล้ว version hashes ตรง
 
@@ -1253,7 +1266,7 @@ Default schedule nightly และก่อน migration/release ใหญ่; r
 ### 18.3 Fixtures และ quality gates
 
 - สร้าง synthetic images เอง ไม่มี confidential production data ใน repository/CI
-- Fixture ชุดหลัก≥30 ภาพ, 3classes, classimbalance, 6groups, verifiedempty, rejected, corruptfile, duplicatebytes/differentnames, UnicodeThai paths และ EXIFrotation
+- Fixture ชุดหลัก≥30 ภาพ, 3classes, classimbalance, 6groups, verifiedempty, rejected, corruptfile, duplicatebytes/differentnames, Unicode paths และ EXIFrotation; Unicode fixtures ทดสอบข้อมูลผู้ใช้ ไม่ใช่ภาษาของ UI
 - Property tests: shape coordinates อยู่ bounds, deterministic serializer, no split overlap, union(partitions)=versionitems, group/hash หนึ่ง partition, roundtrip ไม่สลับ class
 - ห้ามทดสอบ export ด้วยการเรียก productionfunction เดียวกันแล้วเทียบตัวเอง; independent parser/golden expectedfiles ต้องตรวจ behavior
 - ไม่ติดตั้ง Ultralytics ใน core CI เพื่อ verify format; downstream consumer smoke test ทำแยกจาก distributedcore ได้เมื่อองค์กรอนุญาตและไม่ใช่ license bypass
@@ -1286,7 +1299,7 @@ Default schedule nightly และก่อน migration/release ใหญ่; r
 - [ ] YOLOdetect/segment/classificationexport ผ่าน independentvalidation และมี provenance/checksums
 - [ ] LabelMe/YOLO detectionimport มี dry-run และ loss/conflict reports
 - [ ] Backup/restore บน freshlocation ผ่านและ releasedhashes ตรง; operators ทำตาม guide ได้
-- [ ] PackagedWindowsclient/server ผ่าน cleanmachine/offlineLAN tests, Thai paths และ DPI
+- [ ] PackagedWindowsclient/server ใช้ English-only application text และผ่าน cleanmachine/offlineLAN tests, Unicode paths และ DPI
 - [ ] Permission/secret/path/sizevalidation ผ่าน; noexternalruntimeegress
 - [ ] License/SBOM/notice/lockeddependencies ครบ; ไม่มี copyleft หรือ unknownlicense ใน distributedcore
 - [ ] Performance ตาม baseline วัดแล้วและผ่าน หรือมี approvedADR ปรับ target พร้อมข้อมูลจริงก่อน productionrelease

@@ -1,0 +1,132 @@
+{
+  "$defs": {
+    "PinnedAssignment": {
+      "additionalProperties": false,
+      "properties": {
+        "image_id": {
+          "format": "uuid",
+          "title": "Image Id",
+          "type": "string"
+        },
+        "partition": {
+          "enum": [
+            "train",
+            "val",
+            "test"
+          ],
+          "title": "Partition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "image_id",
+        "partition"
+      ],
+      "title": "PinnedAssignment",
+      "type": "object"
+    },
+    "Ratios": {
+      "additionalProperties": false,
+      "properties": {
+        "train": {
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "Train",
+          "type": "integer"
+        },
+        "val": {
+          "maximum": 10000,
+          "minimum": 0,
+          "title": "Val",
+          "type": "integer"
+        },
+        "test": {
+          "maximum": 10000,
+          "minimum": 0,
+          "title": "Test",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "train",
+        "val",
+        "test"
+      ],
+      "title": "Ratios",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "strategy": {
+      "default": "stratified_group",
+      "enum": [
+        "random",
+        "stratified",
+        "group",
+        "stratified_group"
+      ],
+      "title": "Strategy",
+      "type": "string"
+    },
+    "ratios_bps": {
+      "$ref": "#/$defs/Ratios"
+    },
+    "seed": {
+      "default": 42,
+      "maximum": 4294967295,
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "algorithm_version": {
+      "const": "vl-split-1",
+      "default": "vl-split-1",
+      "title": "Algorithm Version",
+      "type": "string"
+    },
+    "require_group_key": {
+      "default": true,
+      "title": "Require Group Key",
+      "type": "boolean"
+    },
+    "missing_group_policy": {
+      "default": "error",
+      "enum": [
+        "error",
+        "singleton"
+      ],
+      "title": "Missing Group Policy",
+      "type": "string"
+    },
+    "strict_class_coverage": {
+      "default": false,
+      "title": "Strict Class Coverage",
+      "type": "boolean"
+    },
+    "size_tolerance_bps": {
+      "default": 500,
+      "maximum": 10000,
+      "minimum": 0,
+      "title": "Size Tolerance Bps",
+      "type": "integer"
+    },
+    "class_tolerance_bps": {
+      "default": 1000,
+      "maximum": 10000,
+      "minimum": 0,
+      "title": "Class Tolerance Bps",
+      "type": "integer"
+    },
+    "pinned_assignments": {
+      "items": {
+        "$ref": "#/$defs/PinnedAssignment"
+      },
+      "maxItems": 50000,
+      "title": "Pinned Assignments",
+      "type": "array"
+    }
+  },
+  "title": "SplitConfig",
+  "type": "object"
+}

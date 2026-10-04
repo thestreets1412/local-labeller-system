@@ -218,3 +218,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# VisionLabel local runtime data must never be committed.
+.data/
+.local-data/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.draft
+*.archived-draft
+claim.key

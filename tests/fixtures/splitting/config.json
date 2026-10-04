@@ -1,0 +1,12 @@
+{
+  "strategy": "stratified_group",
+  "ratios_bps": {
+    "train": 5000,
+    "val": 2500,
+    "test": 2500
+  },
+  "seed": 42,
+  "require_group_key": true,
+  "size_tolerance_bps": 0,
+  "class_tolerance_bps": 0
+}

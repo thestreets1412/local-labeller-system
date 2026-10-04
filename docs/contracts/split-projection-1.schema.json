@@ -1,0 +1,126 @@
+{
+  "$defs": {
+    "SplitItem": {
+      "additionalProperties": false,
+      "properties": {
+        "image_id": {
+          "format": "uuid",
+          "title": "Image Id",
+          "type": "string"
+        },
+        "asset_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Asset Sha256",
+          "type": "string"
+        },
+        "annotation_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Annotation Sha256",
+          "type": "string"
+        },
+        "group_key": {
+          "anyOf": [
+            {
+              "maxLength": 1024,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group Key"
+        },
+        "class_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 10000,
+          "title": "Class Ids",
+          "type": "array"
+        },
+        "verified_empty": {
+          "default": false,
+          "title": "Verified Empty",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "image_id",
+        "asset_sha256",
+        "annotation_sha256"
+      ],
+      "title": "SplitItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "input_schema_version": {
+      "const": "split-projection-1",
+      "default": "split-projection-1",
+      "title": "Input Schema Version",
+      "type": "string"
+    },
+    "project_id": {
+      "format": "uuid",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "version_id": {
+      "format": "uuid",
+      "title": "Version Id",
+      "type": "string"
+    },
+    "version_manifest_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Version Manifest Sha256",
+      "type": "string"
+    },
+    "task_type": {
+      "enum": [
+        "detection",
+        "segmentation",
+        "classification"
+      ],
+      "title": "Task Type",
+      "type": "string"
+    },
+    "class_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "maxItems": 10000,
+      "minItems": 1,
+      "title": "Class Ids",
+      "type": "array"
+    },
+    "enforce_group_split": {
+      "default": true,
+      "title": "Enforce Group Split",
+      "type": "boolean"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/SplitItem"
+      },
+      "maxItems": 50000,
+      "minItems": 1,
+      "title": "Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_id",
+    "version_id",
+    "version_manifest_sha256",
+    "task_type",
+    "class_ids",
+    "items"
+  ],
+  "title": "SplitInput",
+  "type": "object"
+}

@@ -1,0 +1,86 @@
+{
+  "random": {
+    "sha256": "6d5189409ccd7a0de35b73971294ddb13596e7c360e1918c3f7f0ba90c7ada8e",
+    "partitions_by_image_id": [
+      "train",
+      "train",
+      "train",
+      "train",
+      "train",
+      "train",
+      "test",
+      "test",
+      "train",
+      "train",
+      "test",
+      "val",
+      "test",
+      "val",
+      "val",
+      "val"
+    ]
+  },
+  "stratified": {
+    "sha256": "3b22f4bc406cec6cd282eac0021e100824f8a269e22fa0b460c492f57f4fd250",
+    "partitions_by_image_id": [
+      "train",
+      "train",
+      "val",
+      "train",
+      "train",
+      "test",
+      "val",
+      "test",
+      "train",
+      "train",
+      "train",
+      "val",
+      "test",
+      "val",
+      "test",
+      "train"
+    ]
+  },
+  "group": {
+    "sha256": "a024a28751cdeb56f13337a0e41bd16a4901ccd2ba2ae4a5eaac2f44fd71840f",
+    "partitions_by_image_id": [
+      "train",
+      "train",
+      "val",
+      "val",
+      "train",
+      "train",
+      "val",
+      "val",
+      "train",
+      "train",
+      "train",
+      "train",
+      "test",
+      "test",
+      "test",
+      "test"
+    ]
+  },
+  "stratified_group": {
+    "sha256": "93c752182c4d7ec7684efe751780074ba69e227ff96d33b02f86e26f6ac5db7e",
+    "partitions_by_image_id": [
+      "train",
+      "train",
+      "val",
+      "val",
+      "train",
+      "train",
+      "val",
+      "val",
+      "train",
+      "train",
+      "train",
+      "train",
+      "test",
+      "test",
+      "test",
+      "test"
+    ]
+  }
+}

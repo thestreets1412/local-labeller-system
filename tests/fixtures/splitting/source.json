@@ -1,0 +1,173 @@
+{
+  "project_id": "00000000-0000-4000-8000-000000000900",
+  "version_id": "00000000-0000-4000-8000-000000000901",
+  "version_manifest_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "task_type": "detection",
+  "class_ids": [
+    "00000000-0000-4000-8000-000000000800",
+    "00000000-0000-4000-8000-000000000801"
+  ],
+  "enforce_group_split": true,
+  "items": [
+    {
+      "image_id": "00000000-0000-4000-8000-000000000001",
+      "asset_sha256": "cfbb55051399525e165377a834ba1af07a9a08f836356c61c64c24fa4621b823",
+      "annotation_sha256": "aae1108a92395f9f088447e7ed337dee88423c52ad9ab146aa6d642e07fe15f7",
+      "group_key": "unit-0",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000800"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000002",
+      "asset_sha256": "1c49a083a74ed4445c804cc9cb9ab63d9be7d9451073ab200bc41a2c7131afbb",
+      "annotation_sha256": "8ad788b73d975e67e03088387498889860e78f4eb77f8eba59c5626bf6ef768f",
+      "group_key": "unit-0",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000801"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000003",
+      "asset_sha256": "846f3dbe8b5c3b7e99b46fe666a745fa2fa9f6bb7fa95da033db3ad618b2a312",
+      "annotation_sha256": "e5b7cea28992edae3fceb7c9a82a622622f48ffc4f5690092b395fc62ff80181",
+      "group_key": "unit-1",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000800"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000004",
+      "asset_sha256": "cbd903eac3683739924d5708bc53fab3598800ff4727357f773fa5faa7dcb95a",
+      "annotation_sha256": "41facd895ff5e413cc4d9ad7109961f5f7b38a098326e9ae3ed9c75664267932",
+      "group_key": "unit-1",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000801"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000005",
+      "asset_sha256": "30b9f745550921250665487dd64a7df9d651822ede1432169b64289b3dc967e0",
+      "annotation_sha256": "2f1e233f2bd488f828b662cc0bdf419adca7303de9603784ea2195cfcdb41117",
+      "group_key": "unit-2",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000800"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000006",
+      "asset_sha256": "75d66d436cfdfe8d0eaa8c6ddcf1b1f2a5a0a9e62c311c3a83d965323d28c6f7",
+      "annotation_sha256": "36558f56022786c5b859da2072b21eebe1dbf412860be5cc1ceed299601075e9",
+      "group_key": "unit-2",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000801"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000007",
+      "asset_sha256": "35eeba62ea013c36f3d13e02acdbe8f9c72bd6552b50289bd9b23bf93aa5a8ff",
+      "annotation_sha256": "a4354daf7dc3258698426320b3d3a7c25524b0b8eae08726f109000870264cfb",
+      "group_key": "unit-3",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000800"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000008",
+      "asset_sha256": "e11370f94a155aaf6e96838e5519003440fd78a434312a8b1533f31cea0e1026",
+      "annotation_sha256": "5bafcf115c566f63b89b21062e3721bc665ee35474c9e7882b25ba1f33586f08",
+      "group_key": "unit-3",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000801"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000009",
+      "asset_sha256": "f125b52de93a7c77e83a7a1652136d1d79857202704fd184b4f7a6e74250b2a3",
+      "annotation_sha256": "5ef51bec0103e972e6733a07474cafa0caa406d8a58cdc61a9e2a135e1790357",
+      "group_key": "unit-4",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000800"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000010",
+      "asset_sha256": "ddbd50036fdcd08c79b830c3a3ca8ad84a2364bc50070192f818e852e424efbc",
+      "annotation_sha256": "7557352a5a3f65eec5541cc0832071713a191b466f17dbb35a7e4612c46395c6",
+      "group_key": "unit-4",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000801"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000011",
+      "asset_sha256": "cb23ec335de578eff4c16c6bd48dfe1c56dce1cc637d9d028d3ba373fd624785",
+      "annotation_sha256": "1980486753635a82b10a985cdfff93cc5d372ae45bb6fc5b650a16e09192d899",
+      "group_key": "unit-5",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000800"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000012",
+      "asset_sha256": "d3f9009e8b0651ced7669bc7e837c9fcbe9316746ae942e4e618e39d08eb2325",
+      "annotation_sha256": "b5e52d9861dd57baf1b48aff054340e26a24a355d78d7b3a7e0426f315452f2f",
+      "group_key": "unit-5",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000801"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000013",
+      "asset_sha256": "ff527c0798320cc4f77fb57d802e7789b0280e09fca2a24cc5e14e810ea36740",
+      "annotation_sha256": "93823071dff76b706baa80fc12384b3139e72be1660f46a332660fefced01450",
+      "group_key": "unit-6",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000800"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000014",
+      "asset_sha256": "4211073eeeada77347cbf97edffe14ac71bb5fa53090e900eb308cbf7d251744",
+      "annotation_sha256": "cde349305b5d8d29ba5139b2e3d74c75757f22e2713a03aadd49d52ab556e414",
+      "group_key": "unit-6",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000801"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000015",
+      "asset_sha256": "72ffb2aa93b3d1a523d8893ab5c4ccb5ddf210a9929d6654785c9500f671ea03",
+      "annotation_sha256": "bc6ad5f33de3e2fe2e4dc597d805b34ab97cc9fd13cc6bd0172ca0c6574d5470",
+      "group_key": "unit-7",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000800"
+      ],
+      "verified_empty": false
+    },
+    {
+      "image_id": "00000000-0000-4000-8000-000000000016",
+      "asset_sha256": "e7aa49d5d95c5dc990e6c7c4142e754135e1f227826fa4c67a0bc99d543bfe4b",
+      "annotation_sha256": "db2168c73e3115e7682d72f476b96bfa35f1289e1e42552a2b9c7f60cc3e8b24",
+      "group_key": "unit-7",
+      "class_ids": [
+        "00000000-0000-4000-8000-000000000801"
+      ],
+      "verified_empty": false
+    }
+  ]
+}

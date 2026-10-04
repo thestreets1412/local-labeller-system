@@ -1,0 +1,19 @@
+{
+  "result": "passed",
+  "profile": "local-development-wheel-kit",
+  "kit_manifest_sha256": "3f637f28bb8aeccbd4d829a5af25d8ea56035f50029d415b69336026a9aa9d6a",
+  "checks": [
+    "kit hashes",
+    "offline hash-required install in a new environment outside checkout",
+    "packaged schema initialization",
+    "packaged backup/verify/restore and login",
+    "packaged desktop 20-frame render"
+  ],
+  "limitations": [
+    "same development PC, not a clean machine",
+    "not Nuitka or a production installer",
+    "no blocked-egress firewall measurement",
+    "no LAN/HTTPS acceptance",
+    "packaged restore uses empty project database; full asset/annotation restore covered by integration tests"
+  ]
+}
