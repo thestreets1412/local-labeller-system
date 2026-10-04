@@ -5,6 +5,34 @@ import zlib
 from pathlib import Path
 
 
+def bmp_bytes(width=100, height=200, top_down=False):
+    """24-bit BMP with a red top row and blue remaining rows, including row padding."""
+    stride = (width * 3 + 3) & ~3
+    scanlines = [
+        bytes((0, 0, 255) if y == 0 else (255, 0, 0)) * width + bytes(stride - width * 3)
+        for y in range(height)
+    ]
+    pixels = b"".join(scanlines if top_down else reversed(scanlines))
+    return (
+        struct.pack("<2sIHHI", b"BM", 54 + len(pixels), 0, 0, 54)
+        + struct.pack(
+            "<IiiHHIIiiII",
+            40,
+            width,
+            -height if top_down else height,
+            1,
+            24,
+            0,
+            len(pixels),
+            2835,
+            2835,
+            0,
+            0,
+        )
+        + pixels
+    )
+
+
 def png_bytes(index=0, width=640, height=400):
     def chunk(kind, data):
         return (

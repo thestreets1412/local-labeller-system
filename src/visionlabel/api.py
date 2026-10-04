@@ -26,6 +26,7 @@ from .contracts import (
 )
 from .database import SCHEMA_REVISION, row, rows
 from .domain import Problem, digest, uid
+from .imaging import IMAGE_EXTENSIONS
 from .service import Service, decode_cursor, encode_cursor, now
 
 
@@ -335,7 +336,7 @@ def create_app(root: Path):
             srv.maintain(conn, who, str(project_id))
         paths = []
         for path in srv.inbox.rglob("*"):
-            if path.is_file() and path.suffix.lower() in (".png", ".jpg", ".jpeg"):
+            if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS:
                 paths.append(path.relative_to(srv.inbox).as_posix())
                 if len(paths) > 50000:
                     raise Problem("TOO_MANY_FILES", "Import inbox exceeds 50,000 files.")

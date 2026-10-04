@@ -33,10 +33,17 @@ class ProjectCreate(StrictModel):
     initial_classes: list[str] = Field(min_length=1, max_length=100)
 
 
+class YoloImport(StrictModel):
+    class_schema_id: str = Field(min_length=36, max_length=36)
+    class_mapping: dict[str, str] = Field(min_length=1, max_length=1000)
+    empty_is_verified: StrictBool = False
+
+
 class ImportRequest(StrictModel):
     source_alias: Literal["inbox"] = "inbox"
     relative_paths: list[str] = Field(min_length=1, max_length=50000)
     dry_run: bool = False
+    yolo: YoloImport | None = None
 
 
 class ClaimRequest(StrictModel):

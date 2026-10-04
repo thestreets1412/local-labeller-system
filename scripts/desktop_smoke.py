@@ -21,7 +21,7 @@ from visionlabel.api import create_app
 from visionlabel.client import Client, LocalStore
 from visionlabel.desktop import Desktop
 from visionlabel.domain import uid
-from visionlabel.fixtures import create_samples
+from visionlabel.fixtures import bmp_bytes, create_samples
 from visionlabel.service import Service
 
 
@@ -289,6 +289,69 @@ def main():
                 for _ in range(8):
                     dpg.render_dearpygui_frame()
                 dpg.hide_item("statistics")
+                # Phase 7: pair BMP/YOLO in the real inbox, preview via desktop,
+                # import revision 1, correct a predicted box, save and reload.
+                (root / "inbox/spring_img.bmp").write_bytes(bmp_bytes())
+                (root / "inbox/spring_img.txt").write_text("0 .2 .2 .2 .2\n", encoding="utf-8")
+                pred = client.request(
+                    "POST",
+                    "/projects",
+                    {
+                        "name": "Prediction correction",
+                        "slug": "predictions",
+                        "task_type": "detection",
+                        "initial_classes": ["Spring", "Defect"],
+                    },
+                    key=uid(),
+                )
+                desktop.load_project(pred["id"])
+                pump_until(lambda: not desktop.busy and desktop.project["id"] == pred["id"])
+                desktop.show_yolo_import()
+                assert "0=Spring" in dpg.get_value("yolo_mapping")
+                dpg.set_value("yolo_mapping", "0=Defect\n1=Spring")
+                assert desktop.modal_open()
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                dpg.output_frame_buffer(str(args.output / "yolo-import-dialog.png"))
+                for _ in range(8):
+                    dpg.render_dearpygui_frame()
+                desktop.start_yolo_import(True)
+                pump_until(lambda: bool(desktop.job))
+                pump_until(lambda: desktop.job is None)
+                assert client.list_all(f"/projects/{pred['id']}/images") == []
+                dpg.hide_item("import_report")
+                desktop.show_yolo_import()
+                assert dpg.get_value("yolo_mapping") == "0=Defect\n1=Spring"
+                desktop.start_yolo_import(False)
+                pump_until(lambda: bool(desktop.job))
+                pump_until(lambda: desktop.job is None and len(desktop.images) == 4)
+                dpg.hide_item("import_report")
+                bmp = next(item for item in desktop.images if item["display_filename"] == "spring_img.bmp")
+                desktop.open_image(bmp["id"])
+                pump_until(
+                    lambda: (
+                        not desktop.busy and desktop.image is not None and desktop.image["id"] == bmp["id"]
+                    )
+                )
+                assert desktop.head["revision"] == 1 and desktop.editor.content["shapes"][0]["x2"] == 30
+                assert (
+                    desktop.editor.content["shapes"][0]["class_id"]
+                    == pred["schema"]["entries"][1]["class_id"]
+                )
+                corrected = json.loads(json.dumps(desktop.editor.content))
+                corrected["shapes"][0]["x2"] = 40
+                desktop.editor.change(corrected)
+                desktop.edited()
+                desktop.save()
+                pump_until(lambda: not desktop.saving and desktop.head["revision"] == 2)
+                desktop.open_image(bmp["id"])
+                pump_until(lambda: not desktop.busy)
+                assert desktop.editor.content["shapes"][0]["x2"] == 40
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                dpg.output_frame_buffer(str(args.output / "bmp-prediction-workspace.png"))
+                for _ in range(8):
+                    dpg.render_dearpygui_frame()
                 result = {
                     "result": "passed",
                     "checks": [
@@ -306,6 +369,8 @@ def main():
                         "Project members: pick account directly from dropdown",
                         "segmentation: click vertices, Enter finish, drag vertex, save/reload exact geometry",
                         "rendered Statistics / QC uses saved polygon annotations",
+                        "YOLO mapping dialog, preview and canonical prediction import over HTTP",
+                        "BMP render and prediction correction/save/reload revision 2",
                     ],
                     "human_mouse_dpi_acceptance": "not performed",
                 }

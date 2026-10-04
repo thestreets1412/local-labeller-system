@@ -13,6 +13,11 @@
 
 ## Product language
 
+- User-requested Phase 7 connects same-stem YOLO detection text files to canonical
+  editable predictions and adds BMP alongside PNG/JPEG. Implement the desktop path
+  and real persistence; preserve lease/revision safeguards and never overwrite
+  existing annotations during prediction import. See `docs/phase7-plan.md`.
+
 - All application-authored UI text, menus, buttons, tooltips, validation/error messages, dialogs, and installer text must be English. No Thai localization or language switcher is planned for v1.
 - User-provided filenames, paths, class names, project names, and comments remain Unicode-capable; English UI does not restrict user data to ASCII.
 - Repository discussions and the specification may remain in Thai. Identifiers, API contracts, and schemas use English.

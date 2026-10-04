@@ -54,6 +54,8 @@ class Desktop:
         self.job = None
         self.job_time = 0.0
         self.job_pending = False
+        self.yolo_job = False
+        self.yolo_schema_key = None
         self.next_action = None
         self.exit_requested = False
         self.recovery = None
@@ -78,6 +80,7 @@ class Desktop:
             "project_slug",
             "project_classes",
             "search",
+            "yolo_mapping",
         ]
 
     def submit(self, work, success, failure=None):
@@ -136,6 +139,7 @@ class Desktop:
                 dpg.add_button(label="Connection", callback=lambda: self.show_connection())
                 dpg.add_button(label="New project", callback=lambda: dpg.show_item("new_project"))
                 dpg.add_button(label="Import inbox", callback=lambda: self.import_inbox())
+                dpg.add_button(label="Import YOLO labels", callback=lambda: self.show_yolo_import())
                 dpg.add_button(label="Reload / reconnect", callback=lambda: self.guard(self.reload))
                 dpg.add_button(label="Team & users", callback=lambda: self.guard(self.team.open))
             dpg.add_separator()
@@ -308,6 +312,32 @@ class Desktop:
                 height=-1,
                 default_value="No import has completed in this session.",
             )
+        with dpg.window(
+            label="Import YOLO predictions",
+            tag="yolo_dialog",
+            modal=True,
+            show=False,
+            width=650,
+            height=470,
+            pos=(280, 140),
+        ):
+            dpg.add_text("Place image.txt beside image.bmp / .png / .jpg in the server inbox.", wrap=600)
+            dpg.add_text(
+                "Map model class indices to project class names, one index=name per line.\nCheck this against the model's class order before importing.",
+                wrap=600,
+            )
+            dpg.add_input_text(tag="yolo_mapping", multiline=True, width=-1, height=200)
+            dpg.add_checkbox(
+                label="Treat empty .txt files as verified empty", tag="yolo_empty", default_value=False
+            )
+            dpg.add_text(
+                "Missing labels remain unlabeled. Existing annotations are never overwritten.\nImported predictions open as IN_PROGRESS for correction.",
+                wrap=600,
+            )
+            with dpg.group(horizontal=True):
+                dpg.add_button(label="Preview", callback=lambda: self.start_yolo_import(True))
+                dpg.add_button(label="Import predictions", callback=lambda: self.start_yolo_import(False))
+                dpg.add_button(label="Cancel", callback=lambda: dpg.hide_item("yolo_dialog"))
         self.team.build()
         self.statistics.build()
         with dpg.handler_registry():
@@ -521,7 +551,53 @@ class Desktop:
                 user_data=image["id"],
             )
 
-    def import_inbox(self):
+    def show_yolo_import(self):
+        if not self.project or self.project["task_type"] != "detection":
+            self.message("Choose a detection project to import YOLO rectangles.")
+            return
+        entries = self.project["schema"]["entries"]
+        schema_key = (self.project["id"], self.project["active_schema_id"])
+        if self.yolo_schema_key != schema_key:
+            dpg.set_value(
+                "yolo_mapping",
+                "\n".join(f"{e['export_index']}={e['display_name']}" for e in entries if e["active"]),
+            )
+            dpg.set_value("yolo_empty", False)
+            self.yolo_schema_key = schema_key
+        dpg.show_item("yolo_dialog")
+
+    def start_yolo_import(self, dry_run):
+        if not self.project:
+            return
+        names = {e["display_name"]: e["class_id"] for e in self.project["schema"]["entries"] if e["active"]}
+        mapping = {}
+        for line in dpg.get_value("yolo_mapping").splitlines():
+            if not line.strip():
+                continue
+            index, separator, name = line.partition("=")
+            index, name = index.strip(), name.strip()
+            if (
+                not separator
+                or not index.isascii()
+                or not index.isdecimal()
+                or index in mapping
+                or name not in names
+            ):
+                self.message("Use unique integer indices and exact project class names: 0=part")
+                return
+            mapping[index] = names[name]
+        if not mapping:
+            self.message("Add at least one model class mapping.")
+            return
+        options = {
+            "class_schema_id": self.project["active_schema_id"],
+            "class_mapping": mapping,
+            "empty_is_verified": dpg.get_value("yolo_empty"),
+        }
+        dpg.hide_item("yolo_dialog")
+        self.import_inbox(options, dry_run)
+
+    def import_inbox(self, yolo=None, dry_run=False):
         if not self.project or self.job:
             self.message("Choose a project first, and wait for any active import.")
             return
@@ -532,13 +608,17 @@ class Desktop:
         def work():
             source = self.client.request("GET", f"/projects/{project_id}/import-sources")
             if not source["relative_paths"]:
-                raise Problem("EMPTY_INBOX", "No JPEG/PNG files found in the server inbox.")
+                raise Problem("EMPTY_INBOX", "No PNG/JPEG/BMP files found in the server inbox.")
             return self.client.request(
-                "POST", f"/projects/{project_id}/imports", dict(source, dry_run=False), key=request_key
+                "POST",
+                f"/projects/{project_id}/imports",
+                dict(source, dry_run=dry_run, yolo=yolo),
+                key=request_key,
             )
 
         def success(result):
             self.job = result["job_id"]
+            self.yolo_job = bool(yolo)
             self.job_time = 0
             self.message("Import queued. You can continue editing.")
 
@@ -945,6 +1025,7 @@ class Desktop:
                 "conflict_dialog",
                 "team",
                 "statistics",
+                "yolo_dialog",
             )
         )
 
@@ -1031,6 +1112,7 @@ class Desktop:
             or self.busy
             or self.modal_open()
             or dpg.is_item_shown("import_report")
+            or dpg.is_item_shown("yolo_dialog")
             or not dpg.is_item_hovered("canvas")
             or dpg.is_key_down(dpg.mvKey_Spacebar)
             or (self.canvas.gesture and self.canvas.gesture["kind"] == "pan")
@@ -1305,7 +1387,7 @@ class Desktop:
                     items = (result.get("result") or {}).get("items", [])
                     dpg.set_value("import_report_text", json.dumps(result, indent=2, ensure_ascii=False))
                     failed = sum(item["outcome"] == "invalid" for item in items)
-                    if failed or result["state"] == "failed":
+                    if self.yolo_job or failed or result["state"] == "failed":
                         dpg.show_item("import_report")
                     self.message(
                         f"Import {result['state']}: {len(items)} checked, {failed} invalid. Full report: job {job_id}"

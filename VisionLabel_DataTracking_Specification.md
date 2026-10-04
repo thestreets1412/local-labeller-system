@@ -1,6 +1,6 @@
 # VisionLabel + DataTracking — Product & Engineering Specification
 
-**Spec version:** 1.0.6
+**Spec version:** 1.0.7
 **วันที่:** 3 ตุลาคม 2026 (Asia/Bangkok)  
 **ภาษาเอกสาร:** ไทย; identifiers, API และ schema ใช้ภาษาอังกฤษ  
 **ภาษาซอฟต์แวร์:** English-only สำหรับข้อความที่ระบบสร้างใน UI, menus, tooltips, dialogs, validation/error messages และ installer; v1 ไม่มี Thai localization หรือ language switcher ข้อมูลที่ผู้ใช้ตั้งเองยังรองรับ Unicode
@@ -980,7 +980,7 @@ Formal objective: `sum_p ((N_p - T_p)/max(1,N))^2 + mean_c sum_p ((C_cp - T_cp)/
 ### 15.1 Managed image import
 
 1. Maintainer เลือก configured source alias + relative paths; server ไม่รับ arbitrary absolute path จาก client
-2. Scan whitelist JPEG/PNG, size limits; reject corrupt/multiframe/unsupported file และ symlink/junction escapes
+2. Scan whitelist JPEG/PNG/BMP, size limits; reject corrupt/multiframe/unsupported file และ symlink/junction escapes
 3. Copy bytes ไป staging พร้อม streaming SHA-256; decode staged bytes สำหรับ dimensions/orientation; verify bytes ที่ publish ไม่ใช่ source ที่อาจเปลี่ยนขณะอ่าน
 4. หาก source size/mtime เปลี่ยนระหว่าง import ให้ retry bounded หรือ report `SOURCE_CHANGED`; hash staged bytes เป็นหลักฐานจริง
 5. Publish immutable asset, insert project image/head revision0/provenance ใน transaction; identical hash คืน duplicate report และไม่สร้าง second image ใน project
@@ -1195,6 +1195,20 @@ Default schedule nightly และก่อน migration/release ใหญ่; r
 **งาน:** Windows clean-machine test, English UI/font/DPI/Unicode paths, 10-client load, disk-full/disconnect/restart tests, cache/secret policies, migration rehearsal
 
 **Exit gate:** global DoD ข้อ 19 ผ่าน; Engineer และ Junior ทำ end-to-end acceptance journey บนสองเครื่อง; blocked egress test ยืนยันไม่มี external runtime calls; restore บนเครื่องใหม่แล้ว version hashes ตรง
+
+### Phase 7 — Model prediction import และ BMP
+
+**Phase 7 ที่ผู้ใช้เพิ่ม — Model prediction import และ BMP:** รับ YOLO detection `.txt`
+รูปแบบ `class x_center y_center width height` จับคู่ชื่อเดียวกับภาพในโฟลเดอร์เดียวกัน
+เช่น `spring_img.bmp`/`spring_img.txt` โดยมี explicit class mapping, GUI preview/import,
+รายงานทุกภาพ และสร้าง revision ผ่าน service/lease เพื่อเปิดแก้กรอบต่อได้จริง
+ไม่ต้องแปลงผ่าน LabelMe; ไม่ overwrite annotation เดิม; prediction เป็น IN_PROGRESS
+ไม่ auto approve รองรับ BMP เพิ่มจาก PNG/JPEG โดยเก็บ raw bytes และ original raster
+พิกัดเดิม แผนและหลักฐานอยู่ใน `docs/phase7-plan.md` งานค้าง Phase2–6 ยังต้องทำต่อ
+
+**Exit gate:** PNG/JPEG/BMP import และ decode ได้; preview → import YOLO → เปิดกรอบ →
+แก้ไข → save/reload ผ่านจริง; mapping ถูกต้อง; missing/empty แยกกัน;
+import ซ้ำหรือภาพที่มี annotation/lease อยู่ต้องไม่เขียนทับงานเดิม
 
 ### Phase execution rule สำหรับ Codex
 

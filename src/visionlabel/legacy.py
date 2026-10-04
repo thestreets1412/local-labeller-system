@@ -31,6 +31,8 @@ def parse_yolo(text, width, height, mapping, *, source_identity, empty_is_verifi
     for line_number, line in enumerate(text.splitlines(), 1):
         if not line.strip():
             continue
+        if len(data["shapes"]) >= 10000:
+            raise Problem("INVALID_YOLO", "A label file cannot exceed 10000 rectangles.", line=line_number)
         fields = line.split()
         if len(fields) != 5 or not re.fullmatch(r"0|[1-9][0-9]*", fields[0]) or fields[0] not in mapping:
             raise Problem(

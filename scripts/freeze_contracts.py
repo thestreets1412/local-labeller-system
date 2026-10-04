@@ -1,4 +1,4 @@
-"""Refresh Phase 3 API contracts while preserving previous phase snapshots."""
+"""Refresh Phase 7 API contracts while preserving previous phase snapshots."""
 
 import json
 import re
@@ -18,10 +18,10 @@ def main():
     (destination / "annotation-1.0.0.json").write_text(json.dumps(schema, indent=2) + "\n", encoding="utf-8")
     output = ROOT / "docs/contracts"
     output.mkdir(parents=True, exist_ok=True)
-    (output / "phase3-openapi.json").write_text(
+    (output / "phase7-openapi.json").write_text(
         json.dumps(create_app(Path("unused")).openapi(), indent=2) + "\n", encoding="utf-8"
     )
-    print("Annotation schema and Phase 3 OpenAPI refreshed; earlier snapshots retained.")
+    print("Annotation schema and Phase 7 OpenAPI refreshed; earlier snapshots retained.")
 
 
 if __name__ == "__main__":

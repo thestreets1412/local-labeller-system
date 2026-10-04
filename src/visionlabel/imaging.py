@@ -13,6 +13,9 @@ from uuid import UUID
 
 from .domain import Problem
 
+IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp")
+IMAGE_MIME = {"png": "image/png", "jpg": "image/jpeg", "bmp": "image/bmp"}
+
 
 def image_header(data):
     if len(data) > 50 * 1024 * 1024:
@@ -55,8 +58,28 @@ def image_header(data):
                 break
             pos += size
         extension = "jpg"
+    elif data[:2] == b"BM":
+        if len(data) < 26:
+            raise Problem("INVALID_IMAGE", "Truncated BMP header.")
+        dib = int.from_bytes(data[14:18], "little")
+        offset = int.from_bytes(data[10:14], "little")
+        if dib == 12:
+            width, height, planes, bits = struct.unpack("<HHHH", data[18:26])
+        elif dib in (40, 52, 56, 108, 124) and len(data) >= 14 + dib:
+            width, signed_height, planes, bits = struct.unpack("<iiHH", data[18:30])
+            height = abs(signed_height)
+        else:
+            raise Problem("INVALID_IMAGE", "Unsupported or truncated BMP DIB header.")
+        if (
+            width <= 0
+            or planes != 1
+            or bits not in (1, 4, 8, 16, 24, 32)
+            or not 14 + dib <= offset < len(data)
+        ):
+            raise Problem("INVALID_IMAGE", "Invalid BMP raster header.")
+        extension = "bmp"
     else:
-        raise Problem("INVALID_IMAGE", "Only JPEG and PNG are supported.")
+        raise Problem("INVALID_IMAGE", "Supported image formats: PNG, JPEG and BMP.")
     if not width or not height or width * height > 40_000_000:
         raise Problem("INVALID_IMAGE", "Invalid dimensions or image exceeds 40 megapixels.")
     return width, height, extension

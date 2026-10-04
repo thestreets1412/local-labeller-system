@@ -10,7 +10,15 @@ from pathlib import Path
 
 from .database import Database, row, rows
 from .domain import Problem, canonical, digest, empty_content, uid, validate_content
-from .imaging import DecoderSession, exif_orientation, image_header, inspect_image
+from .imaging import (
+    IMAGE_EXTENSIONS,
+    IMAGE_MIME,
+    DecoderSession,
+    exif_orientation,
+    image_header,
+    inspect_image,
+)
+from .legacy import parse_yolo
 from .operations import DirectoryLock
 from .statistics import summarize
 from .storage import BlobStore, contained, local_directory
@@ -627,11 +635,17 @@ class Service:
             )
             self.audit(conn, user, "claim.released", image_id, image["project_id"], request_id=request_id)
 
-    def save(self, user, image_id, body, headers, key, request_id):
+    def save(self, user, image_id, body, headers, key, request_id, import_provenance=None):
         route = f"save/{image_id}"
 
         def preflight(conn):
             image = self.image(conn, user, image_id, True)
+            if import_provenance is not None:
+                self.maintain(conn, user, image["project_id"])
+                if image["current_revision"] != 0:
+                    raise Problem(
+                        "ANNOTATION_EXISTS", "Predictions cannot overwrite existing annotations.", 409
+                    )
             replay = self.replay(conn, user, route, key, body)
             if replay:
                 return image, None, replay
@@ -739,6 +753,8 @@ class Service:
                 "updated": sorted(k for k in current.keys() & before.keys() if current[k] != before[k]),
                 "image_labels_changed": old["image_labels"] != content["image_labels"],
             }
+            if import_provenance is not None:
+                detail["import"] = import_provenance
             self.audit(conn, user, "annotation.saved", image_id, image["project_id"], detail, request_id)
             self.remember(conn, user, route, key, body, result)
             self.fault("before_commit")
@@ -749,6 +765,8 @@ class Service:
         route = f"import/{project_id}"
         with self.db.transaction() as conn:
             self.maintain(conn, user, project_id)
+            if body.get("yolo"):
+                self.check_yolo_import(conn, user, project_id, body["yolo"])
             replay = self.replay(conn, user, route, key, body)
             if replay:
                 return replay
@@ -783,7 +801,16 @@ class Service:
                     raise Problem("SERVER_STOPPING", "Import stopped during server shutdown.", 503)
                 try:
                     results.append(
-                        self.ingest(user, project_id, job_id, rel, body["dry_run"], request_id, decoder)
+                        self.ingest(
+                            user,
+                            project_id,
+                            job_id,
+                            rel,
+                            body["dry_run"],
+                            request_id,
+                            decoder,
+                            body.get("yolo"),
+                        )
                     )
                 except (Problem, OSError) as exc:
                     results.append(
@@ -792,6 +819,7 @@ class Service:
                             "outcome": "invalid",
                             "code": exc.code if isinstance(exc, Problem) else "STORAGE_UNAVAILABLE",
                             "message": exc.message if isinstance(exc, Problem) else "File could not be read.",
+                            "details": exc.details if isinstance(exc, Problem) else {},
                         }
                     )
                 with self.db.transaction() as conn:
@@ -819,10 +847,31 @@ class Service:
         finally:
             decoder.close()
 
-    def ingest(self, user, project_id, job_id, relative, dry_run, request_id, decoder=None):
+    def check_yolo_import(self, conn, user, project_id, options):
+        project = self.maintain(conn, user, project_id)
+        if project["task_type"] != "detection":
+            raise Problem("INVALID_TASK", "YOLO rectangle import requires a detection project.")
+        if project["active_schema_id"] != options["class_schema_id"]:
+            raise Problem("SCHEMA_CHANGED", "Reload the project and class mapping.", 409)
+        allowed = {
+            r["class_id"]
+            for r in rows(
+                conn,
+                "SELECT class_id FROM class_schema_entries WHERE schema_id=? AND active=1",
+                (options["class_schema_id"],),
+            )
+        }
+        mapping = options["class_mapping"]
+        if not mapping or any(
+            not k.isascii() or not k.isdecimal() or str(int(k)) != k or v not in allowed
+            for k, v in mapping.items()
+        ):
+            raise Problem("INVALID_MAPPING", "Map each YOLO integer class index to an active project class.")
+
+    def ingest(self, user, project_id, job_id, relative, dry_run, request_id, decoder=None, yolo=None):
         source = contained(self.inbox, relative, True)
-        if source.suffix.lower() not in (".png", ".jpg", ".jpeg"):
-            raise Problem("INVALID_IMAGE", "Only JPEG and PNG files are supported.")
+        if source.suffix.lower() not in IMAGE_EXTENSIONS:
+            raise Problem("INVALID_IMAGE", "Supported image formats: PNG, JPEG and BMP.")
         stat = source.stat()
         if stat.st_size > 50 * 1024 * 1024:
             raise Problem("INVALID_IMAGE", "Image exceeds 50 MiB.")
@@ -832,6 +881,59 @@ class Service:
             raise Problem("SOURCE_CHANGED", "Source changed while importing. Retry after the copy finishes.")
         width, height, extension = image_header(data)
         sha = digest(data)
+        candidate = None
+        label_sha = None
+        label_relative = None
+        label_state = None
+        if yolo:
+            with self.db.engine.connect() as conn:
+                self.check_yolo_import(conn, user, project_id, yolo)
+            siblings = [
+                p
+                for p in source.parent.iterdir()
+                if p.stem.casefold() == source.stem.casefold()
+                and p.suffix.lower() in IMAGE_EXTENSIONS
+                and p.is_file()
+            ]
+            if len(siblings) != 1:
+                raise Problem(
+                    "AMBIGUOUS_PAIR",
+                    "Multiple images share this filename stem. Rename image/label pairs before importing.",
+                )
+            if extension == "jpg" and exif_orientation(data) != 1:
+                raise Problem(
+                    "ORIENTATION_AMBIGUOUS",
+                    "Resolve EXIF orientation with a new image before importing predictions.",
+                )
+            label_relative = str(Path(relative).with_suffix(".txt")).replace("\\", "/")
+            label = contained(self.inbox, label_relative)
+            raw_label = None
+            if label.exists():
+                label_stat = label.stat()
+                with label.open("rb") as stream:
+                    raw_label = stream.read(8 * 1024 * 1024 + 1)
+                after_stat = label.stat()
+                if (after_stat.st_mtime_ns, after_stat.st_size) != (
+                    label_stat.st_mtime_ns,
+                    label_stat.st_size,
+                ):
+                    raise Problem(
+                        "SOURCE_CHANGED", "Label changed while importing. Retry after the copy finishes."
+                    )
+                if len(raw_label) > 8 * 1024 * 1024:
+                    raise Problem("INVALID_LABEL", "YOLO label exceeds 8 MiB.")
+                label_sha = digest(raw_label)
+            try:
+                candidate, label_state = parse_yolo(
+                    raw_label.decode("utf-8-sig") if raw_label is not None else None,
+                    width,
+                    height,
+                    yolo["class_mapping"],
+                    source_identity=f"{sha}:{label_sha}",
+                    empty_is_verified=yolo["empty_is_verified"],
+                )
+            except UnicodeError as exc:
+                raise Problem("INVALID_LABEL", "YOLO text must be UTF-8.") from exc
         staging = self.root / f"decode-{uid()}.{extension}"
         try:
             staging.write_bytes(data)
@@ -844,8 +946,25 @@ class Service:
             existing = row(
                 conn, "SELECT id FROM images WHERE project_id=? AND asset_sha256=?", (project_id, sha)
             )
+            if yolo and existing:
+                head = self.image(conn, user, existing["id"], True)
+                if head["current_revision"] != 0:
+                    raise Problem(
+                        "ANNOTATION_EXISTS",
+                        "Predictions cannot overwrite existing annotations.",
+                        409,
+                        image_id=existing["id"],
+                    )
         if dry_run:
-            return {"path": relative, "outcome": "duplicate" if existing else "new", "asset_sha256": sha}
+            return {
+                "path": relative,
+                "outcome": "duplicate" if existing else "new",
+                "asset_sha256": sha,
+                "label_path": label_relative,
+                "label_sha256": label_sha,
+                "label_state": label_state,
+                "shape_count": len(candidate["shapes"]) if candidate else 0,
+            }
         path = f"assets/sha256/{sha[:2]}/{sha}.{extension}"
         self.blobs.publish(path, data)
         with self.db.transaction() as conn:
@@ -860,7 +979,7 @@ class Service:
                     (
                         sha,
                         len(data),
-                        "image/png" if extension == "png" else "image/jpeg",
+                        IMAGE_MIME[extension],
                         extension,
                         width,
                         height,
@@ -889,14 +1008,78 @@ class Service:
                 {"duplicate": bool(existing), "asset_sha256": sha},
                 request_id,
             )
-        return {
+        result = {
             "path": relative,
             "outcome": "duplicate" if existing else "imported",
             "image_id": image_id,
             "warnings": ["EXIF rotation ignored; annotations use original raster coordinates."]
-            if exif_orientation(data) != 1
+            if extension == "jpg" and exif_orientation(data) != 1
             else [],
         }
+        if yolo:
+            assert candidate is not None
+            result.update(
+                label_path=label_relative,
+                label_sha256=label_sha,
+                label_state="UNLABELED",
+                shape_count=len(candidate["shapes"]),
+            )
+            if label_state == "UNLABELED":
+                result["warnings"].append(
+                    "Missing or empty label was left unlabeled; no prediction revision was created."
+                )
+                return result
+            lease = None
+            try:
+                lease = self.claim(
+                    user, image_id, {"mode": "edit", "client_instance_id": uid()}, uid(), request_id
+                )
+                headers = {
+                    "id": lease["claim_id"],
+                    "token": lease["claim_token"],
+                    "generation": lease["generation"],
+                }
+                with self.db.engine.connect() as conn:
+                    head = self.image(conn, user, image_id, True)
+                saved = self.save(
+                    user,
+                    image_id,
+                    {
+                        "expected_revision": 0,
+                        "expected_state_revision": head["state_revision"],
+                        "class_schema_id": yolo["class_schema_id"],
+                        "content": candidate,
+                    },
+                    headers,
+                    uid(),
+                    request_id,
+                    import_provenance={
+                        "format": "yolo-detection",
+                        "job_id": job_id,
+                        "label_path": label_relative,
+                        "label_sha256": label_sha,
+                        "asset_sha256": sha,
+                        "options": yolo,
+                    },
+                )
+                result.update(label_state=saved["status"], revision=saved["revision"])
+            except (Problem, OSError) as exc:
+                result.update(
+                    outcome="invalid",
+                    code=exc.code if isinstance(exc, Problem) else "STORAGE_UNAVAILABLE",
+                    message=exc.message
+                    if isinstance(exc, Problem)
+                    else "Prediction save failed; the image was retained.",
+                    label_state="NOT_IMPORTED",
+                    image_retained=True,
+                )
+            finally:
+                if lease:
+                    try:
+                        self.release(user, image_id, headers, request_id)
+                    except Problem:
+                        pass
+        return result
 
 
 def encode_cursor(created_at, entity_id, scope):

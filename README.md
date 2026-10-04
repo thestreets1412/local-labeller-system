@@ -1,11 +1,13 @@
 # VisionLabel + DataTracking
 
 English-only Windows annotation desktop with a local FastAPI service.
-Current milestone: **Phase 6, operations and offline development kit increment**.
+Current milestone: **Phase 7, YOLO prediction import and BMP correction workflow**.
+Use **Import YOLO labels** in a detection project to preview/import same-stem `.txt`
+files, then edit their saved rectangles directly. See [Phase 7 instructions](docs/phase7-plan.md).
 See [operations guide](docs/operations-guide.md) and [Phase 6 status](docs/phase6-plan.md).
 This is not yet a production Nuitka/LAN release.
-The desktop remains at the polygon/QC increment; split/export/import integration is
-not yet exposed in the application. See [Phase 5 progress and commands](docs/phase5-plan.md),
+The desktop includes polygon/QC and YOLO prediction import. Canonical split/export
+and LabelMe import integration remain pending. See [Phase 5 progress and commands](docs/phase5-plan.md),
 [Phase 4 progress](docs/phase4-plan.md) and [Phase 3 progress](docs/phase3-plan.md).
 The user confirmed the Phase 1 workflow and DPI operation. Phase 2 team/review/LAN
 acceptance and final release qualification are still open.
@@ -44,7 +46,7 @@ Use a folder accessible only to the intended Windows account/administrators.
 
 ## Try the rectangle workflow
 
-1. Generate 100 synthetic images, or copy JPEG/PNG files into the server inbox:
+1. Generate 100 synthetic images, or copy JPEG/PNG/BMP files into the server inbox:
 
    ```powershell
    .\.venv\Scripts\python.exe -m visionlabel.cli samples
@@ -139,7 +141,7 @@ The last active administrator or project maintainer cannot be disabled/removed.
 ## What is implemented
 
 - Project and stable initial class-schema creation; JWT-free opaque-token login.
-- Safe JPEG/PNG inbox import, SHA-256 byte identity, duplicate reporting, pagination,
+- Safe JPEG/PNG/BMP inbox import, SHA-256 byte identity, duplicate reporting, pagination,
   filename search, status filtering, and original-raster EXIF policy.
 - Rectangle creation, selection, moving, eight resize handles, zoom/pan, shortcuts,
   local undo/redo, single-label classification, and explicit verified-empty labels.
@@ -156,7 +158,8 @@ The last active administrator or project maintainer cannot be disabled/removed.
 
 This development build remains **loopback-only**. LAN HTTPS, assignment UI,
 submit/review workflows, class schema migration, canonical dataset versions/splits/exports,
-legacy label import, and a Nuitka installer remain in the later specified phases.
+canonical LabelMe import, and a Nuitka installer remain pending. YOLO detection
+prediction import is available through Phase 7's desktop workflow.
 Group/assignee/class browser filters are completed with their team/QC workflows;
 Phase 1 currently exposes filename/status filters. No production training export
 is generated from mutable working annotations. See the [Phase 2 progress and remaining work](docs/phase2-plan.md).

@@ -1,8 +1,9 @@
 # Phase 5: format conversion and legacy dry-run
 
-Status: independently runnable format primitives and read-only migration diagnostics.
-**The Phase 5 exit gate is not complete.** There is no desktop export/import action,
-production training dataset, canonical import transaction or READY export record yet.
+Phase 5 checkpoint: independently runnable format primitives and read-only migration
+diagnostics. Subsequent [Phase 7](phase7-plan.md) adds canonical YOLO detection import
+through the desktop. **The Phase 5 exit gate is not complete**: canonical LabelMe
+import, production training datasets and READY export publication remain pending.
 
 ## Sequence and requirement mapping
 
