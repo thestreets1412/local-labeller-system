@@ -16,18 +16,44 @@ actual company-client/LAN/SMB testing is deferred until that environment is avai
 
 ## Start locally
 
-Use the existing **Python 3.12.10** `.venv`. The machine's bare `py` command may
-select Python 3.14, so use the executable below explicitly.
+Use **Windows x64 and Python 3.12.10**. Installation with Python's bundled **pip**
+is supported; **uv is optional**. The bare `py` or `python` command may select a
+different Python version, so check it first. If needed, replace `python` below
+with the full path to the Python 3.12.10 executable supplied by IT.
 
 From the repository root in PowerShell:
 
 ```powershell
-# Only needed after cloning or changing the dependency lock:
-uv sync --locked
+# Check the interpreter before creating an environment:
+python --version
+python -c "import struct; print(struct.calcsize('P') * 8)"
+
+# New clone only: create .venv if it does not already exist.
+python -m venv .venv
+
+# Install the application and pinned runtime dependencies:
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 
 # Start the local service and desktop together:
 .\.venv\Scripts\python.exe -m visionlabel.launcher
 ```
+
+The checks should print `Python 3.12.10` and `64`. Run all commands from the
+repository root. An existing `.venv` should be reused, not recreated. Activation
+is unnecessary when invoking its executable directly; no PowerShell execution
+policy change or administrator installation is needed for the virtual environment.
+
+`requirements.txt` includes the local application (`-e .`) and exact runtime
+versions exported from `uv.lock`. After pulling dependency changes, run the same
+pip install command again. Editable installation keeps application code linked to
+this checkout, so keep the checkout in place. Installation downloads dependencies
+and isolated build tools from PyPI or the index configured by IT. If that access
+is unavailable, use the [offline kit](docs/operations-guide.md#offline-installation-kit).
+The application itself does not require internet access at runtime.
+
+For development tools, install `requirements-dev.txt` instead (it includes the
+application and runtime requirements). If uv is already available, `uv sync --locked`
+remains an alternative to pip; users do not need uv to consume either requirements file.
 
 The first launch asks you to set an administrator password (at least 12 characters).
 Sign in as `admin` in the desktop with that password. There is no default password.
@@ -207,6 +233,26 @@ are preserved; the claim-signing key is regenerated. Inbox files, desktop recove
 drafts and caches are not canonical and are not included in server backups.
 
 ## Development and checks
+
+Install the pinned developer tools with pip before running these checks:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+```
+
+Maintainers changing dependencies must update `uv.lock` and regenerate both pip
+files in the same change. The export commands use uv on the maintainer's machine
+only; they are not part of end-user installation:
+
+```powershell
+uv export --locked --no-dev --no-hashes --no-header --format requirements-txt --output-file requirements.txt
+uv export --locked --no-hashes --no-header --format requirements-txt --output-file requirements-dev.txt
+```
+
+These pip files pin package versions but omit artifact hashes because they include
+an editable local project. The offline kit retains its separate hash-verified
+wheel installation workflow. Isolated build-tool versions follow `pyproject.toml`;
+the pip files freeze runtime/developer dependencies, not the build environment.
 
 ```powershell
 .\.venv\Scripts\python.exe -m ruff check src tests scripts

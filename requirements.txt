@@ -1,0 +1,66 @@
+-e .
+alembic==1.20.0
+    # via visionlabel
+annotated-doc==0.0.5
+    # via fastapi
+annotated-types==0.8.0
+    # via pydantic
+anyio==4.15.1
+    # via
+    #   httpx
+    #   starlette
+certifi==2026.7.22
+    # via
+    #   httpcore
+    #   httpx
+click==8.5.0
+    # via uvicorn
+dearpygui==2.3.1
+    # via visionlabel
+fastapi==0.142.2
+    # via visionlabel
+h11==0.16.0
+    # via
+    #   httpcore
+    #   uvicorn
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via visionlabel
+idna==3.20
+    # via
+    #   anyio
+    #   httpx
+mako==1.4.3
+    # via alembic
+markupsafe==3.0.4
+    # via mako
+opentelemetry-api==1.45.0
+    # via fastapi
+pydantic==2.13.5
+    # via fastapi
+pydantic-core==2.46.5
+    # via pydantic
+sqlalchemy==2.1.3
+    # via
+    #   alembic
+    #   visionlabel
+starlette==1.7.0
+    # via fastapi
+typing-extensions==4.16.0
+    # via
+    #   alembic
+    #   anyio
+    #   fastapi
+    #   opentelemetry-api
+    #   pydantic
+    #   pydantic-core
+    #   sqlalchemy
+    #   starlette
+    #   typing-inspection
+typing-inspection==0.4.4
+    # via
+    #   fastapi
+    #   pydantic
+uvicorn==0.54.0
+    # via visionlabel

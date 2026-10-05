@@ -7,6 +7,16 @@ text is English; filenames, project/class names and paths can contain Unicode.
 
 ## Offline installation kit
 
+For a source checkout with package-index access, use Python 3.12.10's bundled pip:
+create `.venv` once with `python -m venv .venv` (after verifying that `python` is
+3.12.10 x64), then run `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`
+from the repository root. Start with `.\.venv\Scripts\python.exe -m visionlabel.launcher`.
+No uv installation is required on the destination PC. See [README](../README.md#start-locally).
+
+The kit below is an alternative for a destination without package-index access.
+Building a kit currently requires uv on the provisioning PC; installing a completed
+kit on the destination requires only the specified Python and its bundled pip.
+
 Provision on the development PC (downloads occur only during this step):
 
 ```powershell

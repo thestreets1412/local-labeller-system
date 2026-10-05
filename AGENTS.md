@@ -27,6 +27,7 @@
 
 - Use the existing `.venv` with Python 3.12.10. Invoke `.\.venv\Scripts\python.exe` explicitly when running Python tools; do not rely on bare `py`, which currently defaults to Python 3.14 on this machine.
 - Do not recreate the environment or install packages globally. Pin dependencies in a reproducible lockfile when dependency tooling is established.
+- Support end-user installation with Python's bundled pip; uv is optional on the destination machine. When changing dependencies, update `uv.lock` and regenerate both `requirements.txt` and `requirements-dev.txt` using the commands in README. Keep the local application entry so `pip install -r requirements.txt` installs the application as well as its dependencies.
 - `develop` is the integration branch. Inspect Git status before edits and preserve user changes. Use focused `codex/` branches for implementation work unless directed otherwise; do not merge or push without user authorization.
 - Keep confidential datasets, runtime databases, caches, recovery drafts, secrets, and build output outside tracked source. Use synthetic test data.
 
