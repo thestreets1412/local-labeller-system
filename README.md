@@ -1,12 +1,12 @@
 # VisionLabel + DataTracking
 
 English-only Windows annotation desktop with a local FastAPI service.
-Current milestone: **Phase 7, YOLO prediction import and BMP correction workflow**.
+Current milestone: **Phase 8, YOLO working-dataset export for training**.
 Use **Import YOLO labels** in a detection project to preview/import same-stem `.txt`
 files, then edit their saved rectangles directly. See [Phase 7 instructions](docs/phase7-plan.md).
 See [operations guide](docs/operations-guide.md) and [Phase 6 status](docs/phase6-plan.md).
 This is not yet a production Nuitka/LAN release.
-The desktop includes polygon/QC and YOLO prediction import. Canonical split/export
+The desktop includes polygon/QC, YOLO prediction import and working-dataset export. Reviewed split/export
 and LabelMe import integration remain pending. See [Phase 5 progress and commands](docs/phase5-plan.md),
 [Phase 4 progress](docs/phase4-plan.md) and [Phase 3 progress](docs/phase3-plan.md).
 The user confirmed the Phase 1 workflow and DPI operation. Phase 2 team/review/LAN
@@ -123,6 +123,52 @@ Tiny geometry is a warning, while intersecting/degenerate polygons are rejected.
 The statistics window displays the first 200 warnings and the total warning count.
 Working statistics are separate from future immutable dataset-version statistics.
 
+## Export a YOLO training dataset (Phase 8)
+
+Single-PC admins can label and export using the normal launcher; LAN and NAS are
+not required. Sign in as administrator or project maintainer, finish polygon edits,
+and save. Select **Export YOLO** in the desktop:
+
+1. Set **Validation %** (1–99), **Test %** (0–98), and **Seed**. Their sum must be
+   below 100; train receives the remainder. Use test=0 for a train/validation-only set.
+2. Select **1. Prepare export / retry**. The server freezes saved revisions, copies
+   verified original assets, and reports included/excluded images and actual split counts.
+   Unlabeled/incomplete images are excluded; saved verified-empty images are included.
+3. Inspect actual counts: indivisible groups, class coverage and rounding can change
+   requested percentages. Every observed class must remain in train, and every nonzero
+   partition must be populated. Add examples/groups if those requirements cannot be met.
+4. **Browse parent folder...**, enter a **new folder name**, then **2. Save dataset to folder**.
+   The destination is on the computer running the desktop. Existing folders are refused.
+   Downloads and extracted files are checksum-verified before the new folder appears.
+
+Detection and segmentation contain `images/train|val|test`, matching `labels/`,
+`data.yaml`, and `data.local.yaml` with the destination's absolute path. Classification
+contains `train|val|test/<class-folder>/`; use the dataset root as the training data path.
+See `class_mapping.json` for class IDs, names, export indices and classification folders.
+Images use UUID filenames to avoid collisions; `manifest.json` records original names,
+annotation revisions/hashes, split assignments and exclusions. Source files remain intact.
+
+In a **separate Ultralytics training environment**, with a local model for the task:
+
+```powershell
+# Use a local detection model and your actual export directory:
+yolo detect train model="D:\Models\MODEL.pt" data="D:\Datasets\batch1\data.local.yaml" epochs=100 imgsz=640
+# Segmentation: use a segmentation model and `yolo segment train` with data.local.yaml.
+# Classification: use a classification model and the dataset root directory:
+yolo classify train model="D:\Models\CLASSIFY_MODEL.pt" data="D:\Datasets\classes1" epochs=100 imgsz=224
+```
+
+After moving a detection/segmentation dataset, run `python prepare_dataset.py` inside
+it to regenerate `data.local.yaml`, then use that file's new absolute path. Relative
+`data.yaml` is the portable template; do not rely on the trainer's global datasets directory.
+`TRAINING.txt` is included in each dataset. No Ultralytics package is installed by VisionLabel.
+
+This is a **saved working snapshot**, including potentially unreviewed model predictions,
+not an approved release. Inspect predictions before training. Edits after Prepare are
+not included until you prepare again. Split reproducibility applies to the same frozen
+inputs/options; the same seed does not fix the test set when the source changes.
+See [Phase 8 scope](docs/phase8-plan.md) and [remaining tests](summary_remain_test.md).
+
 ## Preview split algorithms (developer tool)
 
 The independent Phase 4 engine supports random, stratified, group and stratified-group
@@ -187,8 +233,9 @@ submit/review workflows, class schema migration, canonical dataset versions/spli
 canonical LabelMe import, and a Nuitka installer remain pending. YOLO detection
 prediction import is available through Phase 7's desktop workflow.
 Group/assignee/class browser filters are completed with their team/QC workflows;
-Phase 1 currently exposes filename/status filters. No production training export
-is generated from mutable working annotations. See the [Phase 2 progress and remaining work](docs/phase2-plan.md).
+Phase 1 currently exposes filename/status filters. Phase 8 working exports freeze saved
+revisions and explicitly record that they are not approved releases. Reviewed-release
+export integration remains open. See the [Phase 2 progress and remaining work](docs/phase2-plan.md).
 
 For later company setup, cloning source does not transfer your home database,
 images, or recovery drafts. Use the verified backup/restore commands below if you

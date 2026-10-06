@@ -20,6 +20,7 @@ import dearpygui.dearpygui as dpg
 from .canvas import Canvas
 from .client import Client, LocalStore
 from .domain import Editor, Problem, canonical, empty_content, uid
+from .export_ui import ExportPanel
 from .polygon_canvas import PolygonCanvas
 from .statistics_ui import StatisticsPanel
 from .team_ui import TeamPanel
@@ -72,6 +73,7 @@ class Desktop:
         self.status = "Connect to your local DataTracking service to start."
         self.team = TeamPanel(self)
         self.statistics = StatisticsPanel(self)
+        self.exports = ExportPanel(self)
         self.text_inputs = [
             "server",
             "username",
@@ -218,6 +220,7 @@ class Desktop:
                 dpg.add_checkbox(label="Autosave (2 seconds)", default_value=True, tag="autosave")
                 dpg.add_button(label="Last import report", callback=lambda: dpg.show_item("import_report"))
                 dpg.add_button(label="Statistics / QC", callback=lambda: self.statistics.open())
+                dpg.add_button(label="Export YOLO", callback=lambda: self.exports.open())
             dpg.add_text(self.status, tag="status", wrap=1200, color=(182, 200, 218))
         with dpg.window(
             label="Connect to DataTracking",
@@ -340,6 +343,7 @@ class Desktop:
                 dpg.add_button(label="Cancel", callback=lambda: dpg.hide_item("yolo_dialog"))
         self.team.build()
         self.statistics.build()
+        self.exports.build()
         with dpg.handler_registry():
             dpg.add_mouse_click_handler(button=dpg.mvMouseButton_Left, callback=self.mouse_down)
             dpg.add_mouse_double_click_handler(
@@ -1026,6 +1030,8 @@ class Desktop:
                 "team",
                 "statistics",
                 "yolo_dialog",
+                "export_dialog",
+                "export_folder_picker",
             )
         )
 

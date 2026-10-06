@@ -1,5 +1,12 @@
 # Phase 5: format conversion and legacy dry-run
 
+Phase 8 update (2026-10-06): detection/segmentation/classification datasets can now
+be exported from frozen **saved working annotations**, with original images,
+labels/folders, mapping, checksums and local destination selection. The user authorized
+this practical training path before reviewed releases. References below to pending
+production export mean the reviewed-release pipeline, not the Phase 8 working-export
+button. Canonical LabelMe import remains pending. See [phase8-plan.md](phase8-plan.md).
+
 Phase 5 checkpoint: independently runnable format primitives and read-only migration
 diagnostics. Subsequent [Phase 7](phase7-plan.md) adds canonical YOLO detection import
 through the desktop. **The Phase 5 exit gate is not complete**: canonical LabelMe

@@ -99,7 +99,22 @@ Windows service and online backup scheduler are not implemented in this build.
 
 ## Company acceptance and HTTPS deployment plan
 
-Before company use: complete revision-bound review, approved releases, split/export
+Phase 8 can be used on a single PC to label and export working datasets without LAN
+or NAS. Export jobs freeze saved revisions; edits made afterward require a new Prepare.
+`export-cache` under DataRoot holds derived ZIP downloads and is **not** in canonical
+backup. After restore, an old export job may be listed but its download unavailable;
+prepare a new export. Keep completed client-side datasets separately if needed.
+Cache archives consume disk space; there is no automatic retention policy in this
+increment. In a maintenance window an operator may remove unneeded ZIPs from that
+cache, but must never treat `managed` as a disposable cache. Interrupted `.partial`
+files are not completed datasets. Client sibling staging directories left by a hard
+process kill are likewise not published output. Rebuild older offline kits for Phase 8.
+
+The user's home hotspot allowed both laptops to reach the NAS but not each other.
+Actual laptop-to-laptop acceptance is planned at the company. Changing the NAS IP or
+sharing folders cannot enable the currently unimplemented application LAN mode.
+
+Before full team/reviewed-release deployment: complete revision-bound review, approved releases, split/export
 integration and migration transactions; these are code gaps, not environment tests.
 The production client needs HTTPS and internal CA trust configuration, SAN/hostname
 validation without `verify=False`, server-side membership enforcement, local service

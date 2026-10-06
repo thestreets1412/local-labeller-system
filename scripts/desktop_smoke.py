@@ -352,6 +352,63 @@ def main():
                 dpg.output_frame_buffer(str(args.output / "bmp-prediction-workspace.png"))
                 for _ in range(8):
                     dpg.render_dearpygui_frame()
+                # Phase 8: prepare saved detection labels and publish on the desktop's disk.
+                # Add a second labeled source so a distinct validation set is possible.
+                other = next(item for item in desktop.images if item["id"] != bmp["id"])
+                desktop.open_image(other["id"])
+                pump_until(lambda: not desktop.busy and desktop.image["id"] == other["id"])
+                box = json.loads(json.dumps(corrected))
+                desktop.editor.change(box)
+                desktop.edited()
+                desktop.save()
+                pump_until(lambda: not desktop.saving and not desktop.editor.dirty)
+                desktop.exports.open()
+                dpg.set_value("export_val", 20)
+                dpg.set_value("export_test", 0)
+                desktop.exports.prepare()
+                pump_until(lambda: not desktop.exports.busy)
+                assert desktop.exports.prepared, dpg.get_value("export_status")
+                assert desktop.exports.prepared["result"]["included"] == 2
+                prepared = desktop.exports.prepared
+                previous_parent = dpg.get_value("export_parent")
+                dpg.set_value("export_name", "exported-dataset")
+                desktop.exports.browse_folder()
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                assert not dpg.is_item_shown("export_dialog")
+                assert dpg.is_item_shown("export_folder_picker")
+                assert dpg.get_item_configuration("export_folder_picker")["modal"]
+                desktop.exports.cancel_folder()
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                assert dpg.is_item_shown("export_dialog")
+                assert not dpg.is_item_shown("export_folder_picker")
+                assert dpg.get_value("export_parent") == previous_parent
+                assert desktop.exports.prepared is prepared
+                desktop.exports.browse_folder()
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                desktop.exports.choose_folder(None, {"file_path_name": folder})
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                assert dpg.is_item_shown("export_dialog")
+                assert not dpg.is_item_shown("export_folder_picker")
+                assert dpg.get_value("export_parent") == folder
+                assert dpg.get_value("export_name") == "exported-dataset"
+                assert dpg.get_value("export_val") == 20
+                assert dpg.get_value("export_test") == 0
+                assert desktop.exports.prepared is prepared
+                desktop.exports.save()
+                pump_until(lambda: not desktop.exports.busy)
+                exported = Path(folder) / "exported-dataset"
+                assert (exported / "data.local.yaml").is_file(), dpg.get_value("export_status")
+                manifest = json.loads((exported / "manifest.json").read_text(encoding="utf-8"))
+                assert manifest["split"]["actual_counts"] == {"train": 1, "val": 1, "test": 0}
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                dpg.output_frame_buffer(str(args.output / "yolo-export-dialog.png"))
+                for _ in range(8):
+                    dpg.render_dearpygui_frame()
                 result = {
                     "result": "passed",
                     "checks": [
@@ -371,6 +428,8 @@ def main():
                         "rendered Statistics / QC uses saved polygon annotations",
                         "YOLO mapping dialog, preview and canonical prediction import over HTTP",
                         "BMP render and prediction correction/save/reload revision 2",
+                        "YOLO export: real HTTP job, split summary, local download/hash verification and atomic dataset publication",
+                        "Export folder picker: exclusive modal, cancel/selection restore Export and preserve prepared dataset/settings",
                     ],
                     "human_mouse_dpi_acceptance": "not performed",
                 }

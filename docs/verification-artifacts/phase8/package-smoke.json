@@ -1,0 +1,14 @@
+{
+  "result": "passed",
+  "artifact": "visionlabel-0.1.0-py3-none-any.whl",
+  "checks": [
+    "wheel build",
+    "offline runtime dependency install",
+    "noneditable install outside repository",
+    "packaged Alembic migration",
+    "packaged desktop render",
+    "packaged deterministic split preview CLI",
+    "packaged YOLO format preview CLI"
+  ],
+  "scope": "Wheel smoke on development machine; not a Nuitka installer or clean-machine production qualification."
+}

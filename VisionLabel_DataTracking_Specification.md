@@ -1210,6 +1210,25 @@ Default schedule nightly และก่อน migration/release ใหญ่; r
 แก้ไข → save/reload ผ่านจริง; mapping ถูกต้อง; missing/empty แยกกัน;
 import ซ้ำหรือภาพที่มี annotation/lease อยู่ต้องไม่เขียนทับงานเดิม
 
+### Phase 8 — Working YOLO export สำหรับใช้งานเครื่องเดียว
+
+ผู้ใช้เพิ่มขอบเขตวันที่ 6 ตุลาคม 2026: ส่งออก detection, segmentation และ classification
+จาก saved working annotations ได้ก่อนระบบ approved release เสร็จ เลือก validation/test
+เป็นเปอร์เซ็นต์ (train เป็นส่วนที่เหลือ) และเลือก destination ในเครื่องที่เปิด Desktop
+Admin/maintainer ใช้งาน label → export ได้ด้วยเครื่องเดียว ไม่ต้องรอ LAN/NAS
+
+**การปรับ PR15/PR16:** ตรึง source revisions/schema/group metadata ณ จุดเริ่มงาน ตรวจ hash
+ภาพและ annotation ก่อนเขียนชุดข้อมูล เก็บ mapping, source hashes/revisions, assignments,
+excluded images และ requested/actual split counts ใน manifest ระบุ `approved_release=false`
+การส่งออกนี้ไม่ใช่การผ่าน PR10/PR13 หรือ canonical split/reviewed export ของ Phase 3–5
+ข้อกำหนด approved release เดิมยังคงอยู่สำหรับ workflow นั้น ดู `docs/phase8-plan.md`
+
+**Exit gate:** ทั้งสาม task สร้างชุดภาพ/labels หรือ class folders ที่อ่านกลับได้ พิกัดและคลาสถูกต้อง
+validation/test nonzero ไม่ว่าง, ไม่มี group/asset leakage, train ครอบคลุม observed classes,
+แก้ working data ระหว่างเตรียมไม่เปลี่ยน snapshot, ห้าม overwrite destination และไม่มี partial
+dataset ถูกแจ้งว่าสำเร็จ พร้อมคู่มือ training และการย้าย path การรับรอง training กับ Ultralytics
+environment และโมเดลจริงของผู้ใช้แยกจาก automated format/GUI tests
+
 ### Phase execution rule สำหรับ Codex
 
 ทำทีละ phase จน exit gate ผ่านก่อนขึ้น phase ถัดไป สร้าง vertical slice ที่รันจริง ไม่สร้าง mock UI ที่บอกว่าสำเร็จทั้งที่ยังไม่ persist ห้ามเพิ่ม infrastructure นอก baseline เพื่อหลบ transaction/locking design การเลื่อน requirement ต้องระบุ ID, เหตุผล และ phase ใหม่อย่างชัดเจน
