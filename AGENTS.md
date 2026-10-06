@@ -10,6 +10,7 @@
 - Further user sequencing override: start Phase 4's independently testable split engine before Phase 3 releases exist. Standalone diagnostic previews are not canonical splits. Keep release verification, split persistence/jobs, GUI and export integration pending; do not substitute mutable working data for released-version input. See `docs/phase4-plan.md`.
 - The user next requested Phase 5. Start PR16 format conversion and PR17 read-only legacy dry-run independently; these do not approve data, import revisions or publish training exports. Track release/split adapters, canonical import, jobs and GUI as pending integration in `docs/phase5-plan.md`.
 - The user requested Phase 6 next. Harden existing operations and provide an offline development installation kit independently; retain all earlier integration gaps and do not claim production readiness, Nuitka packaging or company acceptance from local wheel tests. See `docs/phase6-plan.md`.
+- User-requested Phase 8 permits practical YOLO training exports from a frozen snapshot of saved working annotations before reviewed releases exist. Support detection, segmentation and classification, validation/test percentages and a client-local destination, including single-PC admin use. Explicitly identify working exports as unreviewed, preserve source hashes/revisions and group/asset boundaries, and never claim these artifacts satisfy the pending reviewed-release gates. See `docs/phase8-plan.md`.
 
 ## Product language
 

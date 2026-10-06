@@ -1,0 +1,24 @@
+{
+  "result": "passed",
+  "checks": [
+    "rendered desktop",
+    "real HTTP login/import",
+    "rectangle drag",
+    "save revision 1",
+    "navigate/reload persisted geometry",
+    "delete/undo",
+    "change class/save revision 2",
+    "explicit recovery restore/save revision 3",
+    "2-second autosave/revision 4",
+    "rendered full-image crosshair and select/pan/outside-image suppression",
+    "Team & users: create account, assign annotator role, update account through real HTTP",
+    "Project members: pick account directly from dropdown",
+    "segmentation: click vertices, Enter finish, drag vertex, save/reload exact geometry",
+    "rendered Statistics / QC uses saved polygon annotations",
+    "YOLO mapping dialog, preview and canonical prediction import over HTTP",
+    "BMP render and prediction correction/save/reload revision 2",
+    "YOLO export: real HTTP job, split summary, local download/hash verification and atomic dataset publication",
+    "Export folder picker: exclusive modal, cancel/selection restore Export and preserve prepared dataset/settings"
+  ],
+  "human_mouse_dpi_acceptance": "not performed"
+}

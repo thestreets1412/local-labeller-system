@@ -1,5 +1,10 @@
 # Phase 4: deterministic split planning
 
+Phase 8 update (2026-10-06): the desktop now offers a separate **working export**
+with validation/test percentages, a seeded group-preserving allocation and local
+dataset output. It does not use or create canonical Phase 4 released-version splits.
+The original integration gaps below still apply. See [phase8-plan.md](phase8-plan.md).
+
 Status: the independently testable split engine and developer preview CLI are
 implemented. Phase 4's end-to-end exit gate is **not complete**. There is no desktop
 split button, released-version adapter, canonical split record or export integration.

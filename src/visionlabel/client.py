@@ -71,6 +71,41 @@ class Client:
         self.user = result["user"]
         return self.user
 
+    def download_export(self, job_id, destination, result):
+        from .working_export import install_archive
+
+        destination = Path(destination).absolute()
+        if destination.exists() or not destination.parent.is_dir():
+            raise Problem("INVALID_DESTINATION", "Choose a new folder inside an existing parent folder.")
+        with tempfile.TemporaryDirectory(prefix=".visionlabel-download-", dir=destination.parent) as folder:
+            archive = Path(folder) / "dataset.zip"
+            try:
+                with self.http.stream("GET", f"/working-exports/{job_id}/download", timeout=120) as response:
+                    if response.is_error:
+                        response.read()
+                        error = response.json().get("error", {})
+                        raise Problem(
+                            error.get("code", "DOWNLOAD_FAILED"),
+                            error.get("message", "Export download failed."),
+                            response.status_code,
+                        )
+                    size = 0
+                    with archive.open("xb") as stream:
+                        for chunk in response.iter_bytes(1024 * 1024):
+                            size += len(chunk)
+                            if size > result["bytes"]:
+                                raise Problem("CORRUPT_EXPORT", "Archive exceeds its expected size.")
+                            stream.write(chunk)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                if size != result["bytes"]:
+                    raise Problem("CORRUPT_EXPORT", "Archive download was incomplete.")
+                return install_archive(archive, destination, result["sha256"])
+            except httpx.HTTPError as exc:
+                raise Problem(
+                    "DISCONNECTED", "Export download interrupted. Retry saving the prepared dataset.", 503
+                ) from exc
+
     def list_all(self, path):
         result = []
         cursor = None

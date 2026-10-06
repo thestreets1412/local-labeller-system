@@ -1,5 +1,10 @@
 # Phase 7: model predictions and BMP workflow
 
+User feedback, 2026-10-06: installed at the company, imported real prediction images
+and YOLO text, and corrected boxes successfully. This confirms that specific human
+workflow, not every negative case, reload scenario or format variant. Phase 8 now
+adds working-dataset export for external training; earlier review/LAN gates remain open.
+
 User-requested scope: label a small seed dataset, train externally, infer the remaining
 images externally, then import same-stem YOLO detection labels directly for correction.
 Example: `spring_img.bmp` and `spring_img.txt` in the same inbox subfolder.

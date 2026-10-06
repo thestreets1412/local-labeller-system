@@ -72,7 +72,7 @@ class Service:
                     json.dumps(
                         {
                             "code": "SERVER_RESTARTED",
-                            "message": "Import interrupted. Inspect results and start a new request.",
+                            "message": "Job interrupted. Inspect results and start a new request.",
                         }
                     ),
                     now(),

@@ -1,10 +1,10 @@
-# สรุปการทดสอบที่ยังเหลือ — VisionLabel / DataTracking, Phase 0–7
+# สรุปการทดสอบที่ยังเหลือ — VisionLabel / DataTracking, Phase 0–8
 
-จัดทำวันที่ 4 ตุลาคม 2026 อ้างอิงโค้ด `d11e04e` และเอกสารแต่ละ Phase ใน repository
+ปรับปรุงวันที่ 6 ตุลาคม 2026: เพิ่ม Phase 8 working YOLO export บนฐานโค้ด `89ceed8` พร้อมผลทดสอบของงาน Phase 8 รอบนี้
 
 ## 1. วิธีอ่านรายงานนี้
 
-รายงานนี้เทียบคำยืนยันของผู้ใช้ในบทสนทนากับแผนและหลักฐานที่เก็บไว้ใน repository ไม่ได้รันทดสอบโปรแกรมรอบใหม่ ข้อที่ระบุว่า **ยังไม่ยืนยัน** หมายถึงยังไม่มีหลักฐานยืนยันเป็นรายกรณี ไม่ได้หมายความว่าผู้ใช้ไม่เคยลอง หรือโปรแกรมมีปัญหา
+รายงานนี้เทียบคำยืนยันของผู้ใช้ในบทสนทนากับแผนและหลักฐานที่เก็บไว้ใน repository ส่วน Phase 0–7 อ้างอิงผลเดิม; Phase 8 มีการทดสอบใหม่ตามบันทึกท้ายรายงาน ข้อที่ระบุว่า **ยังไม่ยืนยัน** หมายถึงยังไม่มีหลักฐานยืนยันเป็นรายกรณี ไม่ได้หมายความว่าผู้ใช้ไม่เคยลอง หรือโปรแกรมมีปัญหา
 
 การขอเริ่ม Phase ถัดไปไม่ถือเป็นการรับรองว่า Phase ก่อนหน้าผ่านทุกข้อ โดยเฉพาะงานที่ตกลงให้ทำเฉพาะส่วนอิสระก่อน
 
@@ -27,9 +27,10 @@
 | 2 — Team / Review | ลองส่วน account/membership แล้ว และรายงานว่าเพิ่มคนเข้า project ยังสับสน | Member picker ที่ปรับใหม่, บทบาท/ถอนสิทธิ์, สอง Client; workflow ทีมและ LAN | ยังไม่จบ มี implementation ค้าง |
 | 3 — Polygon / QC / Versions | ยังไม่มีคำยืนยันรายฟังก์ชัน | Polygon และ working QC พร้อมลอง; schema migration/release/version diff รอพัฒนา | ยังไม่จบ |
 | 4 — Split | ยังไม่มีคำยืนยัน | ทดลอง split preview ผ่าน CLI; GUI และ split ที่ผูก released version รอพัฒนา | ยังไม่จบ |
-| 5 — Export / Migration | ยังไม่มีคำยืนยัน | Format preview และ legacy dry-run พร้อมลอง; export จริงและ LabelMe import เข้า project รอพัฒนา | ยังไม่จบ; YOLO import จริงเพิ่มใน Phase 7 |
+| 5 — Export / Migration | ยังไม่มีคำยืนยัน | Format preview และ legacy dry-run พร้อมลอง; export จาก approved release และ LabelMe import เข้า project รอพัฒนา; working export มีใน Phase 8 | ยังไม่จบ; YOLO import จริงเพิ่มใน Phase 7 และ working export เพิ่มใน Phase 8 |
 | 6 — Operations | ยังไม่มีคำยืนยัน | Backup/restore, offline kit, เครื่องใหม่, performance และ failure drills | ยังไม่จบ; production packaging และระบบอื่นยังค้าง |
-| 7 — YOLO Predictions / BMP | ยังไม่มีคำยืนยันหลังเพิ่มฟังก์ชัน | ภาพ BMP จริง, mapping, preview/import/edit/save/reload, empty/missing/conflicts | มีหลักฐานฝั่งพัฒนา; รอผู้ใช้และไฟล์หน้างาน |
+| 7 — YOLO Predictions / BMP | ผู้ใช้ยืนยัน import prediction และแก้กรอบกับงานจริงที่บริษัทได้ (6 ต.ค. 2026) | ยังต้องยืนยัน preview/reload, mapping, empty/missing/conflicts และชนิด BMP รายละเอียด | ยืนยัน import/edit กับงานจริงแล้ว; กรณีย่อยอื่นยังเปิด |
+| 8 — Working YOLO Export | ยังไม่มีคำยืนยันจากผู้ใช้ | ส่งออกทั้งสาม task, % split, destination, การย้าย dataset และเทรนจริงใน Ultralytics | มี automated/API/GUI evidence; รอผู้ใช้รับรอง training environment จริง |
 
 ## 3. เตรียมพื้นที่ทดสอบแยกจากงานจริง
 
@@ -226,7 +227,7 @@ Get-FileHash "$env:TEMP\vl-uat-split-a.json", "$env:TEMP\vl-uat-split-b.json" -A
 | P5-05 รอพัฒนา PR16 | จาก released version + canonical split ส่งออก detect/segment/classification แล้วย้าย folder ไป path ใหม่ อ่านด้วย training loader ที่เลือก | ข้อมูลพกพาได้, image bytes/hash ตรง release, class/geometry/empty ถูก, มี provenance/checksums; ห้ามอ้างว่า preview ผ่านแล้ว export จริงผ่าน |
 | P5-06 รอพัฒนา PR17 | Import LabelMe เข้า project จริง ทดลอง existing annotation, invalid rows, interrupted import และ mapping | สร้าง revision/audit ตามจริง ไม่มี silent loss และไม่ทับ annotation เดิม |
 
-YOLO detection import เข้า project มีแล้วใน Phase 7 ให้ใช้ชุดทดสอบด้านล่างแทนการรอ P5-06 ส่วนวงจร label 50 ภาพ → export → train → infer → import ยังติด production export; training/inference ทำภายนอกโปรแกรม
+YOLO detection import เข้า project มีแล้วใน Phase 7 ให้ใช้ชุดทดสอบด้านล่างแทนการรอ P5-06 ส่วนวงจร label → working export → train ภายนอก → infer ภายนอก → import ทำได้โดยใช้ Phase 8 ที่เพิ่มใหม่ แต่ approved release/export ยังรอพัฒนา และต้องรับรอง training environment ของผู้ใช้อีกครั้ง
 
 ## 10. Phase 6 — Backup, Installation และการใช้งานจริง
 
@@ -294,6 +295,8 @@ YOLO detection import เข้า project มีแล้วใน Phase 7 ใ�
 
 ### 11.2 รายการพร้อมลองที่บ้าน
 
+อัปเดต 6 ต.ค. 2026: ผู้ใช้ยืนยัน import ภาพและ YOLO prediction จากงานจริงแล้วแก้กรอบได้ ยืนยันส่วน import/edit ของ P7-02 และ prediction จริงใน P7-13 เท่านั้น ยังไม่ถือว่า preview, reload, mapping ทุกแบบ หรือ negative cases ผ่านครบ
+
 | รหัส | ขั้นตอน | ผลที่ควรได้ |
 |---|---|---|
 | P7-01 Preview ไม่เพิ่มภาพ | เปิด **Import YOLO labels** ตั้ง `0=Spring`, `1=Defect` แล้วกด **Preview** อ่าน Import report และตรวจรายการภาพใน project ใหม่ | รายงานกรอบ/คลาสถูก แต่ยังไม่มีภาพหรือ annotation revision ใหม่; ระบบสร้าง import job เพื่อ audit ได้ |
@@ -317,14 +320,55 @@ YOLO detection import เข้า project มีแล้วใน Phase 7 ใ�
 
 ไฟล์ที่รองรับปัจจุบันคือ `.png`, `.jpg`, `.jpeg`, `.bmp` ไม่เกิน 50 MiB/40 ล้านพิกเซลต่อภาพ และต้อง decode ผ่าน ไม่ควรนับ TIFF/WebP/GIF/HEIC/RAW เป็นกรณีที่ต้องผ่านใน Phase 7 นี้ ไม่มี auto EXIF rotation
 
+## 11A. Phase 8 — Export ไปเทรน YOLO (งานใหม่)
+
+**พร้อมลองบนเครื่องเดียว:** เปิด launcher ตามเดิม ใช้ admin หรือ maintainer ของ project ไม่ต้องใช้ NAS หรือเชื่อมต่อ Client อีกเครื่อง ผู้ใช้ยังไม่ได้ยืนยัน Phase 8 โดยตรง
+
+สถานะเครือข่ายล่าสุด: ผู้ใช้ลอง Laptop1/Laptop2 ผ่าน hotspot มือถือแล้ว ping หากันไม่ได้ แต่ทั้งคู่ ping Raspberry Pi ได้ และ NAS เปลี่ยน IP จึงย้ายการรับรอง LAN กลับไปบริษัท ผลนี้ไม่ใช่ข้อบกพร่องที่ยืนยันของแอป และแอปยังไม่มี LAN/HTTPS อยู่แล้ว
+
+วิธีเริ่ม: เลือก project → Save → **Export YOLO** → ตั้ง **Validation %**, **Test %**, **Seed** → **1. Prepare export / retry** → ตรวจจำนวนจริงและภาพที่ข้าม → **Browse parent folder...** → ตั้ง **New folder name** → **2. Save dataset to folder**
+
+Validation เป็นจำนวนเต็ม 1–99%, test 0–98%, รวมต้องน้อยกว่า 100%; train เป็นส่วนที่เหลือ เลือก test=0 ได้ แต่ validation ต้องมีเพื่อเตรียมชุด training/validation ที่ใช้งานได้ ไม่ใช้ภาพ train เป็น val แทนอัตโนมัติ
+
+| รหัส | ขั้นตอนที่ผู้ใช้ยังต้องลอง | ผลที่ควรได้ |
+|---|---|---|
+| P8-01 Detection จริง | ใช้ภาพที่แก้ prediction แล้วและกด Save ทดลอง val20/test10, Prepare แล้ว Save dataset | มี images/train,val,test และ labels ที่ชื่อคู่กัน พิกัด `class cx cy w h` ตรงกรอบที่แก้ พร้อม data.local.yaml |
+| P8-02 Segmentation | ใช้ segmentation project ที่มี polygon บันทึกแล้ว ส่งออกและอ่าน TXT | แถวเป็น class ตามด้วยคู่พิกัด normalized ของ vertices ไม่ใช่ bbox; รูป polygon ไม่เสียและคลาสไม่สลับ |
+| P8-03 Classification | ใช้ project ที่ label หลายคลาส ส่งออกและตรวจ train/val/test | ภาพอยู่ใต้โฟลเดอร์คลาส; ไม่มี YOLO bbox TXT; class_mapping.json บอกชื่อ/UUID/schema index/consumer order ใช้เฉพาะคลาสที่มีภาพและทุกคลาสต้องมีใน train |
+| P8-04 เปอร์เซ็นต์ / ข้อมูลน้อย | ลอง val20/test0 และ val20/test10; ลองรวม100 หรือ validation0; ลองชุดที่มีเพียง1ภาพ | test0 ไม่สร้างชุด test; ค่าไม่ถูกต้องถูกปฏิเสธ; ภาพ/group ไม่พอมี error ชัดเจน ไม่แอบเอาภาพเดียวกันใส่หลายชุด |
+| P8-05 จำนวนจริง / คลาสหายาก | ใช้ชุดเล็กที่รู้จำนวนแต่ละคลาส ตรวจ report หลัง Prepare | จำนวนจริงแสดงครบและอาจต่างจาก % เป้าหมายเพราะ rounding/group/coverage; train มีทุก observed class หรือ export ล้มเหลวพร้อมเหตุผล |
+| P8-06 Missing / verified empty | มีภาพไม่ label, ภาพที่ save แล้วแต่ไม่มี shape และไม่ verified-empty, กับภาพ verified-empty | สองแบบแรกอยู่รายการ excluded ไม่แปลงเป็น negative; verified-empty detection/segment มีภาพและ TXT ศูนย์ไบต์ |
+| P8-07 Destination | หลังแก้ modal focus วันที่ 7 ต.ค. 2026 ให้ลอง Browse แล้ว Cancel จากนั้น Browse อีกครั้งเลือก path ภาษาไทย/มีช่องว่าง Save ลงชื่อ folder ใหม่ แล้วลองใช้ folder เดิม | หน้าต่างเลือก folder กดได้; เลือกหรือ Cancel แล้วกลับหน้า Export พร้อมค่าเดิมและผล Prepare; ลงในเครื่องที่เปิด Desktop จริง; folder เดิมไม่ถูกทับ ไม่แก้ source image/TXT (automated rendered callback smoke ผ่านแล้ว ยังรอยืนยันด้วยเมาส์จริง) |
+| P8-08 Frozen snapshot | Prepare เสร็จ ปิด dialog แก้ annotation และ save เปิด dialog แล้วบันทึก export ที่เตรียมเดิม; จากนั้น Prepare ใหม่ | ชุดเดิมยังอ้าง revision ณ Prepare เดิม ชุดใหม่จึงเห็นการแก้; manifest ระบุ revision/hash และชื่อภาพเดิม |
+| P8-09 Permissions | Login annotator/viewer แล้วลอง Export; ทดลอง admin/maintainer | สองบทบาทแรก export ไม่ได้; admin/maintainer ทำได้โดยไม่ต้องมี reviewer หรือสองเครื่อง |
+| P8-10 Interrupted download / disk full | ผู้พัฒนาหรือ IT ใช้ดิสก์/VM ทดสอบ สร้าง export แล้วจำลอง download ขาดหรือ disk เต็มก่อน publish | ไม่แสดง folder ปลายทางที่ดูเหมือนสำเร็จเมื่อไฟล์ยังไม่ครบ; retry ด้วยพื้นที่เพียงพอได้ ห้ามทำดิสก์งานจริงเต็ม |
+| P8-11 ย้าย dataset | Copy export ไป path ใหม่ รัน `python prepare_dataset.py` ภายในชุดใหม่ แล้วเปิด data.local.yaml | path ใหม่ถูกต้อง; detection/segment ใช้ data.local.yaml ที่สร้างใหม่; classification ใช้ dataset root ใหม่ |
+| P8-12 เทรนจริง | ใน environment Ultralytics ของผู้ใช้ ใช้ local model ให้ตรง detect/segment/classify รันอย่างละ1 epochก่อน แล้วดู batch visualization และ class names | Loader รับชุดข้อมูลได้ geometry/class ตรง ไม่มี label parsing errors; จดเวอร์ชัน Ultralytics/Python/Torch, model และผล รอบนี้ยังไม่ได้ทดสอบ training runtime จริงให้ผู้ใช้ |
+| P8-13 ชุดใหญ่ / ความเร็ว | หลังชุดเล็กผ่าน ทดลองข้อมูลขนาดใกล้งานจริง จดจำนวนภาพ/ขนาด/time/disk | UI ยังตอบสนอง, งานเสร็จหรือ error ชัดเจน; ต้องมีพื้นที่ทั้ง server export-cache และ client download/staging ไม่ถือว่าผ่าน 50,000 ภาพจากชุดเล็ก |
+| P8-14 กลับมาหลัง restore | Restore backup ในพื้นที่ใหม่ แล้วลอง download job เดิมและ Prepare ใหม่ | Cached ZIP ไม่อยู่ใน backup จึงอาจแจ้ง unavailable สำหรับ job เดิม; Prepare ใหม่สร้าง export จากข้อมูลที่กู้ได้ |
+
+ตัวอย่างคำสั่งใน **environment training แยกต่างหาก** เปลี่ยน path และ model ให้ตรงเครื่อง:
+
+```powershell
+# Detection: model ต้องเป็น detection model ที่มีอยู่แล้ว
+ yolo detect train model="D:\Models\detect.pt" data="D:\Datasets\batch1\data.local.yaml" epochs=1 imgsz=640
+# Segmentation: ใช้ segmentation model
+ yolo segment train model="D:\Models\segment.pt" data="D:\Datasets\segment1\data.local.yaml" epochs=1 imgsz=640
+# Classification: data เป็น folder ไม่ใช่ YAML
+ yolo classify train model="D:\Models\classify.pt" data="D:\Datasets\classes1" epochs=1 imgsz=224
+```
+
+Manifest ระบุ `approved_release=false` เพราะนี่เป็น working snapshot ที่อาจมี prediction ยังไม่ตรวจทั้งหมด ไม่ถือว่าผ่าน review/release ของ Phase 2–5 การเปลี่ยน source แล้วใช้ seed เดิมไม่ได้รับประกันว่า test set จะเป็นภาพเดิม
+
 ## 12. ลำดับแนะนำสำหรับรอบทดสอบถัดไป
 
-1. **เริ่ม Phase 7:** P7-01 → P7-02 → P7-03 → P7-05 → P7-08 โดยใช้ภาพไม่กี่ภาพก่อน ตรงกับ workflow ที่ต้องการนำ prediction มาแก้
+0. **ทดลอง export ใหม่ก่อน:** P8-01/02/03 → P8-07 → P8-11 → P8-12 บนเครื่องเดียว แนะนำใช้ชุดเล็กก่อน
+1. **ทวนกรณี Phase 7 ที่ยังไม่ยืนยัน:** P7-01 → P7-02 → P7-03 → P7-05 → P7-08 โดยใช้ภาพไม่กี่ภาพก่อน ตรงกับ workflow ที่ต้องการนำ prediction มาแก้
 2. **ตรวจงาน editor ที่ยังไม่ระบุ:** P1-02/03/05/09 และ P3-01 ถึง P3-05
 3. **ตรวจสิทธิ์บนเครื่องเดียว:** P2-01 ถึง P2-07 ด้วยบัญชีทดสอบสองบัญชี
 4. **ซ้อมกู้ข้อมูล:** P6-01/02 ก่อนเก็บ annotation ที่มีคุณค่าจำนวนมาก
 5. **เมื่อสะดวกใช้ CLI:** P4-01 และ P5-01/02 เป็นการรับรอง developer preview เท่านั้น
-6. **เมื่ออยู่บริษัท:** ภาพจริง/เครื่องใหม่/restore/offline kit ทำได้ตามความพร้อม ส่วน LAN/review/release/split/export ต้องรอ implementation ที่ระบุไว้ก่อน
+6. **เมื่ออยู่บริษัท:** ภาพจริง/เครื่องใหม่/restore/offline kit ทำได้ตามความพร้อม ส่วน LAN/review/release/canonical split และ approved export ต้องรอ implementation ที่ระบุไว้ก่อน; working export Phase 8 ลองบนเครื่องเดียวได้แล้ว
 
 ## 13. แบบบันทึกผล
 
@@ -332,6 +376,7 @@ Copy ตารางนี้เพิ่มแถวตามกรณีที
 
 | รหัส | วันที่ / ผู้ทดสอบ | Commit / เครื่อง / Scale | ผล | สิ่งที่สังเกต / หลักฐาน |
 |---|---|---|---|---|
+| P8-01 | — | — | ยังไม่ลอง | — |
 | P7-01 | — | — | ยังไม่ลอง | — |
 | P7-02 | — | — | ยังไม่ลอง | — |
 | P6-01 | — | — | ยังไม่ลอง | — |
@@ -340,7 +385,7 @@ Copy ตารางนี้เพิ่มแถวตามกรณีที
 
 ## 14. หลักฐานที่ใช้จัดทำรายงาน
 
-จำนวน tests ด้านล่างเป็นผล **ที่บันทึกไว้ในแต่ละช่วง** ไม่ใช่ผลรันใหม่ และไม่ควรนำมาบวกกัน:
+จำนวน tests ด้านล่างเป็นผล **ที่บันทึกไว้ในแต่ละช่วง** ไม่ควรนำมาบวกกัน; แถว Phase 8 เป็นผลรันในงานเพิ่ม export นี้:
 
 | ช่วง | หลักฐานฝั่งพัฒนาที่บันทึกไว้ |
 |---|---|
@@ -350,6 +395,7 @@ Copy ตารางนี้เพิ่มแถวตามกรณีที
 | Phase 4 | 104 tests รวม deterministic split/golden reports/CLI |
 | Phase 5 | 141 tests รวม conversion/dry-run และ offline wheel smoke |
 | Phase 6 | 160 tests รวม operations/kit, offline kit smoke |
+| Phase 8 | Full suite 191 tests ผ่าน; หลังปรับเงื่อนไข verified-empty และเพิ่มตรวจ helper ย้าย path มี focused export suite 15 กรณีผ่าน รวม real HTTP/Desktop export และ offline wheel smoke ตรวจ classifier/segmentation/detection bytes แบบอิสระ ไม่ได้ติดตั้งหรือรัน Ultralytics training |
 | Phase 7 | Full suite 172 tests ก่อนการปรับ UI/mapping รอบสุดท้าย; หลังปรับมี focused Phase 7 suite 16 cases และ GUI/wheel smoke ไม่อ้างว่า full suite หลังแก้รอบสุดท้ายมีผลจำนวนใหม่แล้ว |
 
 แหล่งอ้างอิงภายใน repository:
@@ -357,8 +403,8 @@ Copy ตารางนี้เพิ่มแถวตามกรณีที
 - [Specification: แผน Phase, acceptance tests และ DoD](VisionLabel_DataTracking_Specification.md)
 - [Phase 1 verification / user acceptance](docs/phase1-verification.md)
 - [Phase 2](docs/phase2-plan.md), [Phase 3](docs/phase3-plan.md), [Phase 4](docs/phase4-plan.md)
-- [Phase 5](docs/phase5-plan.md), [Phase 6](docs/phase6-plan.md), [Phase 7](docs/phase7-plan.md)
+- [Phase 5](docs/phase5-plan.md), [Phase 6](docs/phase6-plan.md), [Phase 7](docs/phase7-plan.md), [Phase 8](docs/phase8-plan.md)
 - [Operations guide](docs/operations-guide.md), [README](README.md), [คู่มือ HTML ไทย/อังกฤษ](SoftwareExplainer.html)
 - [หลักฐานภาพและรายงาน](docs/verification-artifacts/), [หลักฐาน Phase 7](docs/verification-artifacts/phase7/)
 
-รายงานนี้เป็นรายการรับรองที่ยังเหลือ ไม่ใช่คำประกาศว่า Phase 0–7 หรือระบบ production ผ่านครบแล้ว งานที่ยังต้องพัฒนายังคงอยู่ใน Phase ต้นทางตามแผนเดิม
+รายงานนี้เป็นรายการรับรองที่ยังเหลือ ไม่ใช่คำประกาศว่า Phase 0–8 หรือระบบ production ผ่านครบแล้ว งานที่ยังต้องพัฒนายังคงอยู่ใน Phase ต้นทางตามแผนเดิม

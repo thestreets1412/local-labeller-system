@@ -9,7 +9,7 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.exc import OperationalError
 from starlette.concurrency import run_in_threadpool
 
@@ -28,6 +28,7 @@ from .database import SCHEMA_REVISION, row, rows
 from .domain import Problem, digest, uid
 from .imaging import IMAGE_EXTENSIONS
 from .service import Service, decode_cursor, encode_cursor, now
+from .working_export import ExportRequest, export_archive, start_export
 
 
 def create_app(root: Path):
@@ -352,6 +353,22 @@ def create_app(root: Path):
     ):
         return srv.import_images(
             who, str(project_id), body.model_dump(), key(request), request.state.request_id
+        )
+
+    @app.post("/api/v1/projects/{project_id}/working-exports", status_code=202)
+    def working_export(
+        project_id: UUID, body: ExportRequest, request: Request, who=Depends(user), srv=Depends(service)
+    ):
+        return start_export(
+            srv, who, str(project_id), body.model_dump(), key(request), request.state.request_id
+        )
+
+    @app.get("/api/v1/working-exports/{job_id}/download")
+    def download_export(job_id: UUID, who=Depends(user), srv=Depends(service)):
+        return FileResponse(
+            export_archive(srv, who, str(job_id)),
+            media_type="application/zip",
+            filename=f"dataset-{job_id}.zip",
         )
 
     @app.get("/api/v1/jobs/{job_id}")
