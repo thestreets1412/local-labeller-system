@@ -373,23 +373,27 @@ def main():
                 previous_parent = dpg.get_value("export_parent")
                 dpg.set_value("export_name", "exported-dataset")
                 desktop.exports.browse_folder()
-                for _ in range(3):
+                for _ in range(5):
+                    dpg.run_callbacks(dpg.get_callback_queue())
                     dpg.render_dearpygui_frame()
                 assert not dpg.is_item_shown("export_dialog")
                 assert dpg.is_item_shown("export_folder_picker")
                 assert dpg.get_item_configuration("export_folder_picker")["modal"]
                 desktop.exports.cancel_folder()
-                for _ in range(3):
+                for _ in range(5):
+                    dpg.run_callbacks(dpg.get_callback_queue())
                     dpg.render_dearpygui_frame()
                 assert dpg.is_item_shown("export_dialog")
                 assert not dpg.is_item_shown("export_folder_picker")
                 assert dpg.get_value("export_parent") == previous_parent
                 assert desktop.exports.prepared is prepared
                 desktop.exports.browse_folder()
-                for _ in range(3):
+                for _ in range(5):
+                    dpg.run_callbacks(dpg.get_callback_queue())
                     dpg.render_dearpygui_frame()
                 desktop.exports.choose_folder(None, {"file_path_name": folder})
-                for _ in range(3):
+                for _ in range(5):
+                    dpg.run_callbacks(dpg.get_callback_queue())
                     dpg.render_dearpygui_frame()
                 assert dpg.is_item_shown("export_dialog")
                 assert not dpg.is_item_shown("export_folder_picker")

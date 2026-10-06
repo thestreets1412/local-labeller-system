@@ -65,6 +65,12 @@ implicit approval of all labels. Users must inspect model predictions before tra
 
 ## Verification (2026-10-06)
 
+Follow-up 2026-10-07: fixed Browse parent folder modal focus. Export hides while
+the modal picker is active; deferred reopening lets ImGui close the previous popup.
+Both selection and Cancel restore Export without losing prepared data or settings.
+Rendered callback smoke passed for both paths and subsequent dataset publication;
+full suite rerun: **191 passed**. Physical mouse acceptance remains pending.
+
 - Full suite: **191 passed**. After the final verified-empty allocation/helper changes,
   focused export suite: **15 passed**. Existing Starlette TestClient/HTTPX warning remains.
 - Independent expected rectangle/polygon values, raw image hashes, classification layout,

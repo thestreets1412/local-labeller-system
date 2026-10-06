@@ -17,7 +17,8 @@
     "rendered Statistics / QC uses saved polygon annotations",
     "YOLO mapping dialog, preview and canonical prediction import over HTTP",
     "BMP render and prediction correction/save/reload revision 2",
-    "YOLO export: real HTTP job, split summary, local download/hash verification and atomic dataset publication"
+    "YOLO export: real HTTP job, split summary, local download/hash verification and atomic dataset publication",
+    "Export folder picker: exclusive modal, cancel/selection restore Export and preserve prepared dataset/settings"
   ],
   "human_mouse_dpi_acceptance": "not performed"
 }

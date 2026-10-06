@@ -67,9 +67,7 @@ class ExportPanel:
             )
             dpg.add_input_text(tag="export_report", multiline=True, readonly=True, width=-1, height=230)
             with dpg.group(horizontal=True):
-                dpg.add_button(
-                    label="Browse parent folder...", callback=self.browse_folder
-                )
+                dpg.add_button(label="Browse parent folder...", callback=self.browse_folder)
                 dpg.add_input_text(
                     label="New folder name", tag="export_name", default_value="yolo-dataset", width=230
                 )
@@ -95,11 +93,16 @@ class ExportPanel:
         if parent.is_dir():
             dpg.configure_item("export_folder_picker", default_path=str(parent))
         dpg.hide_item("export_dialog")
-        dpg.show_item("export_folder_picker")
+        self.show_after_modal_closes("export_folder_picker")
+
+    @staticmethod
+    def show_after_modal_closes(tag):
+        # ImGui must render a frame without the old popup before opening another.
+        dpg.set_frame_callback(dpg.get_frame_count() + 2, lambda: dpg.show_item(tag))
 
     def cancel_folder(self, *args):
         dpg.hide_item("export_folder_picker")
-        dpg.show_item("export_dialog")
+        self.show_after_modal_closes("export_dialog")
 
     def choose_folder(self, sender, data):
         dpg.set_value("export_parent", data["file_path_name"])
