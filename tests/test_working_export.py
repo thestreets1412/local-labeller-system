@@ -58,6 +58,100 @@ def wait(client, job_id):
     pytest.fail("Export did not finish")
 
 
+def test_geometry_report_all_images_persisted_and_new_snapshot_retry(environment, monkeypatch):
+    from decimal import Decimal
+
+    from visionlabel.fixtures import png_bytes
+
+    # Historical format jobs keep their original conversion behavior.
+    monkeypatch.setattr("visionlabel.working_export.FORMAT_VERSION", "vl-formats-1")
+
+    client, srv, root = environment
+    proj = project(client)
+    paths = []
+    for index in range(3):
+        folder = root / "inbox" / str(index)
+        folder.mkdir()
+        (folder / "ภาพ.png").write_bytes(png_bytes(index, 3, 3))
+        paths.append(f"{index}/ภาพ.png")
+    imported = client.post(
+        f"/api/v1/projects/{proj['id']}/imports",
+        json={"relative_paths": paths},
+        headers={"Idempotency-Key": uid()},
+    )
+    assert wait(client, imported.json()["job_id"])["state"] == "succeeded"
+    images = client.get(f"/api/v1/projects/{proj['id']}/images").json()["items"]
+    assert len(images) == 3
+    for image in images:
+        body = save_body(proj)
+        shape = body["content"]["shapes"][0]
+        shape.update(x1=0, y1=0, x2=2, y2=2)
+        body["content"]["shapes"].append(dict(shape, id=uid()))
+        lease = claim(client, image["id"])
+        saved = client.put(
+            f"/api/v1/images/{image['id']}/annotation",
+            json=body,
+            headers=lease | {"Idempotency-Key": uid()},
+        )
+        assert saved.status_code == 200, saved.text
+        client.delete(f"/api/v1/images/{image['id']}/claim", headers=lease)
+    job_id = start(client, proj).json()["job_id"]
+    job = wait(client, job_id)
+    assert job["state"] == "failed"
+    report = job["error"]["details"]
+    assert report["checked_images"] == report["failed_images"] == 3
+    assert report["error_count"] == 6
+    assert {i["image_id"] for i in report["issues"]} == {i["id"] for i in images}
+    assert all(i["filename"] == "ภาพ.png" for i in report["issues"])
+    assert all(i["annotation_revision"] == 1 for i in report["issues"])
+    assert all(Decimal(i["edges"]["left"]) == Decimal("-0.0000000005") for i in report["issues"])
+    assert not (root / "export-cache" / f"{job_id}.zip").exists()
+    assert not (root / "export-cache" / f"{job_id}.partial").exists()
+    assert client.get(f"/api/v1/working-exports/{job_id}/download").status_code != 200
+    # Read durable JSON independently of the returned HTTP document.
+    with srv.db.engine.connect() as conn:
+        persisted = conn.exec_driver_sql("SELECT error_json FROM jobs WHERE id=?", (job_id,)).scalar_one()
+    assert json.loads(persisted) == job["error"]
+    newer_id = start(client, proj).json()["job_id"]
+    assert wait(client, newer_id)["state"] == "failed"
+    url = f"/api/v1/projects/{proj['id']}/export-failures"
+    first = client.get(url, params={"limit": 1}).json()
+    assert first["items"][0]["id"] == newer_id
+    assert "details" not in first["items"][0]  # Listing does not load the entire report.
+    second = client.get(url, params={"limit": 1, "cursor": first["next_cursor"]}).json()
+    assert [i["id"] for i in second["items"]] == [job_id]
+    assert second["next_cursor"] is None
+    other_project = project(client)
+    other_url = f"/api/v1/projects/{other_project['id']}/export-failures"
+    assert client.get(other_url).json()["items"] == []
+    assert client.get(other_url, params={"cursor": first["next_cursor"]}).status_code == 400
+    assert client.get(url, headers={"Authorization": "Bearer invalid"}).status_code == 401
+    from test_team import create_user, member
+
+    outsider = create_user(client, "report-viewer")
+    token = srv.login("report-viewer", "a-long-user-password")["token"]
+    auth = {"Authorization": "Bearer " + token}
+    assert client.get(url, headers=auth).status_code == 404
+    assert client.get(f"/api/v1/jobs/{job_id}", headers=auth).status_code == 404
+    assert member(client, proj, outsider, "viewer").status_code == 200
+    assert client.get(url, headers=auth).status_code == 200
+    assert client.get(f"/api/v1/jobs/{job_id}", headers=auth).json()["error"] == job["error"]
+    for image in images:
+        head = client.get(f"/api/v1/images/{image['id']}/annotation").json()
+        body = save_body(proj, head["revision"], head["state_revision"])
+        body["content"]["shapes"][0].update(x1=0, y1=0, x2=3, y2=3)
+        lease = claim(client, image["id"])
+        saved = client.put(
+            f"/api/v1/images/{image['id']}/annotation",
+            json=body,
+            headers=lease | {"Idempotency-Key": uid()},
+        )
+        assert saved.status_code == 200, saved.text
+        client.delete(f"/api/v1/images/{image['id']}/claim", headers=lease)
+    assert wait(client, start(client, proj).json()["job_id"])["state"] == "succeeded"
+    assert client.get(f"/api/v1/jobs/{job_id}").json()["error"] == job["error"]
+
+
 @pytest.mark.parametrize("task", ["detection", "segmentation", "classification"])
 def test_real_dataset_archive_and_local_publication(environment, tmp_path, task):
     client, srv, root = environment

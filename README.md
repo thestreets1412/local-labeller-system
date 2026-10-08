@@ -279,6 +279,35 @@ validates hashes/FKs, invalidates leases and revokes session tokens. Password ha
 are preserved; the claim-signing key is regenerated. Inbox files, desktop recovery
 drafts and caches are not canonical and are not included in server backups.
 
+## Phase 8 project tools
+
+Open **Project Manager** from the desktop toolbar to create/search/rename projects,
+edit descriptions, organize Factory/Machine folders, or archive and restore a project.
+Archive hides it from the normal list and blocks new writes while preserving history.
+The **Classes / templates** tab shows schema indices and saves reusable class templates;
+**New project from template** copies the task/classes into new identities without images.
+
+In **Import YOLO labels** or **Export YOLO → Model class mapping**, enter a local
+`data.yaml` path and choose **Load model names**. Inspect `index=project class name`
+before importing/exporting. Supported names input is JSON or common YAML lists/maps;
+unsupported YAML tags/aliases are rejected. Export mapping includes every class once
+and does not change canonical class IDs or schema indices. Classification consumers
+may renumber observed folders; inspect `consumer_order` in `class_mapping.json`.
+
+**Versions** separates working data, schemas and **Unreviewed** export snapshots.
+**Remap annotations** offers a filename picker/search and explicit image selection.
+Enter `source name=destination name`, Preview, inspect the affected images/revisions,
+then Apply. Each image is saved independently with a lease and expected revisions;
+inspect partial failures before retrying. A restarted desktop requires a new preview
+of the remaining images; repeating a swap on already changed images reverses it.
+
+New exports use `vl-formats-2` to prevent rounding-only overflow of valid edge boxes.
+Collapsed geometry still blocks export and lists the images/shapes; reports support
+JSON/CSV, historical failure retrieval and **Open image / select shape**.
+Before upgrading valuable data, make a verified service backup: migration `0004`
+adds project organization metadata. Historical annotation and export files are retained.
+See [Phase 8 follow-up plan](docs/phase8-follow-up-plan.md) for exact scope and evidence.
+
 ## Development and checks
 
 Install the pinned developer tools with pip before running these checks:

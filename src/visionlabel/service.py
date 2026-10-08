@@ -321,7 +321,7 @@ class Service:
             self.remember(conn, user, route, key, body, result, 204 if remove else 200)
             return result
 
-    def authorize(self, conn, user, project_id, write=False):
+    def authorize(self, conn, user, project_id, write=False, allow_archived=False):
         current = self.principal(conn, user)
         project = row(conn, "SELECT * FROM projects WHERE id=?", (project_id,))
         member = row(
@@ -333,10 +333,12 @@ class Service:
             raise Problem("NOT_FOUND", "Project not found.", 404)
         if write and not current["is_admin"] and member["role"] == "viewer":
             raise Problem("FORBIDDEN", "This account cannot edit the project.", 403)
+        if write and project.get("archived") and not allow_archived:
+            raise Problem("PROJECT_ARCHIVED", "Restore this project before making changes.", 409)
         return project
 
-    def maintain(self, conn, user, project_id):
-        project = self.authorize(conn, user, project_id, True)
+    def maintain(self, conn, user, project_id, allow_archived=False):
+        project = self.authorize(conn, user, project_id, True, allow_archived)
         current = row(conn, "SELECT is_admin FROM users WHERE id=?", (user["id"],))
         member = row(
             conn,
@@ -463,6 +465,7 @@ class Service:
             )
             role = member["role"] if member else None
             project["can_edit"] = bool(current["is_admin"] or role in ("annotator", "reviewer", "maintainer"))
+            project["can_edit"] = project["can_edit"] and not bool(project.get("archived"))
             project["can_manage_members"] = bool(current["is_admin"] or role == "maintainer")
             schema = row(conn, "SELECT * FROM class_schemas WHERE id=?", (project["active_schema_id"],))
         project["schema"] = self.blobs.json(schema["blob_path"], schema["sha256"])
@@ -635,18 +638,23 @@ class Service:
             )
             self.audit(conn, user, "claim.released", image_id, image["project_id"], request_id=request_id)
 
-    def save(self, user, image_id, body, headers, key, request_id, import_provenance=None):
-        route = f"save/{image_id}"
+    def save(
+        self, user, image_id, body, headers, key, request_id, import_provenance=None, remap_provenance=None
+    ):
+        route = f"remap/{image_id}" if remap_provenance is not None else f"save/{image_id}"
+        request_body = body | {"remap": remap_provenance} if remap_provenance is not None else body
 
         def preflight(conn):
             image = self.image(conn, user, image_id, True)
+            if remap_provenance is not None:
+                self.maintain(conn, user, image["project_id"])
             if import_provenance is not None:
                 self.maintain(conn, user, image["project_id"])
                 if image["current_revision"] != 0:
                     raise Problem(
                         "ANNOTATION_EXISTS", "Predictions cannot overwrite existing annotations.", 409
                     )
-            replay = self.replay(conn, user, route, key, body)
+            replay = self.replay(conn, user, route, key, request_body)
             if replay:
                 return image, None, replay
             self.check_claim(conn, user, image_id, headers)
@@ -755,8 +763,10 @@ class Service:
             }
             if import_provenance is not None:
                 detail["import"] = import_provenance
+            if remap_provenance is not None:
+                detail["remap"] = remap_provenance
             self.audit(conn, user, "annotation.saved", image_id, image["project_id"], detail, request_id)
-            self.remember(conn, user, route, key, body, result)
+            self.remember(conn, user, route, key, request_body, result)
             self.fault("before_commit")
         self.fault("after_commit")
         return result

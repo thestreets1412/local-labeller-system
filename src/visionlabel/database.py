@@ -7,7 +7,7 @@ from sqlalchemy import create_engine, event
 
 from .storage import local_directory
 
-SCHEMA_REVISION = "0003"
+SCHEMA_REVISION = "0004"
 
 SCHEMA = [
     "CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL, password_hash TEXT NOT NULL, is_admin INTEGER NOT NULL CHECK(is_admin IN (0,1)), disabled INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)",

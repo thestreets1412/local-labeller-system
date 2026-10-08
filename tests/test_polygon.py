@@ -250,7 +250,12 @@ def test_upgrade_from_phase2_preserves_project_and_annotation_bytes(tmp_path, mo
     upgraded = Service(root)
     try:
         with upgraded.db.engine.connect() as conn:
-            assert {table: rows(conn, f"SELECT * FROM {table}") for table in tables} == before
+            after = {table: rows(conn, f"SELECT * FROM {table}") for table in tables}
+            for record in after["projects"]:
+                assert record.pop("description") == ""
+                assert record.pop("archived") == 0
+                assert record.pop("folder_id") is None
+            assert after == before
             assert conn.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
             assert conn.exec_driver_sql("PRAGMA foreign_key_check").fetchall() == []
         assert upgraded.blobs.read(reference["blob_path"], reference["sha256"]) == artifact

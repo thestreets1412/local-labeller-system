@@ -21,7 +21,7 @@ from visionlabel.api import create_app
 from visionlabel.client import Client, LocalStore
 from visionlabel.desktop import Desktop
 from visionlabel.domain import uid
-from visionlabel.fixtures import bmp_bytes, create_samples
+from visionlabel.fixtures import bmp_bytes, create_samples, png_bytes
 from visionlabel.service import Service
 
 
@@ -413,6 +413,197 @@ def main():
                 dpg.output_frame_buffer(str(args.output / "yolo-export-dialog.png"))
                 for _ in range(8):
                     dpg.render_dearpygui_frame()
+                # Failed conversion must identify every bad box through real HTTP
+                # and the rendered panel, without publishing another dataset.
+                (root / "inbox/edge-box.png").write_bytes(png_bytes(98, 3000, 3))
+                imported = client.request(
+                    "POST",
+                    f"/projects/{pred['id']}/imports",
+                    {"relative_paths": ["edge-box.png"]},
+                    key=uid(),
+                )
+                pump_until(
+                    lambda: client.request("GET", f"/jobs/{imported['job_id']}")["state"] == "succeeded"
+                )
+                edge = next(
+                    i
+                    for i in client.list_all(f"/projects/{pred['id']}/images")
+                    if i["display_filename"] == "edge-box.png"
+                )
+                lease = client.request(
+                    "POST",
+                    f"/images/{edge['id']}/claim",
+                    {"mode": "edit", "client_instance_id": client.instance},
+                    key=uid(),
+                )
+                shapes = [
+                    {
+                        "id": uid(),
+                        "type": "rectangle",
+                        "class_id": pred["schema"]["entries"][0]["class_id"],
+                        "x1": 0,
+                        "y1": 0,
+                        "x2": 0.000001,
+                        "y2": 2,
+                        "attributes": {},
+                    }
+                    for _ in range(2)
+                ]
+                client.request(
+                    "PUT",
+                    f"/images/{edge['id']}/annotation",
+                    {
+                        "expected_revision": 0,
+                        "expected_state_revision": 0,
+                        "class_schema_id": pred["active_schema_id"],
+                        "content": {"verified_empty": False, "image_labels": [], "shapes": shapes},
+                    },
+                    claim=lease,
+                    key=uid(),
+                )
+                client.request("DELETE", f"/images/{edge['id']}/claim", claim=lease)
+                desktop.exports.prepare()
+                pump_until(lambda: not desktop.exports.busy)
+                assert desktop.exports.prepared is None
+                report = dpg.get_value("export_report")
+                assert "edge-box.png" in report and all(s["id"] in report for s in shapes)
+                assert "WIDTH_NOT_POSITIVE" in report
+                assert not dpg.get_item_configuration("export_save")["enabled"]
+                desktop.exports.save_error_report()
+                reports = list(Path(folder).glob("export-errors-*.json"))
+                assert len(reports) == 1
+                saved_report = json.loads(reports[0].read_text(encoding="utf-8"))
+                assert saved_report["details"]["error_count"] == 2
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                dpg.output_frame_buffer(str(args.output / "yolo-export-errors.png"))
+                for _ in range(8):
+                    dpg.render_dearpygui_frame()
+                dpg.set_value("export_report_format", "CSV")
+                desktop.exports.save_error_report()
+                assert len(list(Path(folder).glob("export-errors-*.csv"))) == 1
+                desktop.exports.open_issue()
+                pump_until(lambda: not desktop.busy and desktop.image["id"] == edge["id"])
+                assert desktop.editor.selected == saved_report["details"]["issues"][0]["shape_id"]
+                assert desktop.claim and "Reported shape selected" in desktop.status
+                corrected = json.loads(json.dumps(desktop.editor.content))
+                for shape in corrected["shapes"]:
+                    shape.update(x2=3, y2=3)
+                desktop.editor.change(corrected)
+                desktop.edited()
+                desktop.save()
+                pump_until(lambda: not desktop.saving and desktop.head["revision"] == 2)
+                desktop.exports.open()
+                desktop.exports.load_history()
+                pump_until(lambda: not desktop.exports.busy)
+                assert desktop.exports.history
+                desktop.exports.load_report()
+                pump_until(lambda: not desktop.exports.busy)
+                assert desktop.exports.failed_report["details"]["issues"][0]["annotation_revision"] == 1
+                desktop.exports.open_issue()
+                # Navigation is deferred until the modal has closed.
+                for _ in range(4):
+                    dpg.render_dearpygui_frame()
+                pump_until(lambda: not desktop.busy and "changed since this report" in desktop.status)
+                assert desktop.editor.selected == saved_report["details"]["issues"][0]["shape_id"]
+                desktop.exports.open()
+                desktop.exports.prepare()
+                pump_until(lambda: not desktop.exports.busy)
+                assert desktop.exports.prepared, dpg.get_value("export_status")
+                # C/D: model-facing indices are separate from canonical class identity.
+                model_yaml = Path(folder) / "model-data.yaml"
+                model_yaml.write_text("names: [Defect, Spring]\n", encoding="utf-8")
+                dpg.set_value("export_model_path", str(model_yaml))
+                desktop.exports.load_model()
+                assert dpg.get_value("export_mapping") == "0=Defect\n1=Spring"
+                desktop.exports.prepare()
+                pump_until(lambda: not desktop.exports.busy)
+                assert desktop.exports.prepared, dpg.get_value("export_status")
+                assert client.request("GET", f"/projects/{pred['id']}")["schema"] == pred["schema"]
+                dpg.hide_item("export_dialog")
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                manager = desktop.project_manager
+                manager.open()
+                pump_until(lambda: not manager.busy)
+                manager.select(pred["id"])
+                pump_until(lambda: not manager.busy)
+                dpg.set_value("pm_folder_name", "Factory 1")
+                dpg.set_value("pm_parent", "(Root)")
+                manager.save_folder(True)
+                pump_until(lambda: not manager.busy)
+                factory = next(label for label in manager.folder_choices if label.startswith("Factory 1 ["))
+                dpg.set_value("pm_folder_name", "Machine A")
+                dpg.set_value("pm_parent", factory)
+                manager.save_folder(True)
+                pump_until(lambda: not manager.busy)
+                machine = next(
+                    label for label in manager.folder_choices if label.startswith("Factory 1 / Machine A [")
+                )
+                dpg.set_value("pm_name", "Detect Top Assy")
+                dpg.set_value("pm_description", "Synthetic project management verification")
+                dpg.set_value("pm_folder", machine)
+                manager.save_project()
+                pump_until(lambda: not manager.busy)
+                assert manager.selected["name"] == "Detect Top Assy"
+                assert manager.selected["folder_id"] == manager.folder_choices[machine]
+                dpg.set_value("pm_template_name", "Machine detection")
+                manager.save_template()
+                pump_until(lambda: not manager.busy)
+                assert manager.templates
+                manager.load_versions()
+                pump_until(lambda: not manager.busy)
+                assert "Unreviewed" in dpg.get_value("pm_versions")
+                # F: remap only a deliberately selected image, preview and then save.
+                manager.load_images()
+                pump_until(lambda: not manager.busy)
+                dpg.set_value("pm_image_search", "edge-box")
+                manager.filter_images()
+                manager.clear_images()
+                manager.add_image()
+                assert dpg.get_value("pm_remap_images") == edge["id"]
+                dpg.set_value("pm_remap_mapping", "Spring=Defect")
+                manager.preview_remap()
+                pump_until(lambda: not manager.busy)
+                assert manager.preview["changed_images"] == 1
+                assert manager.preview["items"][0]["changed_labels"] == 2
+                manager.apply_remap()
+                pump_until(lambda: not manager.busy and not desktop.busy)
+                assert desktop.head["revision"] == 3
+                assert all(
+                    s["class_id"] == pred["schema"]["entries"][1]["class_id"]
+                    for s in desktop.editor.content["shapes"]
+                )
+                dpg.set_value("pm_archived", True)
+                manager.save_project()
+                pump_until(lambda: not manager.busy)
+                assert manager.selected["archived"] and not desktop.project["can_edit"]
+                dpg.set_value("pm_archived", False)
+                manager.save_project()
+                pump_until(lambda: not manager.busy)
+                assert not manager.selected["archived"] and desktop.project["can_edit"]
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                dpg.output_frame_buffer(str(args.output / "project-manager.png"))
+                for _ in range(8):
+                    dpg.render_dearpygui_frame()
+                manager.new_from_template()
+                for _ in range(4):
+                    dpg.render_dearpygui_frame()
+                assert json.loads(dpg.get_value("project_classes")) == ["Spring", "Defect"]
+                dpg.set_value("project_name", "Detect Side Assy")
+                dpg.set_value("project_slug", "side-assy")
+                desktop.create_project()
+                pump_until(lambda: not desktop.busy and desktop.project["slug"] == "side-assy")
+                assert [e["display_name"] for e in desktop.project["schema"]["entries"]] == [
+                    "Spring",
+                    "Defect",
+                ]
+                assert (
+                    desktop.project["schema"]["entries"][0]["class_id"]
+                    != pred["schema"]["entries"][0]["class_id"]
+                )
+                assert not desktop.images
                 result = {
                     "result": "passed",
                     "checks": [
@@ -434,6 +625,9 @@ def main():
                         "BMP render and prediction correction/save/reload revision 2",
                         "YOLO export: real HTTP job, split summary, local download/hash verification and atomic dataset publication",
                         "Export folder picker: exclusive modal, cancel/selection restore Export and preserve prepared dataset/settings",
+                        "Export diagnostics: real HTTP failure, all bad shapes/names displayed, JSON report saved locally",
+                        "Export report follow-up: CSV, open/select with lease, edit/save, historical job reload, stale revision warning and successful fresh export",
+                        "P8-C/D/E/F: model mapping, persistent hierarchy/rename/description/archive/restore, class template creation, working/schema/export history and previewed revision-bound remap",
                     ],
                     "human_mouse_dpi_acceptance": "not performed",
                 }

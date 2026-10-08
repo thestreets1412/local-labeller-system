@@ -22,6 +22,7 @@ from .client import Client, LocalStore
 from .domain import Editor, Problem, canonical, empty_content, uid
 from .export_ui import ExportPanel
 from .polygon_canvas import PolygonCanvas
+from .project_ui import ProjectPanel, load_import_model
 from .statistics_ui import StatisticsPanel
 from .team_ui import TeamPanel
 
@@ -74,6 +75,7 @@ class Desktop:
         self.team = TeamPanel(self)
         self.statistics = StatisticsPanel(self)
         self.exports = ExportPanel(self)
+        self.project_manager = ProjectPanel(self)
         self.text_inputs = [
             "server",
             "username",
@@ -139,7 +141,9 @@ class Desktop:
                 dpg.add_text("/  Annotation workspace", color=(170, 182, 198))
                 dpg.add_spacer(width=20)
                 dpg.add_button(label="Connection", callback=lambda: self.show_connection())
-                dpg.add_button(label="New project", callback=lambda: dpg.show_item("new_project"))
+                dpg.add_button(
+                    label="Project Manager", callback=lambda: self.guard(self.project_manager.open)
+                )
                 dpg.add_button(label="Import inbox", callback=lambda: self.import_inbox())
                 dpg.add_button(label="Import YOLO labels", callback=lambda: self.show_yolo_import())
                 dpg.add_button(label="Reload / reconnect", callback=lambda: self.guard(self.reload))
@@ -330,6 +334,8 @@ class Desktop:
                 wrap=600,
             )
             dpg.add_input_text(tag="yolo_mapping", multiline=True, width=-1, height=200)
+            dpg.add_input_text(label="Local model data.yaml", tag="yolo_model_path", width=450)
+            dpg.add_button(label="Load model names", callback=lambda: load_import_model(self))
             dpg.add_checkbox(
                 label="Treat empty .txt files as verified empty", tag="yolo_empty", default_value=False
             )
@@ -344,6 +350,7 @@ class Desktop:
         self.team.build()
         self.statistics.build()
         self.exports.build()
+        self.project_manager.build()
         with dpg.handler_registry():
             dpg.add_mouse_click_handler(button=dpg.mvMouseButton_Left, callback=self.mouse_down)
             dpg.add_mouse_double_click_handler(
@@ -473,11 +480,21 @@ class Desktop:
         if not self.client.user or self.busy:
             self.message("Connect before creating a project.")
             return
+        classes_text = dpg.get_value("project_classes")
+        try:
+            classes = (
+                json.loads(classes_text)
+                if classes_text.lstrip().startswith("[")
+                else [s.strip() for s in classes_text.split(",")]
+            )
+        except ValueError:
+            self.message("Classes must be comma-separated names or a JSON array of names.")
+            return
         body = {
             "name": dpg.get_value("project_name"),
             "slug": dpg.get_value("project_slug"),
             "task_type": dpg.get_value("project_task"),
-            "initial_classes": [s.strip() for s in dpg.get_value("project_classes").split(",")],
+            "initial_classes": classes,
         }
         self.busy = True
         request_key = uid()
@@ -496,8 +513,8 @@ class Desktop:
         dpg.delete_item("class_list", children_only=True)
         if not self.project:
             return
-        for index, entry in enumerate(self.project["schema"]["entries"]):
-            label = f"{index + 1}. {entry['display_name']}"
+        for entry in self.project["schema"]["entries"]:
+            label = f"{entry['export_index']}: {entry['display_name']}"
             dpg.add_selectable(
                 label=label,
                 default_value=entry["class_id"] == self.class_id,
@@ -638,7 +655,7 @@ class Desktop:
             )
         self.claim = None
 
-    def open_image(self, image_id):
+    def open_image(self, image_id, on_loaded=None):
         if self.busy or self.saving:
             return
         assert self.store is not None and self.project is not None
@@ -741,6 +758,8 @@ class Desktop:
                 dpg.set_value("recovery_compare", json.dumps(compare, indent=2, ensure_ascii=False))
                 dpg.configure_item("restore_draft", enabled=same and bool(self.claim))
                 dpg.show_item("recovery_dialog")
+            if on_loaded:
+                on_loaded()
 
         self.submit(work, success)
 
@@ -1024,6 +1043,7 @@ class Desktop:
             for tag in (
                 "connection",
                 "new_project",
+                "project_manager",
                 "dirty_dialog",
                 "recovery_dialog",
                 "conflict_dialog",
@@ -1036,7 +1056,7 @@ class Desktop:
         )
 
     def can_edit(self):
-        return bool(self.project and self.project.get("can_edit", True))
+        return bool(self.project and self.project.get("can_edit", True) and not self.project_manager.busy)
 
     def mouse_position(self):
         mx, my = dpg.get_mouse_pos(local=False)

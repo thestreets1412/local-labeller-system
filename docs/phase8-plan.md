@@ -1,5 +1,15 @@
 # Phase 8 — Working YOLO training export
 
+2026-10-07 follow-up authorization: export failure diagnostics, class mapping and
+project management/version organization are planned in
+[`phase8-follow-up-plan.md`](phase8-follow-up-plan.md). Begin with aggregate
+geometry diagnostics; later increments retain separate exit gates.
+
+Follow-up P8-A through P8-F are locally implemented: diagnostics/navigation/history,
+bounded quantization, explicit model mappings, project organization/templates and
+revision-bound remapping. See the follow-up plan for evidence, migration `0004`,
+format `vl-formats-2` and remaining company/physical acceptance and earlier phase gaps.
+
 User authorization: 2026-10-06. The user successfully imported factory prediction
 files and corrected their boxes. They now request usable training datasets for
 detection, segmentation and classification, selectable validation/test percentages

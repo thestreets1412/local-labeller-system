@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.exc import OperationalError
 from starlette.concurrency import run_in_threadpool
 
+from . import project_tools as pt
 from .contracts import (
     ClaimRequest,
     ImportRequest,
@@ -277,20 +278,22 @@ def create_app(root: Path):
     def projects(
         limit: int = Query(100, ge=1, le=500),
         cursor: str | None = None,
+        include_archived: bool = False,
         who=Depends(user),
         srv=Depends(service),
     ):
-        stamp, ident = decode_cursor(cursor, "projects")
+        scope = "projects:archived" if include_archived else "projects"
+        stamp, ident = decode_cursor(cursor, scope)
         with srv.db.engine.connect() as conn:
             result = rows(
                 conn,
-                "SELECT DISTINCT p.* FROM projects p LEFT JOIN project_members m ON m.project_id=p.id AND m.user_id=? WHERE (?=1 OR m.user_id IS NOT NULL) AND (p.created_at,p.id)>(?,?) ORDER BY p.created_at,p.id LIMIT ?",
-                (who["id"], who["is_admin"], stamp, ident, limit + 1),
+                "SELECT DISTINCT p.* FROM projects p LEFT JOIN project_members m ON m.project_id=p.id AND m.user_id=? WHERE (?=1 OR m.user_id IS NOT NULL) AND (?=1 OR p.archived=0) AND (p.created_at,p.id)>(?,?) ORDER BY p.created_at,p.id LIMIT ?",
+                (who["id"], who["is_admin"], int(include_archived), stamp, ident, limit + 1),
             )
         items = result[:limit]
         return {
             "items": items,
-            "next_cursor": encode_cursor(items[-1]["created_at"], items[-1]["id"], "projects")
+            "next_cursor": encode_cursor(items[-1]["created_at"], items[-1]["id"], scope)
             if len(result) > limit
             else None,
         }
@@ -302,6 +305,68 @@ def create_app(root: Path):
     @app.get("/api/v1/projects/{project_id}")
     def project(project_id: UUID, who=Depends(user), srv=Depends(service)):
         return srv.project(who, str(project_id))
+
+    @app.patch("/api/v1/projects/{project_id}")
+    def project_update(
+        project_id: UUID, body: pt.ProjectUpdate, request: Request, who=Depends(user), srv=Depends(service)
+    ):
+        return pt.update_project(
+            srv, who, str(project_id), body.model_dump(), key(request), request.state.request_id
+        )
+
+    @app.get("/api/v1/project-folders")
+    def folders(who=Depends(user), srv=Depends(service)):
+        return pt.list_folders(srv, who)
+
+    @app.post("/api/v1/project-folders")
+    def folder_create(body: pt.FolderUpdate, request: Request, who=Depends(user), srv=Depends(service)):
+        return pt.update_folder(srv, who, None, body.model_dump(), key(request), request.state.request_id)
+
+    @app.put("/api/v1/project-folders/{folder_id}")
+    def folder_update(
+        folder_id: UUID, body: pt.FolderUpdate, request: Request, who=Depends(user), srv=Depends(service)
+    ):
+        return pt.update_folder(
+            srv, who, str(folder_id), body.model_dump(), key(request), request.state.request_id
+        )
+
+    @app.post("/api/v1/projects/{project_id}/class-templates")
+    def template_create(
+        project_id: UUID, body: pt.TemplateCreate, request: Request, who=Depends(user), srv=Depends(service)
+    ):
+        return pt.template(
+            srv, who, str(project_id), body.model_dump(), key(request), request.state.request_id
+        )
+
+    @app.get("/api/v1/class-templates")
+    def templates(who=Depends(user), srv=Depends(service)):
+        with srv.db.engine.connect() as conn:
+            items = rows(
+                conn, "SELECT * FROM class_templates WHERE owner_id=? ORDER BY name,id", (who["id"],)
+            )
+        for item in items:
+            item["initial_classes"] = json.loads(item.pop("classes_json"))
+        return {"items": items}
+
+    @app.get("/api/v1/projects/{project_id}/versions")
+    def versions(project_id: UUID, who=Depends(user), srv=Depends(service)):
+        return pt.versions(srv, who, str(project_id))
+
+    @app.post("/api/v1/projects/{project_id}/remap-preview")
+    def remap_preview(project_id: UUID, body: pt.RemapPreview, who=Depends(user), srv=Depends(service)):
+        return pt.preview_remap(srv, who, str(project_id), body.model_dump())
+
+    @app.post("/api/v1/images/{image_id}/remap")
+    def remap(image_id: UUID, body: pt.RemapApply, request: Request, who=Depends(user), srv=Depends(service)):
+        return pt.apply_remap(
+            srv,
+            who,
+            str(image_id),
+            body.model_dump(),
+            claim_headers(request),
+            key(request),
+            request.state.request_id,
+        )
 
     @app.get("/api/v1/projects/{project_id}/images")
     def images(
@@ -362,6 +427,39 @@ def create_app(root: Path):
         return start_export(
             srv, who, str(project_id), body.model_dump(), key(request), request.state.request_id
         )
+
+    @app.get("/api/v1/projects/{project_id}/export-failures")
+    def export_failures(
+        project_id: UUID,
+        limit: int = Query(50, ge=1, le=100),
+        cursor: str | None = None,
+        who=Depends(user),
+        srv=Depends(service),
+    ):
+        pid = str(project_id)
+        scope = f"export-failures/{pid}"
+        stamp, ident = decode_cursor(cursor, scope) if cursor else ("9999", "")
+        with srv.db.engine.connect() as conn:
+            srv.authorize(conn, who, pid)
+            result = rows(
+                conn,
+                "SELECT id,created_at,error_json FROM jobs WHERE project_id=? AND type='working-export' AND state='failed' AND (created_at,id)<(?,?) ORDER BY created_at DESC,id DESC LIMIT ?",
+                (pid, stamp, ident, limit + 1),
+            )
+        items = [
+            {
+                "id": r["id"],
+                "created_at": r["created_at"],
+                "message": json.loads(r["error_json"])["message"] if r["error_json"] else "Export failed.",
+            }
+            for r in result[:limit]
+        ]
+        return {
+            "items": items,
+            "next_cursor": encode_cursor(items[-1]["created_at"], items[-1]["id"], scope)
+            if len(result) > limit
+            else None,
+        }
 
     @app.get("/api/v1/working-exports/{job_id}/download")
     def download_export(job_id: UUID, who=Depends(user), srv=Depends(service)):

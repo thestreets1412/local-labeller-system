@@ -120,7 +120,50 @@ def test_quantization_collapse_reports_identity(content, task):
 def test_rounding_cannot_push_box_out_of_bounds():
     # Width rounds to 1/3, center to 1/6: left edge becomes negative.
     with pytest.raises(Problem, match="quantization"):
-        yolo_labels(rectangle(x1=0, x2=2, y1=0, y2=2), 3, 3, "detection", CLASSES)
+        yolo_labels(
+            rectangle(x1=0, x2=2, y1=0, y2=2), 3, 3, "detection", CLASSES, format_version="vl-formats-1"
+        )
+
+
+def test_collect_geometry_errors_keeps_every_shape_and_exact_decimals():
+    source = rectangle(x1=0, x2=2, y1=0, y2=2)
+    source["shapes"].append(dict(source["shapes"][0], id="30000000-0000-4000-8000-000000000002"))
+    with pytest.raises(Problem) as error:
+        yolo_labels(
+            source,
+            3,
+            3,
+            "detection",
+            CLASSES,
+            image_id=IMAGE,
+            collect_errors=True,
+            format_version="vl-formats-1",
+        )
+    issues = error.value.details["issues"]
+    assert [i["shape_number"] for i in issues] == [1, 2]
+    assert issues[0]["image_id"] == IMAGE
+    assert issues[0]["class_name"] == "OK"
+    assert issues[0]["export_index"] == 2
+    assert issues[0]["failed_checks"] == ["LEFT_OUT_OF_BOUNDS", "TOP_OUT_OF_BOUNDS"]
+    assert Decimal(issues[0]["edges"]["left"]) == Decimal("-0.0000000005")
+    assert issues[0]["quantized"]["w"] == "0.666666667"
+    assert json.loads(canonical(issues))[0]["edges"] == issues[0]["edges"]
+
+
+def test_collect_polygon_collapse_and_valid_output_parity():
+    with pytest.raises(Problem) as error:
+        yolo_labels(
+            polygon([[1, 1], [1.000001, 1], [1, 2]]),
+            10000,
+            1000,
+            "segmentation",
+            CLASSES,
+            collect_errors=True,
+        )
+    assert error.value.details["issues"][0]["failed_checks"] == ["POLYGON_INVALID_AFTER_QUANTIZATION"]
+    assert yolo_labels(rectangle(), 100, 200, "detection", CLASSES, collect_errors=True) == yolo_labels(
+        rectangle(), 100, 200, "detection", CLASSES
+    )
 
 
 def test_verified_empty_and_unlabeled():

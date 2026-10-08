@@ -14,6 +14,12 @@
 
 ## Product language
 
+- Phase 8 follow-up authorized 2026-10-07: implement aggregate export diagnostics
+  first, then inspect/revalidate, bounded quantization, class mapping, project
+  management/folders and version history according to `docs/phase8-follow-up-plan.md`.
+  Keep model export mapping separate from stable class identity and project folders
+  separate from image split groups. Working snapshots are not approved releases.
+
 - User-requested Phase 7 connects same-stem YOLO detection text files to canonical
   editable predictions and adds BMP alongside PNG/JPEG. Implement the desktop path
   and real persistence; preserve lease/revision safeguards and never overwrite

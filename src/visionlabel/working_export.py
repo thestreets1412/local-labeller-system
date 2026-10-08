@@ -8,8 +8,9 @@ import zipfile
 from collections import Counter
 from pathlib import Path
 
-from pydantic import Field, model_validator
+from pydantic import Field, StrictInt, model_validator
 
+from .class_mapping import export_classes
 from .contracts import StrictModel
 from .database import row, rows
 from .domain import Problem, canonical, digest, uid, validate_content
@@ -22,6 +23,7 @@ PROFILE = "working-yolo-export-1"
 
 
 class ExportRequest(StrictModel):
+    class_mapping: dict[str, StrictInt] | None = None
     validation_percent: int = Field(default=20, ge=1, le=99, strict=True)
     test_percent: int = Field(default=10, ge=0, le=98, strict=True)
     seed: int = Field(default=42, ge=0, le=2**31 - 1, strict=True)
@@ -123,12 +125,21 @@ def start_export(srv, user, project_id, body, key, request_id):
         if replay:
             return replay
         schema = row(conn, "SELECT * FROM class_schemas WHERE id=?", (project["active_schema_id"],))
+        export_classes(
+            rows(
+                conn,
+                "SELECT class_id,export_index FROM class_schema_entries WHERE schema_id=?",
+                (schema["id"],),
+            ),
+            body["class_mapping"],
+        )
         records = rows(
             conn,
             "SELECT i.id AS image_id,i.asset_sha256,i.display_filename,i.group_key,a.width,a.height,a.extension,a.blob_path AS asset_path,h.status,h.current_revision,r.schema_id,r.blob_path AS annotation_path,r.sha256 AS annotation_sha256 FROM images i JOIN assets a ON a.sha256=i.asset_sha256 JOIN annotation_heads h ON h.image_id=i.id LEFT JOIN annotation_revisions r ON r.image_id=i.id AND r.revision=h.current_revision WHERE i.project_id=? AND i.archived=0 ORDER BY i.id",
             (project_id,),
         )
         snapshot = {
+            "format_version": FORMAT_VERSION,
             "project_id": project_id,
             "task_type": project["task_type"],
             "schema": schema,
@@ -183,6 +194,7 @@ def prepare_snapshot(srv, snapshot):
         }
         for e in document["entries"]
     ]
+    classes = export_classes(classes, snapshot["options"].get("class_mapping"))
     included, excluded = [], []
     for record in snapshot["records"]:
         if srv.stop.is_set():
@@ -243,6 +255,54 @@ def prepare_snapshot(srv, snapshot):
     return classes, included, excluded
 
 
+def validate_export_geometry(srv, snapshot, classes, items):
+    """Scan every included shape before splitting or publishing; never omit bad labels."""
+    if snapshot["task_type"] == "classification":
+        return
+    issues = []
+    for item in items:
+        if srv.stop.is_set():
+            raise Problem("SERVER_STOPPING", "Export interrupted by server shutdown.", 503)
+        try:
+            yolo_labels(
+                item["content"],
+                item["width"],
+                item["height"],
+                snapshot["task_type"],
+                classes,
+                image_id=item["image_id"],
+                collect_errors=True,
+                format_version=snapshot.get("format_version", "vl-formats-1"),
+            )
+        except Problem as exc:
+            if exc.code != "UNREPRESENTABLE_GEOMETRY":
+                raise
+            for issue in exc.details["issues"]:
+                issues.append(
+                    issue
+                    | {
+                        "filename": item["display_filename"],
+                        "annotation_revision": item["current_revision"],
+                        "annotation_sha256": item["annotation_sha256"],
+                        "asset_sha256": item["asset_sha256"],
+                    }
+                )
+    if issues:
+        image_count = len({issue["image_id"] for issue in issues})
+        raise Problem(
+            "UNREPRESENTABLE_GEOMETRY",
+            f"Export blocked: {image_count} images, {len(issues)} geometry errors. No dataset was published.",
+            report_version=1,
+            project_id=snapshot["project_id"],
+            snapshot_sha256=digest(canonical(snapshot)),
+            format_version=snapshot.get("format_version", "vl-formats-1"),
+            checked_images=len(items),
+            failed_images=image_count,
+            error_count=len(issues),
+            issues=issues,
+        )
+
+
 def run_export(srv, user, job_id, snapshot, request_id):
     from .service import now
 
@@ -254,6 +314,7 @@ def run_export(srv, user, job_id, snapshot, request_id):
             srv.maintain(conn, user, snapshot["project_id"])
             conn.exec_driver_sql("UPDATE jobs SET state='running',updated_at=? WHERE id=?", (now(), job_id))
         classes, items, excluded = prepare_snapshot(srv, snapshot)
+        validate_export_geometry(srv, snapshot, classes, items)
         assignments, split = split_items(items, snapshot["options"])
         classification = snapshot["task_type"] == "classification"
         folders = []
@@ -294,7 +355,13 @@ def run_export(srv, user, job_id, snapshot, request_id):
                 add(image_path, raw)
                 if not classification:
                     label, _ = yolo_labels(
-                        item["content"], item["width"], item["height"], snapshot["task_type"], classes
+                        item["content"],
+                        item["width"],
+                        item["height"],
+                        snapshot["task_type"],
+                        classes,
+                        image_id=item["image_id"],
+                        format_version=snapshot.get("format_version", "vl-formats-1"),
                     )
                     add(f"labels/{part}/{item['image_id']}.txt", label)
                 outputs.append(
@@ -344,7 +411,7 @@ def run_export(srv, user, job_id, snapshot, request_id):
                 "project_id": snapshot["project_id"],
                 "source": "saved_working_snapshot",
                 "approved_release": False,
-                "format_version": FORMAT_VERSION,
+                "format_version": snapshot.get("format_version", "vl-formats-1"),
                 "snapshot_sha256": digest(canonical(snapshot)),
                 "schema_sha256": snapshot["schema"]["sha256"],
                 "split": split,
@@ -392,6 +459,7 @@ def run_export(srv, user, job_id, snapshot, request_id):
                 "message": exc.message
                 if isinstance(exc, Problem)
                 else "Export failed. Check storage and retry with a new request.",
+                "details": exc.details if isinstance(exc, Problem) else {},
             }
             conn.exec_driver_sql(
                 "UPDATE jobs SET state='failed',error_json=?,updated_at=? WHERE id=?",

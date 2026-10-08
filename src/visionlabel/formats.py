@@ -6,7 +6,7 @@ from decimal import ROUND_HALF_EVEN, Decimal
 
 from .domain import Problem, segments_intersect, valid_uuid, validate_content
 
-FORMAT_VERSION = "vl-formats-1"
+FORMAT_VERSION = "vl-formats-2"
 QUANTUM = Decimal("0.000000001")
 
 
@@ -56,15 +56,29 @@ def polygon_valid(points):
     return True
 
 
-def yolo_labels(content, width, height, task, classes, *, polygon_to_bbox=False, image_id=None):
+def yolo_labels(
+    content,
+    width,
+    height,
+    task,
+    classes,
+    *,
+    polygon_to_bbox=False,
+    image_id=None,
+    collect_errors=False,
+    format_version=FORMAT_VERSION,
+):
     """Return exact label bytes plus explicit loss warnings, without claiming provenance."""
     dimensions(width, height)
+    if format_version not in ("vl-formats-1", FORMAT_VERSION):
+        raise Problem("INVALID_FORMAT", "Unknown format version.")
     mapping = schema_mapping(classes)
     if task not in ("detection", "segmentation") or (polygon_to_bbox and task != "segmentation"):
         raise Problem("INVALID_FORMAT", "Unsupported task or conversion option.")
     data = validate_content(content, width, height, task, mapping, complete=True)
-    rows, warnings = [], []
-    for shape in data["shapes"]:
+    rows, warnings, issues = [], [], []
+    geometry: dict[str, object]
+    for ordinal, shape in enumerate(data["shapes"], 1):
         index = mapping[shape["class_id"]]["export_index"]
         if task == "detection" or polygon_to_bbox:
             if polygon_to_bbox:
@@ -86,9 +100,35 @@ def yolo_labels(content, width, height, task, classes, *, polygon_to_bbox=False,
                 )
             ]
             cx, cy, w, h = values
+            if format_version == "vl-formats-2":
+                # Keep nine-place centers and shrink only a rounding overshoot.
+                # Each size changes by at most one quantum; zero remains an error.
+                w = min(w, 2 * cx, 2 * (1 - cx))
+                h = min(h, 2 * cy, 2 * (1 - cy))
+                values = [cx, cy, w, h]
             valid = (
                 w > 0 and h > 0 and 0 <= cx - w / 2 < cx + w / 2 <= 1 and 0 <= cy - h / 2 < cy + h / 2 <= 1
             )
+            checks = {
+                "WIDTH_NOT_POSITIVE": w > 0,
+                "HEIGHT_NOT_POSITIVE": h > 0,
+                "LEFT_OUT_OF_BOUNDS": cx - w / 2 >= 0,
+                "RIGHT_OUT_OF_BOUNDS": cx + w / 2 <= 1,
+                "TOP_OUT_OF_BOUNDS": cy - h / 2 >= 0,
+                "BOTTOM_OUT_OF_BOUNDS": cy + h / 2 <= 1,
+            }
+            geometry = {
+                "source": {k: str(v) for k, v in zip(("x1", "y1", "x2", "y2"), raw, strict=True)},
+                "quantized": {k: str(v) for k, v in zip(("cx", "cy", "w", "h"), values, strict=True)},
+                "edges": {
+                    k: str(v)
+                    for k, v in zip(
+                        ("left", "top", "right", "bottom"),
+                        (cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2),
+                        strict=True,
+                    )
+                },
+            }
         else:
             points = [
                 (quantize(Decimal(str(x)) / width), quantize(Decimal(str(y)) / height))
@@ -96,7 +136,29 @@ def yolo_labels(content, width, height, task, classes, *, polygon_to_bbox=False,
             ]
             valid = polygon_valid(points)
             values = [v for point in points for v in point]
+            checks = {"POLYGON_INVALID_AFTER_QUANTIZATION": valid}
+            geometry = {
+                "source_points": [[str(x), str(y)] for x, y in shape["points"]],
+                "quantized_points": [[str(x), str(y)] for x, y in points],
+            }
         if not valid:
+            if collect_errors:
+                issues.append(
+                    {
+                        "code": "UNREPRESENTABLE_GEOMETRY",
+                        "image_id": image_id,
+                        "shape_id": shape["id"],
+                        "shape_number": ordinal,
+                        "class_id": shape["class_id"],
+                        "class_name": mapping[shape["class_id"]]["name"],
+                        "export_index": index,
+                        "width": width,
+                        "height": height,
+                        "failed_checks": [name for name, passed in checks.items() if not passed],
+                        **geometry,
+                    }
+                )
+                continue
             raise Problem(
                 "UNREPRESENTABLE_GEOMETRY",
                 "Geometry is invalid after nine-decimal quantization.",
@@ -104,6 +166,13 @@ def yolo_labels(content, width, height, task, classes, *, polygon_to_bbox=False,
                 shape_id=shape["id"],
             )
         rows.append(str(index) + " " + " ".join(format(v, ".9f") for v in values) + "\n")
+    if issues:
+        raise Problem(
+            "UNREPRESENTABLE_GEOMETRY",
+            "Geometry is invalid after nine-decimal quantization.",
+            image_id=image_id,
+            issues=issues,
+        )
     return "".join(rows).encode("utf-8"), warnings
 
 
@@ -131,8 +200,9 @@ def classification_mapping(classes, train_ids, evaluation_ids):
             {
                 "folder_name": folder,
                 "internal_class_id": cid,
-                "schema_export_index": row["export_index"],
+                "schema_export_index": row.get("schema_export_index", row["export_index"]),
                 "consumer_order": len(result),
+                **({"model_export_index": row["export_index"]} if "schema_export_index" in row else {}),
             }
         )
     return result

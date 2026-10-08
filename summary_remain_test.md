@@ -385,6 +385,30 @@ Copy ตารางนี้เพิ่มแถวตามกรณีที
 
 ## 14. หลักฐานที่ใช้จัดทำรายงาน
 
+Phase 8 P8-C/D/E/F (2026-10-08): เพิ่ม quantization `vl-formats-2`, model class
+mapping และ templates, Project Manager/โฟลเดอร์/Archive-Restore, version history
+และ preview/apply remap ผ่าน leases และ revision checks แล้ว Migration `0004`
+คง ID และไฟล์ประวัติเดิม การทดสอบหน้าต่างจริงและ wheel ติดตั้ง offline ผ่าน
+ยังต้องรับรองด้วยเมาส์/DPI ข้อมูลจริงที่บริษัท และ LAN/SMB; ไม่ใช่ approved release
+หรือ production readiness รายละเอียดและผลตรวจล่าสุดอยู่ในแผน follow-up
+Full suite ล่าสุด **228 tests ผ่าน**; focused P8-C/D/E/F **26 cases ผ่าน**;
+Ruff/mypy ผ่าน โดยยังมี Starlette/HTTPX deprecation warning เดิม
+
+Phase 8 P8-B (2026-10-07): เพิ่ม Open image / select shape จากหมายเลข error,
+ตรวจ revision/hash เก่า, CSV และ Previous failures/Older/Load selected report
+ผ่าน job ที่ server เก็บไว้ ทดสอบหน้าต่างจริงกับ HTTP ผ่านเส้นทางเปิดกล่อง →
+แก้/save → โหลดรายงานเก่าและแจ้ง revision เปลี่ยน → Prepare ใหม่สำเร็จ
+ยังต้องตรวจเมาส์/DPI และข้อมูลบริษัท ส่วน P8-C quantization และ P8-D/E/F ยังรอทำ
+
+Phase 8 follow-up (2026-10-07): แผนและข้อมูลปัญหาจากบริษัทอยู่ใน
+[phase8-follow-up-plan.md](docs/phase8-follow-up-plan.md) เริ่ม P8-A แล้ว:
+รายงาน geometry error ทุกกล่อง/ทุกภาพที่ตรวจได้ เก็บชื่อภาพ revision และค่าทศนิยม
+ใน failed job แสดงใน Export และบันทึก JSON ลงเครื่องได้ Full suite 196 tests ผ่าน;
+real HTTP/rendered desktop smoke ผ่าน รวมรายงานสองกล่องและบันทึก JSON
+ยังต้องตรวจด้วยข้อมูลบริษัทและเมาส์จริง การเปิดภาพจากรายงาน/CSV/ประวัติรายงาน,
+แก้ quantization, class mapping, Project Manager/โฟลเดอร์ และ version history
+ยังอยู่ใน P8-B ถึง P8-F ไม่ได้ถือว่าเสร็จแล้ว
+
 จำนวน tests ด้านล่างเป็นผล **ที่บันทึกไว้ในแต่ละช่วง** ไม่ควรนำมาบวกกัน; แถว Phase 8 เป็นผลรันในงานเพิ่ม export นี้:
 
 | ช่วง | หลักฐานฝั่งพัฒนาที่บันทึกไว้ |
