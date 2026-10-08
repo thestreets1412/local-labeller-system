@@ -111,6 +111,11 @@ class Desktop:
         )
 
     def build(self):
+        # Give the Windows taskbar a stable application identity instead of Python's.
+        shell = ctypes.WinDLL("shell32", use_last_error=True)
+        shell.SetCurrentProcessExplicitAppUserModelID.argtypes = [ctypes.c_wchar_p]
+        shell.SetCurrentProcessExplicitAppUserModelID.restype = ctypes.c_long
+        shell.SetCurrentProcessExplicitAppUserModelID("VisionLabel.Desktop")
         dpg.create_context()
         dpg.configure_app(manual_callback_management=True)
         # Use the font installed with Windows; do not redistribute OS font files.
@@ -133,10 +138,13 @@ class Desktop:
                 dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 12, 10)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 8, 7)
         dpg.bind_theme(theme)
+        assets = Path(__file__).resolve().parent / "assets"
+        icon_width, icon_height, _, icon_data = dpg.load_image(str(assets / "visionlabel-64.png"))
         with dpg.texture_registry(tag="textures"):
-            pass
+            dpg.add_static_texture(icon_width, icon_height, icon_data, tag="brand_icon")
         with dpg.window(tag="main", label="VisionLabel", no_close=True):
             with dpg.group(horizontal=True):
+                dpg.add_image("brand_icon", width=24, height=24)
                 dpg.add_text("VISIONLABEL", color=(76, 201, 166))
                 dpg.add_text("/  Annotation workspace", color=(170, 182, 198))
                 dpg.add_spacer(width=20)
@@ -361,7 +369,8 @@ class Desktop:
             dpg.add_mouse_wheel_handler(callback=self.mouse_wheel)
             dpg.add_key_press_handler(callback=self.key_press)
         dpg.create_viewport(
-            title="VisionLabel - Annotation workspace", width=1440, height=900, min_width=1060, min_height=700
+            title="VisionLabel - Annotation workspace", width=1440, height=900, min_width=1060, min_height=700,
+            small_icon=str(assets / "visionlabel.ico"), large_icon=str(assets / "visionlabel.ico"),
         )
         dpg.setup_dearpygui()
         dpg.set_primary_window("main", True)
