@@ -1,5 +1,9 @@
 # Phase 3 progress and verification
 
+2026-10-10: [Phase 9](phase9-plan.md) implements revised working-review
+states and interactions. REVIEWED_PASS is not a released APPROVED dataset;
+the review-to-release adapter and this phase's immutable-release gate remain open.
+
 Status: increment 1 implemented (polygon editor and working statistics/QC).
 Phase 3's immutable-release exit gate is still open.
 
@@ -18,7 +22,7 @@ at the company. Record unavailable tests separately from unfinished features.
 |---|---|---|
 | PR06, PR14 | Start polygon editing and saved working statistics now; independent of LAN deployment | Phase 3 increment 1 |
 | PR04, PR08, PR09 | Assignments, claim-next, workflow transitions and team filters remain unimplemented; cannot be marked passed by account tests | Phase 2 follow-up integration, retained in phase2-plan.md |
-| PR10 | Review UI and revision/hash-bound approval are not implemented; release must never fabricate approvals | Phase 2 follow-up before Phase 3 reviewed segmentation / approved releases |
+| PR10 | Phase 9 supplies working review UI/evidence; approved-release binding/adapter remains open and must never fabricate approvals | Phase 2 follow-up before Phase 3 reviewed segmentation / approved releases |
 | PR12 | Mutation audit persists, but history/audit browsing and restore UI remain open | Phase 2 follow-up integration |
 | PR18 | LAN HTTPS/SMB support is not implemented; current build remains loopback-only | Phase 2 deployment increment |
 | PR09, PR10, PR18 | Actual two-client/two-machine and share-denial acceptance unavailable at home | Company verification after deployment support, before marking the team exit gate passed |
@@ -84,7 +88,8 @@ HTTPX deprecation warning remains; no dependency changes were introduced.
 
 ## Remaining Phase 3 implementation
 
-1. Integrate PR10 review evidence and reviewed segmentation; enforce self-review
+1. Integrate Phase 9 PR10 working-review evidence with approved-release prerequisites
+   and reviewed segmentation; enforce self-review
    policy and stale approval rejection before exposing release actions.
 2. Class schema creation/migration with stable IDs, explicit mappings, dry-run
    reports and no rewriting of historical annotations.

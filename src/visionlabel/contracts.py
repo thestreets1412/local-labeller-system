@@ -47,7 +47,7 @@ class ImportRequest(StrictModel):
 
 
 class ClaimRequest(StrictModel):
-    mode: Literal["edit"] = "edit"
+    mode: Literal["edit", "review"] = "edit"
     client_instance_id: UUID
 
 

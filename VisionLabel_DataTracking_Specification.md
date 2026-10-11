@@ -1229,6 +1229,25 @@ validation/test nonzero ไม่ว่าง, ไม่มี group/asset leaka
 dataset ถูกแจ้งว่าสำเร็จ พร้อมคู่มือ training และการย้าย path การรับรอง training กับ Ultralytics
 environment และโมเดลจริงของผู้ใช้แยกจาก automated format/GUI tests
 
+### Phase 9 — High-volume annotation and review (authorized implementation, 2026-10-10)
+
+ผู้ใช้อนุมัติพัฒนา P9-A ถึง P9-F หลังทดลองใช้งานเกือบ 5,000 ภาพ:
+เพิ่ม REVIEWED_PASS/REVIEWED_NG โดย reviewer/maintainer รีวิว IN_PROGRESS
+ผ่าน Accept [S]/Reject [X]; reviewer รีวิวอย่างเดียว ส่วน annotator/maintainer
+แก้ได้ทุก working state และเมื่อบันทึกเนื้อหาที่เปลี่ยน ผลรีวิวเดิมหมดผล
+พร้อมกลับเป็น IN_PROGRESS โดยเก็บ history และ revision/hash binding
+
+เปิด Autosave แล้วต้องบันทึกก่อนเปลี่ยนภาพโดยไม่ถาม save ตามปกติ;
+save ล้มเหลวต้องคงภาพและ draft เดิม เพิ่ม scroll ตามภาพและ title [ลำดับ/ภาพทั้งหมดใน project]
+หากมีภาพไม่ใช่ REVIEWED_PASS ให้เตือนก่อน working export และยืนยันส่งออกต่อได้
+ผลลัพธ์ยังเป็น working snapshot ไม่ใช่ approved release
+
+รายละเอียด scope overrides PR04/PR05/PR06/PR07/PR09/PR10/PR12/PR16/PR18,
+permission matrix, review-method proposals และ exit gates อยู่ใน
+`docs/phase9-plan.md` ใช้โหมด queue/auto-advance ที่เลือกเปิดปิดได้ พร้อม resume
+และกำหนดให้ system admin ต้องมี project role ที่เหมาะสมสำหรับ mutation
+งานค้างของ Phase 2–6 และการทดสอบจริงที่บริษัทยังไม่ถือว่าเสร็จ
+
 ### Phase execution rule สำหรับ Codex
 
 ทำทีละ phase จน exit gate ผ่านก่อนขึ้น phase ถัดไป สร้าง vertical slice ที่รันจริง ไม่สร้าง mock UI ที่บอกว่าสำเร็จทั้งที่ยังไม่ persist ห้ามเพิ่ม infrastructure นอก baseline เพื่อหลบ transaction/locking design การเลื่อน requirement ต้องระบุ ID, เหตุผล และ phase ใหม่อย่างชัดเจน

@@ -148,6 +148,21 @@ class LocalStore:
         self.root.mkdir(parents=True, exist_ok=True)
         self.prune_cache()
 
+    def save_review_cursor(self, project_id, status, search, image_id):
+        name = digest(f"{project_id}/{status}/{search}".encode())
+        path = self.root / f"review-{name}.cursor"
+        temp = path.with_suffix(".tmp")
+        temp.write_bytes(protect(canonical({"image_id": image_id})))
+        os.replace(temp, path)
+
+    def review_cursor(self, project_id, status, search):
+        name = digest(f"{project_id}/{status}/{search}".encode())
+        path = self.root / f"review-{name}.cursor"
+        try:
+            return json.loads(protect(path.read_bytes(), True))["image_id"]
+        except (OSError, ValueError, KeyError):
+            return None
+
     def draft_path(self, image_id):
         return self.root / f"{image_id}.draft"
 

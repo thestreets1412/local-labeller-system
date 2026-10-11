@@ -432,3 +432,30 @@ real HTTP/rendered desktop smoke ผ่าน รวมรายงานสอ�
 - [หลักฐานภาพและรายงาน](docs/verification-artifacts/), [หลักฐาน Phase 7](docs/verification-artifacts/phase7/)
 
 รายงานนี้เป็นรายการรับรองที่ยังเหลือ ไม่ใช่คำประกาศว่า Phase 0–8 หรือระบบ production ผ่านครบแล้ว งานที่ยังต้องพัฒนายังคงอยู่ใน Phase ต้นทางตามแผนเดิม
+
+
+## Phase 9 acceptance follow-up (2026-10-10)
+
+P9-A through P9-F are implemented and local automated verification passed:
+252 tests, real HTTP/rendered 5,000-image review/navigation smoke, desktop
+regression and offline wheel smoke. Evidence and measurement limits are in
+[Phase 9](docs/phase9-plan.md). Human/company
+acceptance remains open; do not close earlier reviewed-release/LAN gates.
+
+- Use a backed-up copy of the company project. Enable Autosave, change a box and
+  press D immediately: save must finish before navigation without a normal save
+  prompt. Repeat with slow/disconnected service; retain the image and draft.
+- Navigate A/D and jump between distant images in a 5,000-image project. The
+  selected row stays visible and title denominator remains the project total
+  while filtering. Check actual Windows scaling and mouse behavior.
+- Reviewer: cannot edit; S accepts IN_PROGRESS; X records a reason; cancelling X
+  leaves the state unchanged. Holding S/X or typing them must not review a second
+  image. A/D never review. Confirm optional auto-advance and Resume queue.
+- Annotator: open Needs correction, read NG reason, edit/save -> IN_PROGRESS.
+  Editing PASS also resets review. Check classification and polygon equivalents.
+- Maintainer working alone: explicitly enable self-review with a reason. Verify
+  other project roles cannot change this setting or invoke management/export APIs.
+- Export mixed review states: inspect counts, cancel, prepare again and Export
+  anyway. Confirm the exported snapshot remains unreviewed release-wise and that
+  invalid/incomplete content still follows existing diagnostics/exclusion rules.
+- Company two-client races and LAN/SMB deployment acceptance remain separate.

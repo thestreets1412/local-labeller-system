@@ -236,13 +236,40 @@ def test_upgrade_from_phase2_preserves_project_and_annotation_bytes(tmp_path, mo
             client.headers["Authorization"] = "Bearer " + login["token"]
             proj = project(client)
             image = import_files(client, root, proj["id"])[0]
-            result = client.put(
-                f"/api/v1/images/{image['id']}/annotation",
-                json=save_body(proj),
-                headers=dict(claim(client, image["id"]), **{"Idempotency-Key": uid()}),
-            )
-            assert result.status_code == 200
+            # Seed an actual old-schema revision; current service writes require
+            # the current migration and must not run against a historical schema.
+            from visionlabel.domain import canonical
+            from visionlabel.service import now
+
             old = client.app.state.service
+            actor = client.get("/api/v1/me").json()["id"]
+            stamp = now()
+            doc = dict(
+                save_body(proj)["content"],
+                schema_version="1.0.0",
+                project_id=proj["id"],
+                image_id=image["id"],
+                asset_sha256=image["asset_sha256"],
+                width=100,
+                height=200,
+                class_schema_id=proj["active_schema_id"],
+                revision=1,
+                created_by=actor,
+                created_at=stamp,
+            )
+            artifact = canonical(doc)
+            sha = digest(artifact)
+            blob = f"projects/{proj['id']}/annotations/{image['id']}/r00000001-{sha}.json"
+            old.blobs.publish(blob, artifact)
+            with old.db.transaction() as conn:
+                conn.exec_driver_sql(
+                    "INSERT INTO annotation_revisions VALUES (?,?,?,?,?,?,?,?,?)",
+                    (image["id"], 1, proj["active_schema_id"], blob, sha, 0, 1, stamp, actor),
+                )
+                conn.exec_driver_sql(
+                    "UPDATE annotation_heads SET current_revision=1,state_revision=1,status='IN_PROGRESS' WHERE image_id=?",
+                    (image["id"],),
+                )
             with old.db.engine.connect() as conn:
                 before = {table: rows(conn, f"SELECT * FROM {table}") for table in tables}
             reference = before["annotation_revisions"][0]
@@ -255,6 +282,7 @@ def test_upgrade_from_phase2_preserves_project_and_annotation_bytes(tmp_path, mo
                 assert record.pop("description") == ""
                 assert record.pop("archived") == 0
                 assert record.pop("folder_id") is None
+                assert record.pop("allow_self_review") == 0
             assert after == before
             assert conn.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
             assert conn.exec_driver_sql("PRAGMA foreign_key_check").fetchall() == []

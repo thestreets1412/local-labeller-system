@@ -91,6 +91,8 @@ def main():
                     while time.monotonic() < deadline:
                         dpg.run_callbacks(dpg.get_callback_queue())
                         desktop.tick()
+                        if desktop.exports.review_confirmation:
+                            desktop.exports.confirm_review()
                         dpg.render_dearpygui_frame()
                         if predicate():
                             return
@@ -164,9 +166,10 @@ def main():
                     vertical = dpg.get_item_configuration(lines[3])
                     left, top = canvas.transform.screen(0, 0)
                     right, bottom = canvas.transform.screen(canvas.width, canvas.height)
-                    assert horizontal["p1"][0] == max(0, left)
+                    # Dear PyGui stores draw coordinates as float32.
+                    assert abs(horizontal["p1"][0] - max(0, left)) < 0.001
                     assert abs(horizontal["p2"][0] - min(dpg.get_item_width("canvas"), right)) < 0.001
-                    assert vertical["p1"][1] == max(0, top)
+                    assert abs(vertical["p1"][1] - max(0, top)) < 0.001
                     assert abs(vertical["p2"][1] - min(dpg.get_item_height("canvas"), bottom)) < 0.001
                     desktop.set_mode("select")
                     assert not desktop.crosshair_visible

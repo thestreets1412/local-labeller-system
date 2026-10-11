@@ -14,6 +14,7 @@ from sqlalchemy.exc import OperationalError
 from starlette.concurrency import run_in_threadpool
 
 from . import project_tools as pt
+from . import review
 from .contracts import (
     ClaimRequest,
     ImportRequest,
@@ -407,6 +408,40 @@ def create_app(root: Path):
                 if len(paths) > 50000:
                     raise Problem("TOO_MANY_FILES", "Import inbox exceeds 50,000 files.")
         return {"source_alias": "inbox", "relative_paths": sorted(paths)}
+
+    @app.get("/api/v1/projects/{project_id}/review-overview")
+    def review_overview(project_id: UUID, who=Depends(user), srv=Depends(service)):
+        return review.overview(srv, who, str(project_id))
+
+    @app.put("/api/v1/projects/{project_id}/review-settings")
+    def review_settings(
+        project_id: UUID,
+        body: review.ReviewSettings,
+        request: Request,
+        who=Depends(user),
+        srv=Depends(service),
+    ):
+        return review.settings(
+            srv, who, str(project_id), body.model_dump(), key(request), request.state.request_id
+        )
+
+    @app.get("/api/v1/images/{image_id}/reviews")
+    def review_history(image_id: UUID, who=Depends(user), srv=Depends(service)):
+        return review.history(srv, who, str(image_id))
+
+    @app.post("/api/v1/images/{image_id}/reviews", status_code=201)
+    def review_decision(
+        image_id: UUID, body: review.ReviewRequest, request: Request, who=Depends(user), srv=Depends(service)
+    ):
+        return review.decide(
+            srv,
+            who,
+            str(image_id),
+            body.model_dump(),
+            claim_headers(request),
+            key(request),
+            request.state.request_id,
+        )
 
     @app.get("/api/v1/projects/{project_id}/statistics")
     def statistics(project_id: UUID, who=Depends(user), srv=Depends(service)):

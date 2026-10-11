@@ -14,6 +14,15 @@
 
 ## Product language
 
+- Phase 9 P9-A through P9-F implementation was authorized after the 2026-10-09
+  plan and resumed on 2026-10-10. Use `docs/phase9-plan.md`: working review states,
+  review-only reviewer, annotation by annotator/maintainer, navigation autosave,
+  project position/scroll, snapshot-bound export confirmation, pending/correction
+  queues and optional auto-advance/resume. System admins need the corresponding
+  project role for project mutations; maintainers retain all project capabilities.
+  Self-review stays off unless explicitly enabled with an audited reason. Preserve
+  revision-bound review evidence and earlier released-version/company gates.
+
 - Phase 8 follow-up authorized 2026-10-07: implement aggregate export diagnostics
   first, then inspect/revalidate, bounded quantization, class mapping, project
   management/folders and version history according to `docs/phase8-follow-up-plan.md`.

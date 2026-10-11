@@ -7,6 +7,16 @@ from visionlabel.domain import Problem
 from visionlabel.export_ui import ExportPanel, failure_report
 
 
+@pytest.fixture(autouse=True)
+def headless_visibility(monkeypatch):
+    from visionlabel import export_ui
+
+    # These tests use a fake widget model, not a native Dear PyGui context.
+    monkeypatch.setattr(export_ui.dpg, "hide_item", lambda _: None)
+    monkeypatch.setattr(export_ui.dpg, "show_item", lambda _: None)
+    monkeypatch.setattr(export_ui.dpg, "does_item_exist", lambda _: True)
+
+
 def test_failed_job_details_reach_desktop_and_local_report(monkeypatch, tmp_path):
     from visionlabel import export_ui
 
@@ -79,6 +89,58 @@ def test_failed_job_details_reach_desktop_and_local_report(monkeypatch, tmp_path
 
 def test_old_job_without_details_remains_readable():
     assert failure_report(Problem("EXPORT_FAILED", "Old error")) == "Old error"
+
+
+def test_review_warning_cancel_and_confirm_bind_exact_candidate(monkeypatch):
+    from visionlabel import export_ui
+
+    values = {"export_mapping": "", "export_val": 20, "export_test": 0, "export_seed": 42}
+    monkeypatch.setattr(export_ui.dpg, "get_value", values.__getitem__)
+    monkeypatch.setattr(export_ui.dpg, "set_value", values.__setitem__)
+    monkeypatch.setattr(export_ui.dpg, "configure_item", lambda *a, **k: None)
+    calls = []
+    candidate = "11111111-1111-4111-8111-111111111111"
+
+    def request(method, path, body=None, **kwargs):
+        if method == "POST":
+            calls.append(body)
+            if not body["confirmation"]:
+                raise Problem(
+                    "REVIEW_CONFIRMATION_REQUIRED",
+                    "Review is incomplete.",
+                    409,
+                    confirmation=candidate,
+                    counts={"IN_PROGRESS": 3},
+                    captured_at="2026-10-10T00:00:00Z",
+                    snapshot_sha256="source",
+                )
+            return {"job_id": "job"}
+        return {"state": "failed", "error": {"code": "INVALID_GEOMETRY", "message": "Inspect labels."}}
+
+    def submit(work, done, failed):
+        try:
+            done(work())
+        except Problem as exc:
+            failed(exc)
+
+    panel = ExportPanel(
+        SimpleNamespace(
+            project={"schema": {"entries": []}},
+            client=SimpleNamespace(request=request),
+            exit_requested=False,
+            submit=submit,
+        )
+    )
+    panel.project_id = "project"
+    panel.prepare()
+    assert len(calls) == 1 and panel.review_confirmation == candidate
+    panel.cancel_review()
+    assert len(calls) == 1 and panel.review_confirmation is None
+    panel.prepare()
+    panel.confirm_review()
+    assert len(calls) == 3 and calls[-1]["confirmation"] == candidate
+    assert calls[-1]["validation_percent"] == calls[0]["validation_percent"]
+    assert panel.review_confirmation is None
 
 
 @pytest.mark.parametrize(

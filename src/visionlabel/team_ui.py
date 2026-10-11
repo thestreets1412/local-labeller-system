@@ -55,7 +55,7 @@ class TeamPanel:
                         width=240,
                     )
                     dpg.add_text(
-                        "Viewer: read only. Annotator: edit. Reviewer: edit and review.\nMaintainer: manage this project and its members.",
+                        "Viewer: read only. Annotator: edit. Reviewer: review only.\nMaintainer: manage this project and its members.",
                         wrap=740,
                     )
                     with dpg.group(horizontal=True):

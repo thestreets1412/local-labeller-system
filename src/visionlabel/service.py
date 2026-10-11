@@ -20,6 +20,7 @@ from .imaging import (
 )
 from .legacy import parse_yolo
 from .operations import DirectoryLock
+from .review import EDITABLE, require_role
 from .statistics import summarize
 from .storage import BlobStore, contained, local_directory
 
@@ -331,7 +332,7 @@ class Service:
         )
         if not current or not project or (not current["is_admin"] and not member):
             raise Problem("NOT_FOUND", "Project not found.", 404)
-        if write and not current["is_admin"] and member["role"] == "viewer":
+        if write and (not member or member["role"] not in ("annotator", "maintainer")):
             raise Problem("FORBIDDEN", "This account cannot edit the project.", 403)
         if write and project.get("archived") and not allow_archived:
             raise Problem("PROJECT_ARCHIVED", "Restore this project before making changes.", 409)
@@ -339,13 +340,12 @@ class Service:
 
     def maintain(self, conn, user, project_id, allow_archived=False):
         project = self.authorize(conn, user, project_id, True, allow_archived)
-        current = row(conn, "SELECT is_admin FROM users WHERE id=?", (user["id"],))
         member = row(
             conn,
             "SELECT role FROM project_members WHERE project_id=? AND user_id=?",
             (project_id, user["id"]),
         )
-        if not current["is_admin"] and (not member or member["role"] != "maintainer"):
+        if not member or member["role"] != "maintainer":
             raise Problem("FORBIDDEN", "Maintainer permission is required.", 403)
         return project
 
@@ -457,16 +457,17 @@ class Service:
     def project(self, user, project_id):
         with self.db.engine.connect() as conn:
             project = self.authorize(conn, user, project_id)
-            current = self.principal(conn, user)
+            self.principal(conn, user)
             member = row(
                 conn,
                 "SELECT role FROM project_members WHERE project_id=? AND user_id=?",
                 (project_id, user["id"]),
             )
             role = member["role"] if member else None
-            project["can_edit"] = bool(current["is_admin"] or role in ("annotator", "reviewer", "maintainer"))
+            project["can_review"] = role in ("reviewer", "maintainer") and not project.get("archived")
+            project["can_edit"] = role in ("annotator", "maintainer")
             project["can_edit"] = project["can_edit"] and not bool(project.get("archived"))
-            project["can_manage_members"] = bool(current["is_admin"] or role == "maintainer")
+            project["can_manage_members"] = bool(role == "maintainer")
             schema = row(conn, "SELECT * FROM class_schemas WHERE id=?", (project["active_schema_id"],))
         project["schema"] = self.blobs.json(schema["blob_path"], schema["sha256"])
         return project
@@ -556,12 +557,20 @@ class Service:
     def claim(self, user, image_id, body, key, request_id):
         route = f"claim/{image_id}"
         with self.db.transaction() as conn:
-            image = self.image(conn, user, image_id, True)
+            image = self.image(conn, user, image_id)
+            mode = body.get("mode", "edit")
+            require_role(
+                self,
+                conn,
+                user,
+                image["project_id"],
+                ("reviewer", "maintainer") if mode == "review" else ("annotator", "maintainer"),
+            )
             replay = self.replay(conn, user, route, key, body)
             if replay:
                 replay["claim_token"] = self.claim_token(replay["claim_id"], replay["generation"])
                 return replay
-            if image["status"] not in ("UNLABELED", "IN_PROGRESS", "ANNOTATED", "REJECTED"):
+            if image["status"] not in EDITABLE or (mode == "review" and image["status"] != "IN_PROGRESS"):
                 raise Problem("STATE_CONFLICT", "Image is not editable.", 409)
             existing = row(conn, "SELECT * FROM task_claims WHERE image_id=?", (image_id,))
             if existing and existing["expires_at"] > now():
@@ -570,7 +579,7 @@ class Service:
             claim_id, expires = uid(), after(900)
             token = self.claim_token(claim_id, generation)
             conn.exec_driver_sql(
-                "INSERT INTO task_claims VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(image_id) DO UPDATE SET claim_id=excluded.claim_id,owner_id=excluded.owner_id,client_instance_id=excluded.client_instance_id,generation=excluded.generation,token_hash=excluded.token_hash,expires_at=excluded.expires_at,last_heartbeat_at=excluded.last_heartbeat_at",
+                "INSERT INTO task_claims (image_id,claim_id,owner_id,client_instance_id,generation,token_hash,expires_at,last_heartbeat_at,mode) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(image_id) DO UPDATE SET claim_id=excluded.claim_id,owner_id=excluded.owner_id,client_instance_id=excluded.client_instance_id,generation=excluded.generation,token_hash=excluded.token_hash,expires_at=excluded.expires_at,last_heartbeat_at=excluded.last_heartbeat_at,mode=excluded.mode",
                 (
                     image_id,
                     claim_id,
@@ -580,12 +589,13 @@ class Service:
                     digest(token.encode()),
                     expires,
                     now(),
+                    mode,
                 ),
             )
             result = {
                 "claim_id": claim_id,
                 "generation": generation,
-                "mode": "edit",
+                "mode": mode,
                 "owner_id": user["id"],
                 "server_time": now(),
                 "expires_at": expires,
@@ -610,8 +620,15 @@ class Service:
 
     def heartbeat(self, user, image_id, headers):
         with self.db.transaction() as conn:
-            self.image(conn, user, image_id, True)
-            self.check_claim(conn, user, image_id, headers)
+            image = self.image(conn, user, image_id)
+            lease = self.check_claim(conn, user, image_id, headers)
+            require_role(
+                self,
+                conn,
+                user,
+                image["project_id"],
+                ("reviewer", "maintainer") if lease["mode"] == "review" else ("annotator", "maintainer"),
+            )
             expires = after(900)
             conn.exec_driver_sql(
                 "UPDATE task_claims SET expires_at=?,last_heartbeat_at=? WHERE image_id=?",
@@ -621,7 +638,7 @@ class Service:
 
     def release(self, user, image_id, headers, request_id):
         with self.db.transaction() as conn:
-            image = self.image(conn, user, image_id, True)
+            image = self.image(conn, user, image_id)
             claim = row(conn, "SELECT * FROM task_claims WHERE image_id=?", (image_id,))
             if (
                 claim
@@ -657,7 +674,9 @@ class Service:
             replay = self.replay(conn, user, route, key, request_body)
             if replay:
                 return image, None, replay
-            self.check_claim(conn, user, image_id, headers)
+            lease = self.check_claim(conn, user, image_id, headers)
+            if lease["mode"] != "edit":
+                raise Problem("STATE_CONFLICT", "Acquire an editing lease before saving.", 409)
             if (
                 image["current_revision"] != body["expected_revision"]
                 or image["state_revision"] != body["expected_state_revision"]
@@ -672,7 +691,7 @@ class Service:
             project = self.authorize(conn, user, image["project_id"], True)
             if project["active_schema_id"] != body["class_schema_id"]:
                 raise Problem("SCHEMA_CHANGED", "The class schema changed. Reload the project.", 409)
-            if image["status"] not in ("UNLABELED", "IN_PROGRESS", "REJECTED"):
+            if image["status"] not in EDITABLE:
                 raise Problem("STATE_CONFLICT", "Resume or reopen this image before editing.", 409)
             class_ids = {
                 x["class_id"]
@@ -691,6 +710,30 @@ class Service:
             image, content, replay = preflight(conn)
         if replay:
             return replay
+        if image["status"] in ("REVIEWED_PASS", "REVIEWED_NG"):
+            with self.db.transaction() as conn:
+                image, content, replay = preflight(conn)
+                if replay:
+                    return replay
+                previous = row(
+                    conn,
+                    "SELECT * FROM annotation_revisions WHERE image_id=? AND revision=?",
+                    (image_id, image["current_revision"]),
+                )
+                old = self.blobs.json(previous["blob_path"], previous["sha256"])
+                if canonical(content) == canonical(
+                    {k: old[k] for k in ("shapes", "image_labels", "verified_empty")}
+                ):
+                    result = {
+                        "image_id": image_id,
+                        "revision": image["current_revision"],
+                        "state_revision": image["state_revision"],
+                        "status": image["status"],
+                        "annotation_sha256": previous["sha256"],
+                        "saved_at": previous["created_at"],
+                    }
+                    self.remember(conn, user, route, key, request_body, result)
+                    return result
         revision = image["current_revision"] + 1
         timestamp = now()
         doc = dict(

@@ -55,6 +55,7 @@ class ExportPanel:
         self.report_client = None
         self.history = {}
         self.history_cursor = None
+        self.review_confirmation = None
 
     def build(self):
         with dpg.file_dialog(
@@ -131,6 +132,15 @@ class ExportPanel:
             dpg.add_button(
                 label="1. Prepare export / retry", tag="export_prepare", callback=lambda: self.prepare()
             )
+            dpg.add_button(
+                label="Export anyway", tag="export_confirm_review", show=False, callback=self.confirm_review
+            )
+            dpg.add_button(
+                label="Cancel review confirmation",
+                tag="export_cancel_review",
+                show=False,
+                callback=self.cancel_review,
+            )
             dpg.add_input_text(tag="export_report", multiline=True, readonly=True, width=-1, height=230)
             with dpg.group(horizontal=True):
                 dpg.add_input_int(
@@ -197,6 +207,10 @@ class ExportPanel:
         self.cancel_folder()
 
     def invalidate(self, *args):
+        self.review_confirmation = None
+        if dpg.does_item_exist("export_confirm_review"):
+            dpg.hide_item("export_confirm_review")
+            dpg.hide_item("export_cancel_review")
         if not self.busy:
             self.prepared = None
             self.request_key = None
@@ -220,7 +234,7 @@ class ExportPanel:
 
     def open(self):
         if not self.app.project or not self.app.project.get("can_manage_members"):
-            self.app.message("Select a project where you are an administrator or maintainer.")
+            self.app.message("Select a project where you are a maintainer.")
             return
         if self.busy and self.project_id != self.app.project["id"]:
             self.app.message("Wait for the export of the previous project to finish.")
@@ -427,9 +441,25 @@ class ExportPanel:
             return
         dpg.set_value("export_status", f"Error report saved: {path}")
 
-    def prepare(self):
+    def confirm_review(self):
+        token = self.review_confirmation
+        self.review_confirmation = None
+        dpg.hide_item("export_confirm_review")
+        dpg.hide_item("export_cancel_review")
+        self.prepare(confirmation=token)
+
+    def cancel_review(self):
+        self.review_confirmation = None
+        dpg.hide_item("export_confirm_review")
+        dpg.hide_item("export_cancel_review")
+        dpg.set_value("export_status", "Export cancelled. Prepare again to capture fresh data.")
+
+    def prepare(self, confirmation=None):
         if self.busy or not self.app.project:
             return
+        self.review_confirmation = None
+        dpg.hide_item("export_confirm_review")
+        dpg.hide_item("export_cancel_review")
         try:
             mapping_text = dpg.get_value("export_mapping") or ""
             mapping = (
@@ -438,6 +468,7 @@ class ExportPanel:
                 else None
             )
             body = ExportRequest(
+                confirmation=confirmation,
                 class_mapping={cid: index for index, cid in mapping.items()} if mapping is not None else None,
                 validation_percent=dpg.get_value("export_val"),
                 test_percent=dpg.get_value("export_test"),
@@ -515,6 +546,31 @@ class ExportPanel:
             )
 
         def failed(exc):
+            if isinstance(exc, Problem) and exc.code == "REVIEW_CONFIRMATION_REQUIRED":
+                self.set_busy(False)
+                self.review_confirmation = exc.details["confirmation"]
+                self.request_key = None
+                counts = exc.details["counts"]
+                summary = ["Review summary", ""]
+                for label, state in (
+                    ("PASS", "REVIEWED_PASS"),
+                    ("NG", "REVIEWED_NG"),
+                    ("Pending", "IN_PROGRESS"),
+                    ("Unlabeled", "UNLABELED"),
+                ):
+                    summary.append(f"{label}: {counts.get(state, 0):,}")
+                summary.extend(
+                    [
+                        "",
+                        "Saved snapshot captured: " + exc.details["captured_at"],
+                        "Export anyway uses this snapshot. New edits require preparing again.",
+                    ]
+                )
+                dpg.set_value("export_report", "\n".join(summary))
+                dpg.set_value("export_status", exc.message)
+                dpg.show_item("export_confirm_review")
+                dpg.show_item("export_cancel_review")
+                return
             if not isinstance(exc, Problem) or exc.code != "DISCONNECTED":
                 self.request_key = None
             self.failure(exc)

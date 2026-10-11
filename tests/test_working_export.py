@@ -43,9 +43,12 @@ def labeled(client, root, task="detection", count=10):
 
 
 def start(client, proj, **body):
-    return client.post(
-        f"/api/v1/projects/{proj['id']}/working-exports", json=body, headers={"Idempotency-Key": uid()}
-    )
+    url = f"/api/v1/projects/{proj['id']}/working-exports"
+    response = client.post(url, json=body, headers={"Idempotency-Key": uid()})
+    if response.status_code == 409 and response.json()["error"]["code"] == "REVIEW_CONFIRMATION_REQUIRED":
+        body["confirmation"] = response.json()["error"]["details"]["confirmation"]
+        response = client.post(url, json=body, headers={"Idempotency-Key": uid()})
+    return response
 
 
 def wait(client, job_id):
@@ -358,9 +361,11 @@ def test_permissions_idempotency_and_download_revocation(environment):
     client.headers["Authorization"] = "Bearer " + srv.login("junior", "a-long-user-password")["token"]
     headers = {"Idempotency-Key": uid()}
     url = f"/api/v1/projects/{proj['id']}/working-exports"
-    response = client.post(url, json={"test_percent": 0}, headers=headers)
+    warning = client.post(url, json={"test_percent": 0}, headers=headers)
+    confirmed = {"test_percent": 0, "confirmation": warning.json()["error"]["details"]["confirmation"]}
+    response = client.post(url, json=confirmed, headers=headers)
     assert response.status_code == 202
-    assert client.post(url, json={"test_percent": 0}, headers=headers).json() == response.json()
+    assert client.post(url, json=confirmed, headers=headers).json() == response.json()
     assert client.post(url, json={"test_percent": 10}, headers=headers).status_code == 409
     job_id = response.json()["job_id"]
     assert wait(client, job_id)["state"] == "succeeded"

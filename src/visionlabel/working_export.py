@@ -23,6 +23,7 @@ PROFILE = "working-yolo-export-1"
 
 
 class ExportRequest(StrictModel):
+    confirmation: str | None = Field(default=None, pattern=r"^[0-9a-f-]{36}$")
     class_mapping: dict[str, StrictInt] | None = None
     validation_percent: int = Field(default=20, ge=1, le=99, strict=True)
     test_percent: int = Field(default=10, ge=0, le=98, strict=True)
@@ -119,48 +120,112 @@ def start_export(srv, user, project_id, body, key, request_id):
     from .service import now
 
     body = ExportRequest.model_validate(body).model_dump()
+    options = {k: v for k, v in body.items() if k != "confirmation"}
+    warning = None
     with srv.db.transaction() as conn:
         project = srv.maintain(conn, user, project_id)
         replay = srv.replay(conn, user, f"working-export/{project_id}", key, body)
         if replay:
             return replay
-        schema = row(conn, "SELECT * FROM class_schemas WHERE id=?", (project["active_schema_id"],))
-        export_classes(
-            rows(
+        if body["confirmation"]:
+            candidate = row(
                 conn,
-                "SELECT class_id,export_index FROM class_schema_entries WHERE schema_id=?",
-                (schema["id"],),
-            ),
-            body["class_mapping"],
-        )
-        records = rows(
-            conn,
-            "SELECT i.id AS image_id,i.asset_sha256,i.display_filename,i.group_key,a.width,a.height,a.extension,a.blob_path AS asset_path,h.status,h.current_revision,r.schema_id,r.blob_path AS annotation_path,r.sha256 AS annotation_sha256 FROM images i JOIN assets a ON a.sha256=i.asset_sha256 JOIN annotation_heads h ON h.image_id=i.id LEFT JOIN annotation_revisions r ON r.image_id=i.id AND r.revision=h.current_revision WHERE i.project_id=? AND i.archived=0 ORDER BY i.id",
-            (project_id,),
-        )
-        snapshot = {
-            "format_version": FORMAT_VERSION,
-            "project_id": project_id,
-            "task_type": project["task_type"],
-            "schema": schema,
-            "records": records,
-            "options": body,
-        }
-        job_id = uid()
-        conn.exec_driver_sql(
-            "INSERT INTO jobs (id,project_id,created_by,type,state,payload_json,progress_total,created_at,updated_at) VALUES (?,?,?,'working-export','queued',?,?,?,?)",
-            (job_id, project_id, user["id"], canonical(snapshot).decode(), len(records), now(), now()),
-        )
-        result = {"job_id": job_id}
-        srv.remember(conn, user, f"working-export/{project_id}", key, body, result, 202)
-        srv.audit(
-            conn,
-            user,
-            "working_export.requested",
-            job_id,
-            project_id,
-            {"snapshot_sha256": digest(canonical(snapshot)), "options": body},
-            request_id,
+                "SELECT * FROM export_candidates WHERE id=? AND project_id=? AND user_id=?",
+                (body["confirmation"], project_id, user["id"]),
+            )
+            if not candidate:
+                raise Problem("INVALID_CONFIRMATION", "Prepare a new review summary.", 409)
+            snapshot = json.loads(candidate["snapshot_json"])
+            if snapshot["options"] != options:
+                raise Problem(
+                    "INVALID_CONFIRMATION", "Export options changed. Prepare a new review summary.", 409
+                )
+        else:
+            schema = row(conn, "SELECT * FROM class_schemas WHERE id=?", (project["active_schema_id"],))
+            export_classes(
+                rows(
+                    conn,
+                    "SELECT class_id,export_index FROM class_schema_entries WHERE schema_id=?",
+                    (schema["id"],),
+                ),
+                options["class_mapping"],
+            )
+            records = rows(
+                conn,
+                "SELECT i.id AS image_id,i.asset_sha256,i.display_filename,i.group_key,a.width,a.height,a.extension,a.blob_path AS asset_path,h.status,h.current_revision,h.state_revision,r.schema_id,r.blob_path AS annotation_path,r.sha256 AS annotation_sha256 FROM images i JOIN assets a ON a.sha256=i.asset_sha256 JOIN annotation_heads h ON h.image_id=i.id LEFT JOIN annotation_revisions r ON r.image_id=i.id AND r.revision=h.current_revision WHERE i.project_id=? AND i.archived=0 ORDER BY i.id",
+                (project_id,),
+            )
+            for record in records:
+                record["review"] = row(
+                    conn,
+                    "SELECT id,decision,comment,reviewer_id,created_at,annotation_revision,annotation_sha256,schema_id,state_revision FROM working_reviews WHERE image_id=? AND state_revision=? AND annotation_revision=? AND annotation_sha256=?",
+                    (
+                        record["image_id"],
+                        record["state_revision"],
+                        record["current_revision"],
+                        record["annotation_sha256"],
+                    ),
+                )
+                if record["status"] in ("REVIEWED_PASS", "REVIEWED_NG") and not record["review"]:
+                    raise Problem("INVALID_REVIEW", "Review evidence is missing for the saved state.", 409)
+            counts = dict(Counter(r["status"] for r in records))
+            snapshot = {
+                "snapshot_version": "working-review-2",
+                "format_version": FORMAT_VERSION,
+                "project_id": project_id,
+                "task_type": project["task_type"],
+                "schema": schema,
+                "records": records,
+                "options": options,
+                "review_counts": counts,
+            }
+            if any(r["status"] != "REVIEWED_PASS" for r in records):
+                token = uid()
+                conn.exec_driver_sql(
+                    "INSERT INTO export_candidates VALUES (?,?,?,?,?)",
+                    (token, project_id, user["id"], canonical(snapshot).decode(), now()),
+                )
+                warning = {
+                    "confirmation": token,
+                    "counts": counts,
+                    "snapshot_sha256": digest(canonical(snapshot)),
+                    "captured_at": now(),
+                }
+        if warning is None:
+            job_id = uid()
+            conn.exec_driver_sql(
+                "INSERT INTO jobs (id,project_id,created_by,type,state,payload_json,progress_total,created_at,updated_at) VALUES (?,?,?,'working-export','queued',?,?,?,?)",
+                (
+                    job_id,
+                    project_id,
+                    user["id"],
+                    canonical(snapshot).decode(),
+                    len(snapshot["records"]),
+                    now(),
+                    now(),
+                ),
+            )
+            result = {"job_id": job_id}
+            srv.remember(conn, user, f"working-export/{project_id}", key, body, result, 202)
+            srv.audit(
+                conn,
+                user,
+                "working_export.requested",
+                job_id,
+                project_id,
+                {
+                    "snapshot_sha256": digest(canonical(snapshot)),
+                    "options": options,
+                    "review_warning_confirmed": bool(body["confirmation"]),
+                },
+                request_id,
+            )
+    if warning:
+        raise Problem(
+            "REVIEW_CONFIRMATION_REQUIRED",
+            "Review is incomplete. Export saved working labels anyway? Unlabeled/incomplete images remain excluded; invalid content still blocks export.",
+            409,
+            **warning,
         )
     srv.pool.submit(run_export, srv, user, job_id, snapshot, request_id)
     return result
@@ -406,6 +471,22 @@ def run_export(srv, user, job_id, snapshot, request_id):
             add("TRAINING.txt", instruction.encode())
             add("class_mapping.json", canonical({"classes": classes, "classification_folders": folders}))
             manifest = {
+                "manifest_version": "working-review-2" if "review_counts" in snapshot else "working-1",
+                "review_counts": snapshot.get("review_counts", {}),
+                "review_evidence": [
+                    {
+                        k: r.get(k)
+                        for k in (
+                            "image_id",
+                            "status",
+                            "current_revision",
+                            "state_revision",
+                            "annotation_sha256",
+                            "review",
+                        )
+                    }
+                    for r in snapshot["records"]
+                ],
                 "profile": PROFILE,
                 "task_type": snapshot["task_type"],
                 "project_id": snapshot["project_id"],

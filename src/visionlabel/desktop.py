@@ -23,6 +23,7 @@ from .domain import Editor, Problem, canonical, empty_content, uid
 from .export_ui import ExportPanel
 from .polygon_canvas import PolygonCanvas
 from .project_ui import ProjectPanel, load_import_model
+from .review_ui import ReviewPanel
 from .statistics_ui import StatisticsPanel
 from .team_ui import TeamPanel
 
@@ -59,6 +60,11 @@ class Desktop:
         self.yolo_job = False
         self.yolo_schema_key = None
         self.next_action = None
+        self.navigation_save = False
+        self.image_rows = {}
+        self.selected_row = None
+        self.review_keys = set()
+        self.image_query_generation = 0
         self.exit_requested = False
         self.recovery = None
         self.frame_count = 0
@@ -72,6 +78,7 @@ class Desktop:
         self.crosshair_cursor = self.cursor_api.LoadCursorW(None, 32515)
         self.arrow_cursor = self.cursor_api.LoadCursorW(None, 32512)
         self.status = "Connect to your local DataTracking service to start."
+        self.review = ReviewPanel(self)
         self.team = TeamPanel(self)
         self.statistics = StatisticsPanel(self)
         self.exports = ExportPanel(self)
@@ -170,12 +177,21 @@ class Desktop:
                         callback=lambda: self.refresh_images(),
                     )
                     dpg.add_combo(
-                        ["All", "UNLABELED", "IN_PROGRESS"],
+                        [
+                            "All",
+                            "UNLABELED",
+                            "IN_PROGRESS",
+                            "REVIEWED_PASS",
+                            "REVIEWED_NG",
+                            "Review pending",
+                            "Needs correction",
+                        ],
                         default_value="All",
                         tag="filter",
                         width=-1,
                         callback=lambda: self.refresh_images(),
                     )
+                    dpg.add_button(label="Resume queue", callback=self.review.resume)
                     dpg.add_text("No images", tag="image_count", color=(160, 173, 190))
                     with dpg.child_window(tag="image_list", height=-1, border=False):
                         pass
@@ -224,6 +240,7 @@ class Desktop:
                     dpg.add_separator()
                     dpg.add_text("No editing lease", tag="lease", wrap=220)
                     dpg.add_text("Not saved", tag="saved", wrap=220)
+                    dpg.add_text("", tag="review_current", wrap=220)
             dpg.add_separator()
             with dpg.group(horizontal=True):
                 dpg.add_button(label="Previous [A]", callback=lambda: self.navigate(-1))
@@ -233,6 +250,27 @@ class Desktop:
                 dpg.add_button(label="Last import report", callback=lambda: dpg.show_item("import_report"))
                 dpg.add_button(label="Statistics / QC", callback=lambda: self.statistics.open())
                 dpg.add_button(label="Export YOLO", callback=lambda: self.exports.open())
+            with dpg.group(horizontal=True):
+                dpg.add_button(
+                    label="Accept [S]",
+                    tag="review_accept",
+                    callback=lambda: self.review.request("accept"),
+                )
+                dpg.add_button(
+                    label="Reject [X]",
+                    tag="review_reject_button",
+                    callback=lambda: self.review.request("reject"),
+                )
+                dpg.add_checkbox(label="Advance after review", default_value=True, tag="review_advance")
+                dpg.add_button(label="Review history", callback=self.review.show_history)
+                dpg.add_button(label="Review settings", callback=self.review.show_settings)
+            for tag in ("review_accept", "review_reject_button"):
+                with dpg.tooltip(tag):
+                    dpg.add_text(
+                        "Reviewer or maintainer only. Review saved IN_PROGRESS images.\nSelf-review requires an enabled project setting.",
+                        wrap=350,
+                    )
+            dpg.add_text("", tag="review_counts")
             dpg.add_text(self.status, tag="status", wrap=1200, color=(182, 200, 218))
         with dpg.window(
             label="Connect to DataTracking",
@@ -355,6 +393,7 @@ class Desktop:
                 dpg.add_button(label="Preview", callback=lambda: self.start_yolo_import(True))
                 dpg.add_button(label="Import predictions", callback=lambda: self.start_yolo_import(False))
                 dpg.add_button(label="Cancel", callback=lambda: dpg.hide_item("yolo_dialog"))
+        self.review.build()
         self.team.build()
         self.statistics.build()
         self.exports.build()
@@ -369,8 +408,13 @@ class Desktop:
             dpg.add_mouse_wheel_handler(callback=self.mouse_wheel)
             dpg.add_key_press_handler(callback=self.key_press)
         dpg.create_viewport(
-            title="VisionLabel - Annotation workspace", width=1440, height=900, min_width=1060, min_height=700,
-            small_icon=str(assets / "visionlabel.ico"), large_icon=str(assets / "visionlabel.ico"),
+            title="VisionLabel - Annotation workspace",
+            width=1440,
+            height=900,
+            min_width=1060,
+            min_height=700,
+            small_icon=str(assets / "visionlabel.ico"),
+            large_icon=str(assets / "visionlabel.ico"),
         )
         dpg.setup_dearpygui()
         dpg.set_primary_window("main", True)
@@ -384,7 +428,7 @@ class Desktop:
             dpg.show_item("connection")
 
     def connect(self):
-        if self.busy or self.saving:
+        if self.busy or self.saving or self.review.busy:
             return
         url, username, password = (dpg.get_value(t) for t in ("server", "username", "password"))
         self.busy = True
@@ -421,6 +465,10 @@ class Desktop:
             self.image = self.head = self.claim = self.project = None
             self.images = []
             self.pending_save = None
+            self.next_action = None
+            self.navigation_save = False
+            self.review.pending = None
+            self.review.overview = {"total": 0, "image_ids": [], "counts": {}}
             self.recovery = None
             self.editor.load(empty_content())
             self.busy = False
@@ -450,6 +498,7 @@ class Desktop:
         self.busy = True
         self.image = None
         self.images = []
+        self.review.overview = {"total": 0, "image_ids": [], "counts": {}}
         self.populate_images()
         self.head = None
         self.pending_save = None
@@ -557,29 +606,90 @@ class Desktop:
             return
         search = quote(dpg.get_value("search"))
         status = dpg.get_value("filter")
+        status = {"Review pending": "IN_PROGRESS", "Needs correction": "REVIEWED_NG"}.get(status, status)
+        self.image_query_generation += 1
+        generation = self.image_query_generation
         project_id = self.project["id"]
         path = f"/projects/{project_id}/images?search={search}&status=" + ("" if status == "All" else status)
 
         def success(items):
-            if self.project and self.project["id"] == project_id:
+            if (
+                self.project
+                and self.project["id"] == project_id
+                and generation == self.image_query_generation
+            ):
+                if (
+                    self.image
+                    and self.image["project_id"] == project_id
+                    and not any(i["id"] == self.image["id"] for i in items)
+                ):
+                    # Keep the loaded image visible when a decision removes it
+                    # from the filter; navigation itself remains deliberate.
+                    items.append(dict(self.image, pinned_outside_queue=True))
+                    items.sort(key=lambda i: (i["created_at"], i["id"]))
                 self.images = items
                 self.populate_images()
+                self.review.refresh()
+                if self.image:
+                    dpg.set_frame_callback(dpg.get_frame_count() + 2, lambda: self.reveal_image())
                 self.message(f"{len(items)} images. Select one to begin.")
 
         self.submit(lambda: self.client.list_all(path), success)
 
     def populate_images(self):
-        dpg.delete_item("image_list", children_only=True)
-        dpg.set_value("image_count", f"{len(self.images)} images")
-        for image in self.images:
-            label = image["display_filename"] + "\n" + image["status"].replace("_", " ").title()
-            dpg.add_selectable(
-                label=label,
-                parent="image_list",
-                default_value=bool(self.image and self.image["id"] == image["id"]),
-                callback=lambda s, a, u: self.guard(lambda: self.open_image(u)),
-                user_data=image["id"],
-            )
+        ids = [image["id"] for image in self.images]
+        current = self.image["id"] if self.image else None
+        if list(self.image_rows) != ids:
+            scroll = dpg.get_y_scroll("image_list")
+            dpg.delete_item("image_list", children_only=True)
+            self.image_rows = {}
+            for image in self.images:
+                label = image["display_filename"] + "\n" + image["status"].replace("_", " ").title()
+                tag = dpg.add_selectable(
+                    label=label,
+                    parent="image_list",
+                    height=40,
+                    default_value=image["id"] == current,
+                    callback=lambda s, a, u: self.select_image_row(u),
+                    user_data=image["id"],
+                )
+                self.image_rows[image["id"]] = (tag, label)
+            dpg.set_y_scroll("image_list", scroll)
+        else:
+            for image in self.images:
+                tag, previous = self.image_rows[image["id"]]
+                label = image["display_filename"] + "\n" + image["status"].replace("_", " ").title()
+                if label != previous:
+                    dpg.configure_item(tag, label=label)
+                    self.image_rows[image["id"]] = (tag, label)
+            if self.selected_row in self.image_rows:
+                dpg.set_value(self.image_rows[self.selected_row][0], False)
+            if current in self.image_rows:
+                dpg.set_value(self.image_rows[current][0], True)
+        self.selected_row = current
+        self.review.position()
+
+    def select_image_row(self, image_id):
+        if image_id in self.image_rows and (not self.image or image_id != self.image["id"]):
+            dpg.set_value(self.image_rows[image_id][0], False)
+        if self.image and self.image["id"] in self.image_rows:
+            dpg.set_value(self.image_rows[self.image["id"]][0], True)
+        self.guard(lambda: self.open_image(image_id))
+
+    def reveal_image(self):
+        if not self.image or self.image["id"] not in self.image_rows:
+            return
+        tag = self.image_rows[self.image["id"]][0]
+        top = dpg.get_item_rect_min(tag)[1]
+        scroll = dpg.get_y_scroll("image_list")
+        first_tag = next(iter(self.image_rows.values()))[0]
+        viewport = dpg.get_item_rect_min(first_tag)[1] + scroll
+        height = dpg.get_item_rect_size("image_list")[1]
+        bottom = top + dpg.get_item_rect_size(tag)[1]
+        if top < viewport + 5:
+            dpg.set_y_scroll("image_list", max(0, scroll + top - viewport - 5))
+        elif bottom > viewport + height - 8:
+            dpg.set_y_scroll("image_list", scroll + bottom - viewport - height + 8)
 
     def show_yolo_import(self):
         if not self.project or self.project["task_type"] != "detection":
@@ -665,9 +775,10 @@ class Desktop:
         self.claim = None
 
     def open_image(self, image_id, on_loaded=None):
-        if self.busy or self.saving:
+        if self.busy or self.saving or self.review.busy:
             return
         assert self.store is not None and self.project is not None
+        self.review.pending = None
         old_image_id = self.image["id"] if self.image else None
         old_claim = self.claim
         self.claim = None
@@ -678,6 +789,8 @@ class Desktop:
         request_key = uid()
         client, store = self.client, self.store
         project_id = self.project["id"]
+        editable = self.project.get("can_edit", False)
+        reviewable = self.project.get("can_review", False)
 
         def work():
             if old_image_id and old_claim:
@@ -693,10 +806,13 @@ class Desktop:
                 )
             claim_error = None
             try:
+                mode = "edit" if editable else "review"
+                if not editable and not (reviewable and image["status"] == "IN_PROGRESS"):
+                    raise Problem("READ_ONLY", "Read-only image.", 403)
                 claim = client.request(
                     "POST",
                     f"/images/{image_id}/claim",
-                    {"mode": "edit", "client_instance_id": client.instance},
+                    {"mode": mode, "client_instance_id": client.instance},
                     key=request_key,
                 )
             except Problem as exc:
@@ -704,6 +820,8 @@ class Desktop:
                     raise
                 claim, claim_error = None, exc.message
             head = client.request("GET", f"/images/{image_id}/annotation")
+            decisions = client.request("GET", f"/images/{image_id}/reviews")["items"]
+            head["review_comment"] = next((r["comment"] for r in decisions if r["applicable"]), "")
             data = store.read_cached(image)
             if data is None:
                 data = store.cached_image(
@@ -718,6 +836,10 @@ class Desktop:
             assert self.project is not None
             self.image, self.claim, self.head, width, height, pixels, draft, claim_error = result
             assert self.image is not None and self.head is not None
+            self.image["status"] = self.head["status"]
+            for item in self.images:
+                if item["id"] == self.image["id"]:
+                    item["status"] = self.head["status"]
             self.editor.load(self.content_from_head(self.head))
             self.last_content = canonical(self.editor.content)
             self.canvas.cancel()
@@ -733,6 +855,11 @@ class Desktop:
             self.heartbeat_time = time.monotonic()
             self.fit()
             self.populate_images()
+            self.review.remember()
+            self.review.refresh()
+            if dpg.get_value("filter") != "All" or dpg.get_value("search"):
+                self.refresh_images()
+            dpg.set_frame_callback(dpg.get_frame_count() + 2, lambda: self.reveal_image())
             dpg.set_value(
                 "image_title",
                 f"{self.image['display_filename']}  /  {self.image['width']} x {self.image['height']} px",
@@ -742,7 +869,11 @@ class Desktop:
                 "classification": "Ready. Choose one class for this image.",
                 "detection": "Ready. Draw a rectangle, or use V to select and move.",
             }
-            self.message(claim_error or ready[self.project["task_type"]])
+            self.message(
+                (self.head["status"] + ": " + self.head["review_comment"])
+                if self.head.get("review_comment")
+                else (claim_error or ready[self.project["task_type"]])
+            )
             self.render()
             if draft:
                 self.recovery = draft
@@ -765,12 +896,16 @@ class Desktop:
                     "server_content": self.editor.content,
                 }
                 dpg.set_value("recovery_compare", json.dumps(compare, indent=2, ensure_ascii=False))
-                dpg.configure_item("restore_draft", enabled=same and bool(self.claim))
+                dpg.configure_item("restore_draft", enabled=same and bool(self.claim) and self.can_edit())
                 dpg.show_item("recovery_dialog")
             if on_loaded:
                 on_loaded()
 
-        self.submit(work, success)
+        def failure(exc):
+            self.busy = False
+            self.error(exc)
+
+        self.submit(work, success, failure)
 
     @staticmethod
     def content_from_head(head):
@@ -782,6 +917,9 @@ class Desktop:
         )
 
     def restore_draft(self):
+        if not self.can_edit():
+            self.message("An annotator or maintainer role is required to restore an editable draft.")
+            return
         assert self.recovery is not None
         self.editor.change(self.recovery["content"])
         self.blocked = False
@@ -811,22 +949,29 @@ class Desktop:
         self.reload()
 
     def guard(self, action):
-        if self.busy or self.saving:
-            self.message("Wait for the current load or save to finish.")
+        if self.busy or self.review.busy or self.next_action:
+            self.message("Wait for the current operation to finish.")
             return
-        if isinstance(self.canvas, PolygonCanvas) and self.canvas.draft:
-            self.message("Finish the polygon with Enter, or cancel it with Escape before continuing.")
+        if self.canvas.gesture or (isinstance(self.canvas, PolygonCanvas) and self.canvas.draft):
+            self.message("Finish or cancel the current gesture before continuing.")
             return
-        if self.editor.dirty or self.pending_save:
+        if self.editor.dirty or self.pending_save or self.saving:
             self.next_action = action
-            dpg.show_item("dirty_dialog")
+            if dpg.get_value("autosave"):
+                self.navigation_save = True
+                if not self.saving:
+                    self.save(continue_after=True)
+            else:
+                dpg.show_item("dirty_dialog")
         else:
             action()
 
     def save_then_continue(self):
+        self.navigation_save = True
         self.save(continue_after=True)
 
     def keep_then_continue(self):
+        self.navigation_save = False
         self.persist_draft()
         dpg.hide_item("dirty_dialog")
         action, self.next_action = self.next_action, None
@@ -834,6 +979,7 @@ class Desktop:
             action()
 
     def cancel_navigation(self):
+        self.navigation_save = False
         self.next_action = None
         dpg.hide_item("dirty_dialog")
 
@@ -844,7 +990,8 @@ class Desktop:
         index = next((i for i, img in enumerate(self.images) if img["id"] == current_id), -1)
         target = max(0, min(len(self.images) - 1, index + delta))
         if target != index:
-            self.guard(lambda: self.open_image(self.images[target]["id"]))
+            target_id = self.images[target]["id"]
+            self.guard(lambda: self.open_image(target_id))
 
     def persist_draft(self):
         if not self.image or not self.store or not self.head or not self.project:
@@ -886,7 +1033,9 @@ class Desktop:
         if isinstance(self.canvas, PolygonCanvas) and self.canvas.draft:
             self.message("Finish the polygon with Enter before saving. Escape cancels unfinished points.")
             return
-        if self.blocked or not self.claim:
+        if self.blocked or not self.claim or self.claim.get("mode", "edit") != "edit":
+            self.next_action = None
+            self.navigation_save = False
             self.message("Saving is paused. Reload and reconcile your draft first.")
             return
         assert self.head is not None and self.project is not None and self.store is not None
@@ -911,9 +1060,13 @@ class Desktop:
         self.message("Saving...")
 
         def success(result):
+            if not self.image or self.image["id"] != image_id:
+                return
             assert self.head is not None and self.image is not None and self.store is not None
             self.saving = False
+            self.image_query_generation += 1
             self.pending_save = None
+            self.head["review_comment"] = ""
             self.head.update(
                 {
                     "revision": result["revision"],
@@ -935,7 +1088,11 @@ class Desktop:
             self.message(f"Saved revision {result['revision']}.")
             self.render()
             self.populate_images()
-            if continue_after and not self.editor.dirty:
+            self.review.refresh()
+            if self.navigation_save and self.editor.dirty:
+                self.save(continue_after=True)
+            elif (continue_after or self.navigation_save) and not self.editor.dirty:
+                self.navigation_save = False
                 dpg.hide_item("dirty_dialog")
                 action, self.next_action = self.next_action, None
                 if action:
@@ -946,9 +1103,13 @@ class Desktop:
             self.error(exc)
             if isinstance(exc, Problem) and exc.status in (401, 403, 404, 409, 423):
                 self.blocked = True
+                self.next_action = None
+                self.navigation_save = False
                 dpg.show_item("conflict_dialog")
             elif isinstance(exc, Problem) and exc.status == 422:
                 self.pending_save = None
+                self.next_action = None
+                self.navigation_save = False
                 dpg.set_value("autosave", False)
                 self.message(exc.message + " Correct the annotation and save again. Autosave is paused.")
             else:
@@ -993,7 +1154,7 @@ class Desktop:
 
     def mark_empty(self, sender, value):
         if not self.image or self.busy or not self.can_edit():
-            dpg.set_value("verified_empty", False)
+            dpg.set_value("verified_empty", self.editor.content["verified_empty"])
             return
         if value and self.editor.content["shapes"]:
             dpg.set_value("verified_empty", False)
@@ -1053,6 +1214,9 @@ class Desktop:
                 "connection",
                 "new_project",
                 "project_manager",
+                "review_reject",
+                "review_settings",
+                "review_history",
                 "dirty_dialog",
                 "recovery_dialog",
                 "conflict_dialog",
@@ -1065,7 +1229,14 @@ class Desktop:
         )
 
     def can_edit(self):
-        return bool(self.project and self.project.get("can_edit", True) and not self.project_manager.busy)
+        return bool(
+            self.project
+            and self.project.get("can_edit", True)
+            and not self.project_manager.busy
+            and not self.review.busy
+            and not self.navigation_save
+            and not (self.claim and self.claim.get("mode") == "review")
+        )
 
     def mouse_position(self):
         mx, my = dpg.get_mouse_pos(local=False)
@@ -1194,6 +1365,9 @@ class Desktop:
             self.render(canvas_only=True)
 
     def key_press(self, sender, key):
+        fresh_review_key = key not in self.review_keys
+        if key in (dpg.mvKey_S, dpg.mvKey_X):
+            self.review_keys.add(key)
         if self.modal_open() or any(dpg.is_item_active(tag) for tag in self.text_inputs) or self.busy:
             return
         control = dpg.is_key_down(dpg.mvKey_LControl) or dpg.is_key_down(dpg.mvKey_RControl)
@@ -1205,6 +1379,13 @@ class Desktop:
             elif key == dpg.mvKey_Y:
                 self.redo()
             return
+        if key in (dpg.mvKey_S, dpg.mvKey_X):
+            if fresh_review_key and not any(
+                dpg.is_key_down(k)
+                for k in (dpg.mvKey_LShift, dpg.mvKey_RShift, dpg.mvKey_LAlt, dpg.mvKey_RAlt)
+            ):
+                self.review.request("accept" if key == dpg.mvKey_S else "reject")
+            return
         actions: dict[int, Callable[[], None]] = {
             dpg.mvKey_R: lambda: self.set_mode("rectangle"),
             dpg.mvKey_P: lambda: self.set_mode("polygon"),
@@ -1214,7 +1395,7 @@ class Desktop:
             dpg.mvKey_Delete: self.delete_selected,
             dpg.mvKey_A: lambda: self.navigate(-1),
             dpg.mvKey_D: lambda: self.navigate(1),
-            dpg.mvKey_Escape: self.canvas.cancel,
+            dpg.mvKey_Escape: self.cancel_navigation if self.next_action else self.canvas.cancel,
         }
         if key in actions:
             actions[key]()
@@ -1298,7 +1479,7 @@ class Desktop:
         dpg.set_value("verified_empty", self.editor.content["verified_empty"])
         dpg.set_value(
             "lease",
-            "Editing lease active"
+            ("Review lease active" if self.claim.get("mode") == "review" else "Editing lease active")
             if self.claim and not self.blocked
             else "Local editing / shared save paused"
             if self.image
@@ -1317,6 +1498,19 @@ class Desktop:
             if self.head
             else "Not saved",
         )
+        dpg.set_value(
+            "review_current",
+            (
+                self.head["status"].replace("_", " ")
+                + ("\nReason: " + self.head["review_comment"] if self.head.get("review_comment") else "")
+            )
+            if self.head
+            else "",
+        )
+        dpg.configure_item("review_accept", enabled=self.review.eligible())
+        dpg.configure_item("review_reject_button", enabled=self.review.eligible())
+        if self.editor.dirty and self.head and self.head["status"] in ("REVIEWED_PASS", "REVIEWED_NG"):
+            dpg.set_value("saved", "Unsaved changes - review will reset on save")
         dpg.set_value("objects_title", f"OBJECTS  /  {len(self.editor.content['shapes'])}")
         dpg.delete_item("objects", children_only=True)
         if self.project:
@@ -1353,6 +1547,7 @@ class Desktop:
         self.render()
 
     def tick(self):
+        self.review_keys = {key for key in self.review_keys if dpg.is_key_down(key)}
         while not self.completed.empty():
             callback, value, is_error = self.completed.get_nowait()
             try:
@@ -1433,7 +1628,7 @@ class Desktop:
                 self.error(exc)
 
             self.submit(lambda: self.client.request("GET", f"/jobs/{job_id}"), job_result, job_error)
-        height = max(450, dpg.get_viewport_client_height() - 170)
+        height = max(450, dpg.get_viewport_client_height() - 220)
         width = max(380, dpg.get_item_rect_size("center")[0] - 28)
         for tag in ("sidebar", "center", "inspector"):
             if dpg.get_item_height(tag) != height:

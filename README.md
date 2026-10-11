@@ -1,7 +1,8 @@
 # VisionLabel + DataTracking
 
 English-only Windows annotation desktop with a local FastAPI service.
-Current milestone: **Phase 8, YOLO working-dataset export for training**.
+Current milestone: **[Phase 9 — high-volume annotation and review](docs/phase9-plan.md)**.
+Working YOLO export from Phase 8 remains available; approved releases are separate.
 Use **Import YOLO labels** in a detection project to preview/import same-stem `.txt`
 files, then edit their saved rectangles directly. See [Phase 7 instructions](docs/phase7-plan.md).
 See [operations guide](docs/operations-guide.md) and [Phase 6 status](docs/phase6-plan.md).
@@ -92,7 +93,9 @@ Use a folder accessible only to the intended Windows account/administrators.
 6. **Wheel** zooms around the pointer, **Space + drag** pans, and **F** fits the image.
 7. **Ctrl+Z / Ctrl+Y** undo/redo; **Delete** removes the selected shape;
    **1–9** chooses a class and updates the selected shape; **A / D** navigates images.
-8. **Ctrl+S** saves. Autosave runs two seconds after a completed edit.
+8. **Ctrl+S** saves. Autosave runs two seconds after a completed edit and immediately
+   before navigation. The next image loads only after save succeeds; conflicts keep
+   the current image and draft. Turn Autosave off to retain the explicit save prompt.
    The revision display changes only after the server confirms the save.
 9. Navigate away and back to verify the saved annotation. Dirty navigation asks
    whether to save, retain a recovery draft, or cancel.
@@ -169,6 +172,36 @@ not included until you prepare again. Split reproducibility applies to the same 
 inputs/options; the same seed does not fix the test set when the source changes.
 See [Phase 8 scope](docs/phase8-plan.md) and [remaining tests](summary_remain_test.md).
 
+## Review large projects (Phase 9)
+
+- **Annotator:** edit any working state. **Reviewer:** review only. **Maintainer:**
+  edit, review, import/export and manage the project. System-admin status alone
+  does not grant project write/review/export rights; a project role is required.
+- Choose **Review pending** for saved `IN_PROGRESS` images. **Accept [S]** records
+  `REVIEWED_PASS`. **Reject [X]** asks for a preset/custom reason and records
+  `REVIEWED_NG`. Only reviewer/maintainer can decide; missing labels are not PASS.
+- **Advance after review** moves to the next pending image only after server
+  acknowledgement. A/D simply browse. **Resume queue** returns to the last image
+  for this account/project/filter/search, or the next remaining match.
+- Annotators choose **Needs correction** to see NG images and reasons. Saving
+  changed content resets PASS/NG to `IN_PROGRESS`; no-op saves retain review.
+  **Review history** keeps previous decisions visible as superseded.
+- Solo maintainers must explicitly enable **Review settings > Allow self-review**
+  and enter a reason before reviewing revisions they authored. The default is off;
+  the setting is audited and does not bypass leases, revisions or validation.
+- The title shows `[current project position / project total]`, independent of
+  filters. Queue position is separate. The list scrolls to the loaded image;
+  PASS/NG/Pending/Unlabeled counts identify remaining work.
+- **Export YOLO > Prepare** warns whenever some project images are not PASS.
+  **Export anyway** confirms that exact frozen snapshot; **Cancel review
+  confirmation** prepares nothing. Changes to export settings require a fresh
+  confirmation. Unlabeled/incomplete exclusions and geometry validation remain.
+  Even all-PASS working exports are not approved dataset releases.
+
+Migration `0005` runs on service startup. Use the documented backup procedure
+before upgrading valuable data. No dependency change or environment recreation
+is required. See [Phase 9 evidence and remaining acceptance](docs/phase9-plan.md).
+
 ## Preview split algorithms (developer tool)
 
 The independent Phase 4 engine supports random, stratified, group and stratified-group
@@ -199,8 +232,8 @@ Restart the application to load the new **Team & users** button. Database migrat
 4. Choose `annotator` and click **Add / update role**. The member appears in the list.
 5. Sign in with the new account through **Connection** to test its access.
 
-Project roles are `viewer`, `annotator`, `reviewer`, and `maintainer`. Review actions
-arrive in the next Phase 2 increments. Account creation alone does not grant access
+Project roles are `viewer`, `annotator`, `reviewer`, and `maintainer`. Phase 9 implements working
+review; reviewer is review-only and annotator/maintainer correct labels. Account creation alone does not grant access
 to projects. Maintainers can manage their own project's members using a user ID
 provided by an administrator; only administrators see the global account list.
 
@@ -229,7 +262,7 @@ The last active administrator or project maintainer cannot be disabled/removed.
 - An independent deterministic split planner and diagnostic CLI for frozen projections.
 
 This development build remains **loopback-only**. LAN HTTPS, assignment UI,
-submit/review workflows, class schema migration, canonical dataset versions/splits/exports,
+released-version submit/review integration, class schema migration, canonical dataset versions/splits/exports,
 canonical LabelMe import, and a Nuitka installer remain pending. YOLO detection
 prediction import is available through Phase 7's desktop workflow.
 Group/assignee/class browser filters are completed with their team/QC workflows;

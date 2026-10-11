@@ -1,0 +1,28 @@
+{
+  "result": "passed",
+  "images": 5000,
+  "metrics": {
+    "import_seconds": 342.8280000000086,
+    "import_batch_size": 500,
+    "load_render_seconds": 1.1559999999881256,
+    "jump_load_reveal_seconds": [
+      0.25,
+      0.14000000001396984,
+      0.15700000000651926,
+      0.125,
+      0.15599999998812564
+    ],
+    "save_and_navigate_seconds": 0.15600000001722947,
+    "peak_working_set_bytes_including_test_server": 185917440
+  },
+  "checks": [
+    "5000 real imported synthetic images",
+    "jump reveal in both directions",
+    "unfiltered project title under filter",
+    "save-before-navigation without modal",
+    "audited self-review setting",
+    "PASS -> edit -> IN_PROGRESS -> NG and persisted history",
+    "Review-only user, S auto-advance, per-user resume cursor, reject cancellation"
+  ],
+  "physical_mouse_dpi_acceptance": "not performed"
+}

@@ -1,8 +1,14 @@
 # Phase 2 implementation sequence
 
+2026-10-10 implementation update: [Phase 9](phase9-plan.md) implements the user's revised
+working-review flow and review-only reviewer role. Its direct IN_PROGRESS review
+and automatic reset on changed saves replace the planned working submit/reopen
+interaction. Revision-bound evidence, earlier completion/skip
+and released-version integration, and this phase's unfulfilled gates remain open.
+
 Status: started with explicit user authorization after Phase 1 pilot acceptance.
-Increment 1 (users and project roles) is implemented and verified. Items 2–5 remain
-open within Phase 2; no requirement has been deferred to another phase. LAN exposure
+Increment 1 (users and project roles) is implemented and verified. Phase 9 adds
+working review decisions/history, but items 2–5 retain their other open gates; no requirement has been deferred to another phase. LAN exposure
 and the complete Phase 2 exit gate are not yet implemented/claimed.
 
 The user tested increment 1 and requested Phase 3 next. Continue independent polygon
@@ -26,6 +32,10 @@ directly in the Project members tab before selecting a role.
    reject/reopen with revision-bound review evidence, required rejection comments,
    and default self-review prevention. Add reviewer queue and conflict states.
    Verify rejection -> edit -> resubmit and stale approval rejection.
+   **Phase 9 update:** working IN_PROGRESS -> REVIEWED_PASS/REVIEWED_NG, review-only
+   permissions, revision/hash-bound decisions, reasons, self-review settings and
+   automatic review invalidation on edited saves are implemented. The original
+   completion/skip and reviewed-release workflow adapter remains open here.
 4. **Audit/history (PR12):** expose authorized history and audit browsing;
    restoring an earlier annotation creates a new revision through normal save
    validation. Verify actors, revisions, object changes, and permission checks.

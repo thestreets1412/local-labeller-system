@@ -1,0 +1,7 @@
+{
+  "images": 5000,
+  "metrics": {
+    "import_seconds": 342.8280000000086,
+    "import_batch_size": 500
+  }
+}
