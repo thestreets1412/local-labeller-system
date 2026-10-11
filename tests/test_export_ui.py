@@ -91,6 +91,33 @@ def test_old_job_without_details_remains_readable():
     assert failure_report(Problem("EXPORT_FAILED", "Old error")) == "Old error"
 
 
+def test_prepare_locks_class_mapping_until_response(monkeypatch):
+    from visionlabel import export_ui
+
+    values = {"export_mapping": "", "export_val": 20, "export_test": 10, "export_seed": 42}
+    configs, pending = {}, []
+    monkeypatch.setattr(export_ui.dpg, "get_value", values.__getitem__)
+    monkeypatch.setattr(export_ui.dpg, "set_value", values.__setitem__)
+    monkeypatch.setattr(
+        export_ui.dpg, "configure_item", lambda tag, **kw: configs.setdefault(tag, {}).update(kw)
+    )
+    panel = ExportPanel(
+        SimpleNamespace(
+            project={"schema": {"entries": []}},
+            client=object(),
+            submit=lambda *callbacks: pending.append(callbacks),
+            exit_requested=False,
+        )
+    )
+    panel.project_id = "project"
+    panel.prepare()
+    assert len(pending) == 1 and panel.busy
+    assert configs["export_mapping"]["enabled"] is False
+    pending[0][2](Problem("DISCONNECTED", "Try again", 503))
+    assert not panel.busy and configs["export_mapping"]["enabled"] is True
+    assert configs["export_save"]["enabled"] is False
+
+
 def test_review_warning_cancel_and_confirm_bind_exact_candidate(monkeypatch):
     from visionlabel import export_ui
 

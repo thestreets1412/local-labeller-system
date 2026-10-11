@@ -24,6 +24,7 @@ def app(monkeypatch):
     instance.canvas = Canvas(instance.editor)
     instance.busy = instance.saving = instance.blocked = instance.navigation_save = False
     instance.next_action = instance.pending_save = None
+    instance.pending_load_claim = None
     instance.image_query_generation = 0
     instance.review = SimpleNamespace(busy=False, refresh=lambda: None)
     instance.project = {"id": "project", "active_schema_id": "schema"}
@@ -109,6 +110,138 @@ def test_autosave_off_and_active_gesture(app):
     instance.canvas.gesture = {"kind": "draw"}
     instance.navigate(1)
     assert not calls and instance.next_action is None
+
+
+@pytest.mark.parametrize("blocked,claim", [(True, {"mode": "edit"}), (False, None)])
+def test_blocked_navigation_offers_draft_preserving_recovery(app, blocked, claim):
+    instance, _, shown, calls, _, opened = app
+    instance.blocked, instance.claim = blocked, claim
+    drafts = []
+    instance.persist_draft = lambda: drafts.append(copy.deepcopy(instance.editor.content))
+    instance.guard(lambda: opened.append("reload"))
+    assert shown == ["dirty_dialog"] and not calls and not opened
+    instance.keep_then_continue()
+    assert opened == ["reload"] and drafts == [instance.editor.content]
+
+
+@pytest.mark.parametrize("operation", ["class", "delete"])
+def test_rectangle_commands_during_drag_survive_mouse_release(app, operation):
+    instance, _, _, _, _, _ = app
+    instance.can_edit = lambda: True
+    instance.populate_classes = instance.edited = lambda: None
+    instance.project["task_type"] = "detection"
+    instance.editor.load(
+        {
+            "verified_empty": False,
+            "image_labels": [],
+            "shapes": [
+                {
+                    "id": "shape",
+                    "type": "rectangle",
+                    "class_id": "old",
+                    "attributes": {},
+                    "x1": 10,
+                    "y1": 10,
+                    "x2": 30,
+                    "y2": 30,
+                }
+            ],
+        }
+    )
+    instance.canvas.width = instance.canvas.height = 100
+    instance.canvas.mode = "select"
+    instance.canvas.start(20, 20, "old")
+    instance.canvas.move(25, 25)
+    if operation == "class":
+        instance.select_class("new")
+    else:
+        instance.delete_selected()
+    instance.canvas.finish()
+    if operation == "class":
+        assert instance.editor.content["shapes"][0]["class_id"] == "new"
+    else:
+        assert instance.editor.content["shapes"] == []
+
+
+@pytest.mark.parametrize("failure_path", ["annotation", "reviews", "decode", "draft"])
+def test_failed_image_load_releases_acquired_claim(app, failure_path):
+    instance, _, _, calls, _, _ = app
+    instance.claim = None
+    instance.project["can_edit"] = True
+    requests = []
+
+    def fail():
+        raise Problem("DISCONNECTED", "Load failed", 503)
+
+    def request(method, path, *args, **kwargs):
+        requests.append((method, path, kwargs))
+        if path.endswith("/" + failure_path):
+            fail()
+        if method == "POST":
+            return {"claim_id": "lease", "mode": "edit"}
+        if method == "DELETE":
+            return None
+        if path.endswith("/annotation"):
+            return {}
+        if path.endswith("/reviews"):
+            return {"items": []}
+        return {"id": "two", "project_id": "project", "status": "IN_PROGRESS"}
+
+    instance.client = SimpleNamespace(request=request, instance="client")
+    instance.store = SimpleNamespace(
+        read_cached=lambda _: b"pixels",
+        decode_image=lambda *args: fail() if failure_path == "decode" else (1, 1, b"\0" * 4, "png"),
+        load_draft=lambda _: fail() if failure_path == "draft" else None,
+    )
+    Desktop.open_image(instance, "two")
+    work, _, failed = calls.pop()
+    with pytest.raises(Problem) as error:
+        work()
+    failed(error.value)
+    assert instance.claim is None
+    releases = [r for r in requests if r[0] == "DELETE"]
+    assert len(releases) == 1 and releases[0][1] == "/images/two/claim"
+    assert releases[0][2]["claim"]["claim_id"] == "lease"
+
+
+@pytest.mark.parametrize("lost_ack", [False, True])
+def test_load_retry_recovers_claim_after_cleanup_disconnect(app, lost_ack):
+    instance, _, _, calls, _, _ = app
+    instance.claim = None
+    instance.project["can_edit"] = True
+    posts, releases = [], []
+    online = False
+
+    def request(method, path, *args, **kwargs):
+        if method == "POST":
+            posts.append(kwargs["key"])
+            if lost_ack and not online:
+                raise Problem("DISCONNECTED", "Acknowledgement lost", 503)
+            return {"claim_id": "lease", "mode": "edit"}
+        if method == "DELETE":
+            releases.append(kwargs["claim"])
+            if not online:
+                raise Problem("DISCONNECTED", "Cleanup unavailable", 503)
+            return None
+        if path.endswith("/annotation"):
+            raise Problem("DISCONNECTED", "Annotation unavailable", 503)
+        return {"id": "two", "project_id": "project", "status": "IN_PROGRESS"}
+
+    instance.client = SimpleNamespace(request=request, instance="client")
+    for attempt in range(2):
+        online = bool(attempt)
+        Desktop.open_image(instance, "two")
+        work, _, failed = calls.pop()
+        with pytest.raises(Problem) as error:
+            work()
+        failed(error.value)
+        if attempt == 0:
+            assert instance.pending_load_claim is not None
+    assert instance.pending_load_claim is None
+    assert posts[0] != posts[-1]  # A fresh claim only after recovery/release.
+    if lost_ack:
+        assert posts[:3] == [posts[0]] * 3
+    assert releases[-1]["claim_id"] == "lease"
 
 
 def test_title_uses_project_order_not_filtered_queue(app, monkeypatch):

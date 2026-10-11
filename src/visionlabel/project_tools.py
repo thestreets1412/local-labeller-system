@@ -60,7 +60,7 @@ def update_project(srv, user, pid, body, key, request_id):
             raise Problem("REVISION_CONFLICT", "Project changed. Refresh before saving.", 409)
         if not body["name"].strip():
             raise Problem("VALIDATION_FAILED", "Project name cannot be blank.")
-        if body["folder_id"]:
+        if body["folder_id"] and body["folder_id"] != project["folder_id"]:
             manage_folder(srv, conn, user, body["folder_id"])
         conn.exec_driver_sql(
             "UPDATE projects SET name=?,description=?,archived=?,folder_id=?,project_revision=project_revision+1 WHERE id=?",

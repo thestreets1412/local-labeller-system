@@ -224,7 +224,7 @@ class ExportPanel:
 
     def set_busy(self, value):
         self.busy = value
-        for tag in ("export_val", "export_test", "export_seed", "export_prepare"):
+        for tag in ("export_val", "export_test", "export_seed", "export_mapping", "export_prepare"):
             dpg.configure_item(tag, enabled=not value)
         for tag in ("export_history_refresh", "export_history_load"):
             dpg.configure_item(tag, enabled=not value)

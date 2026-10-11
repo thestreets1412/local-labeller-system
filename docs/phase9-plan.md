@@ -320,3 +320,14 @@ and export do not satisfy approved-release requirements. Restart the service and
 desktop to load this increment; normal service startup applies migration `0005`.
 A maintainer working alone must explicitly enable self-review in Review settings
 with an audit reason before reviewing their own saved annotations.
+
+### Review follow-up (2026-10-11)
+
+The user authorized the fixes in [the project code review](code-review-2026-10-11.md).
+Image-loading failures now release acquired claims and retain unresolved claim
+handles/keys for cleanup retry. Dirty navigation with an unavailable save offers
+draft-preserving recovery choices even with Autosave enabled. Class/delete commands
+cancel an unfinished drag before changing content, so mouse release cannot restore
+the older annotation snapshot. Export preparation locks the mapping field alongside
+its other frozen options. Regression evidence and the related metadata/split fixes
+are recorded in that review document; earlier acceptance gates remain open.

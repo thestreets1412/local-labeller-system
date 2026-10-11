@@ -161,6 +161,26 @@ def test_export_mapping_is_explicit_and_frozen(environment):
     assert not history["exports"][0]["approved_release"]
 
 
+def test_shared_maintainer_preserves_folder_when_editing_metadata(environment):
+    client, srv, root = environment
+    proj, _ = labeled(client, root, count=1)
+    folder = mutate(client, "POST", "/project-folders", {"name": "Owner folder"}).json()
+    other_folder = mutate(client, "POST", "/project-folders", {"name": "Other folder"}).json()
+    body = {"expected_project_revision": 1, "name": proj["name"], "folder_id": folder["id"]}
+    response = mutate(client, "PATCH", f"/projects/{proj['id']}", body)
+    assert response.status_code == 200
+    account = create_user(client)
+    assert member(client, proj, account, "maintainer", revision=2).status_code == 200
+    auth = {"Authorization": "Bearer " + srv.login("junior", "a-long-user-password")["token"]}
+    body.update(expected_project_revision=3, name="Renamed by maintainer", archived=True)
+    response = mutate(client, "PATCH", f"/projects/{proj['id']}", body, headers=auth)
+    assert response.status_code == 200, response.text
+    assert response.json()["name"] == body["name"] and response.json()["archived"]
+    assert response.json()["folder_id"] == folder["id"]
+    body.update(expected_project_revision=4, folder_id=other_folder["id"])
+    assert mutate(client, "PATCH", f"/projects/{proj['id']}", body, headers=auth).status_code == 404
+
+
 def test_project_folders_archive_templates_permissions_and_cas(environment):
     client, srv, root = environment
     proj, images = labeled(client, root, count=1)

@@ -42,6 +42,7 @@ class Desktop:
         self.image: dict[str, Any] | None = None
         self.head: dict[str, Any] | None = None
         self.claim: dict[str, Any] | None = None
+        self.pending_load_claim: dict[str, Any] | None = None
         self.class_id: str | None = None
         self.texture = None
         self.texture_number = 0
@@ -323,7 +324,9 @@ class Desktop:
             no_close=True,
         ):
             dpg.add_text("Choose how to preserve your edits before continuing.")
-            dpg.add_button(label="Save and continue", callback=lambda: self.save_then_continue())
+            dpg.add_button(
+                label="Save and continue", tag="dirty_save", callback=lambda: self.save_then_continue()
+            )
             dpg.add_button(
                 label="Keep local recovery draft and continue", callback=lambda: self.keep_then_continue()
             )
@@ -589,6 +592,8 @@ class Desktop:
             self.render()
             return
         if self.image and self.project and not self.busy and self.can_edit():
+            if self.canvas.gesture:
+                self.canvas.cancel()
             data = copy.deepcopy(self.editor.content)
             if self.project["task_type"] == "classification":
                 data["image_labels"] = [class_id]
@@ -774,6 +779,21 @@ class Desktop:
             )
         self.claim = None
 
+    def release_load_claim(self):
+        """Resolve uncertain acquisition with its original key before releasing it."""
+        pending = self.pending_load_claim
+        if not pending:
+            return
+        client, path = pending["client"], f"/images/{pending['image_id']}/claim"
+        try:
+            if pending["claim"] is None:
+                pending["claim"] = client.request("POST", path, pending["body"], key=pending["key"])
+            client.request("DELETE", path, claim=pending["claim"])
+        except Problem as exc:
+            if exc.status not in (401, 403, 404, 409, 423):
+                raise
+        self.pending_load_claim = None
+
     def open_image(self, image_id, on_loaded=None):
         if self.busy or self.saving or self.review.busy:
             return
@@ -792,13 +812,14 @@ class Desktop:
         editable = self.project.get("can_edit", False)
         reviewable = self.project.get("can_review", False)
 
-        def work():
+        def load():
             if old_image_id and old_claim:
-                try:
-                    client.request("DELETE", f"/images/{old_image_id}/claim", claim=old_claim)
-                except Problem as exc:
-                    if exc.status not in (409, 423):
-                        raise
+                self.pending_load_claim = {
+                    "client": client,
+                    "image_id": old_image_id,
+                    "claim": old_claim,
+                }
+                self.release_load_claim()
             image = client.request("GET", f"/images/{image_id}")
             if image["project_id"] != project_id:
                 raise Problem(
@@ -809,15 +830,25 @@ class Desktop:
                 mode = "edit" if editable else "review"
                 if not editable and not (reviewable and image["status"] == "IN_PROGRESS"):
                     raise Problem("READ_ONLY", "Read-only image.", 403)
+                body = {"mode": mode, "client_instance_id": client.instance}
+                self.pending_load_claim = {
+                    "client": client,
+                    "image_id": image_id,
+                    "body": body,
+                    "key": request_key,
+                    "claim": None,
+                }
                 claim = client.request(
                     "POST",
                     f"/images/{image_id}/claim",
-                    {"mode": mode, "client_instance_id": client.instance},
+                    body,
                     key=request_key,
                 )
+                self.pending_load_claim["claim"] = claim
             except Problem as exc:
                 if exc.status not in (403, 409, 423):
                     raise
+                self.pending_load_claim = None
                 claim, claim_error = None, exc.message
             head = client.request("GET", f"/images/{image_id}/annotation")
             decisions = client.request("GET", f"/images/{image_id}/reviews")["items"]
@@ -832,9 +863,22 @@ class Desktop:
             draft = store.load_draft(image_id)
             return image, claim, head, width, height, texture, draft, claim_error
 
+        def work():
+            self.release_load_claim()
+            try:
+                return load()
+            except Exception:
+                # A failed cleanup keeps the handle/key for the next load attempt.
+                try:
+                    self.release_load_claim()
+                except Exception:
+                    pass
+                raise
+
         def success(result):
             assert self.project is not None
             self.image, self.claim, self.head, width, height, pixels, draft, claim_error = result
+            self.pending_load_claim = None
             assert self.image is not None and self.head is not None
             self.image["status"] = self.head["status"]
             for item in self.images:
@@ -957,11 +1001,15 @@ class Desktop:
             return
         if self.editor.dirty or self.pending_save or self.saving:
             self.next_action = action
-            if dpg.get_value("autosave"):
+            save_available = bool(
+                not self.blocked and self.claim and self.claim.get("mode", "edit") == "edit"
+            )
+            if dpg.get_value("autosave") and save_available:
                 self.navigation_save = True
                 if not self.saving:
                     self.save(continue_after=True)
             else:
+                dpg.configure_item("dirty_save", enabled=save_available)
                 dpg.show_item("dirty_dialog")
         else:
             action()
@@ -1168,6 +1216,8 @@ class Desktop:
     def delete_selected(self, whole_shape=False):
         if not self.image or self.busy or not self.can_edit():
             return
+        if self.canvas.gesture:
+            self.canvas.cancel()
         if isinstance(self.canvas, PolygonCanvas):
             if self.canvas.draft:
                 self.canvas.draft.pop()

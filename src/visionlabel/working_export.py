@@ -20,6 +20,7 @@ from .splitting import PARTITIONS, effective_groups, targets
 from .storage import contained
 
 PROFILE = "working-yolo-export-1"
+SPLIT_ALGORITHM = "working-group-split-2"
 
 
 class ExportRequest(StrictModel):
@@ -98,14 +99,55 @@ def split_items(items, options):
                 continue
             candidates.append(group)
         if not candidates:
-            raise Problem(
-                "TRAIN_COVERAGE",
-                "Cannot keep all classes in train and populate validation/test. Add labeled examples/groups or reduce test to 0 percent.",
+            # At most two evaluation partitions are requested. A feasible split
+            # exists iff one/two whole groups can be held out while every class
+            # remains in train. Only classes carried by one or two groups can
+            # prevent that choice; no exponential set-cover search is needed.
+            carriers: dict[str, list[str]] = {}
+            for group in ordered:
+                for cls in group["classes"]:
+                    if cls != "__empty__":
+                        carriers.setdefault(cls, []).append(group["id"])
+            required = {ids[0] for ids in carriers.values() if len(ids) == 1}
+            forbidden: dict[str, set[str]] = {}
+            for ids in carriers.values():
+                if len(ids) == 2:
+                    a, b = ids
+                    forbidden.setdefault(a, set()).add(b)
+                    forbidden.setdefault(b, set()).add(a)
+            eligible = sorted(
+                (g for g in ordered if g["id"] not in required),
+                key=lambda g: (g["size"], rank[g["id"]]),
             )
+            evaluation = [p for p in active if p != "train"]
+            holdouts = eligible[:1] if len(evaluation) == 1 else []
+            if len(evaluation) == 2:
+                for index, first in enumerate(eligible):
+                    second = next(
+                        (
+                            g
+                            for g in eligible[index + 1 :]
+                            if g["id"] not in forbidden.get(first["id"], set())
+                        ),
+                        None,
+                    )
+                    if second is not None:
+                        holdouts = [first, second]
+                        break
+            if len(holdouts) != len(evaluation):
+                raise Problem(
+                    "TRAIN_COVERAGE",
+                    "Cannot keep all classes in train and populate validation/test. Add labeled examples/groups or reduce test to 0 percent.",
+                )
+            for group in ordered:
+                place(group, "train")
+            for group, destination in zip(holdouts, evaluation, strict=True):
+                place(group, destination)
+            break
         place(min(candidates, key=lambda g: (g["size"], rank[g["id"]])), part)
     assignments = {i["image_id"]: allocated[g["id"]] for g in groups for i in g["items"]}
     return assignments, {
-        "algorithm": PROFILE,
+        "algorithm": SPLIT_ALGORITHM,
         "seed": options["seed"],
         "requested_percent": {p: ratios[p] / 100 for p in PARTITIONS},
         "actual_counts": counts,

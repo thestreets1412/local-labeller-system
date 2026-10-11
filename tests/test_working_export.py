@@ -335,6 +335,74 @@ def test_group_boundaries_determinism_and_infeasibility():
         split_items(items[:2], options)
 
 
+@pytest.mark.parametrize("seed", range(10))
+def test_multilabel_coverage_can_reselect_training_groups(seed):
+    def cid(n):
+        return f"00000000-0000-4000-8000-{n:012d}"
+
+    items = [
+        {
+            "image_id": cid(i + 1),
+            "asset_sha256": str(i) * 64,
+            "group_key": None,
+            "class_ids": [cid(c) for c in classes],
+        }
+        for i, classes in enumerate([[100], [101], [100, 101]])
+    ]
+    options = {"validation_percent": 20, "test_percent": 10, "seed": seed}
+    assigned, report = split_items(items, options)
+    assert assigned[cid(3)] == "train"
+    assert {assigned[cid(1)], assigned[cid(2)]} == {"val", "test"}
+    assert assigned == split_items(list(reversed(items)), options)[0]
+    assert report["actual_counts"] == {"train": 1, "val": 1, "test": 1}
+
+
+def test_split_rejects_truly_impossible_training_coverage():
+    items = [
+        {"image_id": str(i), "asset_sha256": str(i), "group_key": None, "class_ids": [str(i)]}
+        for i in range(3)
+    ]
+    with pytest.raises(Problem) as exc:
+        split_items(items, {"validation_percent": 20, "test_percent": 10, "seed": 4})
+    assert exc.value.code == "TRAIN_COVERAGE"
+
+
+def test_small_splits_match_exhaustive_feasibility_oracle():
+    from itertools import product
+
+    for size in (3, 4):
+        for labels in product(([], ["A"], ["B"], ["A", "B"]), repeat=size):
+            all_classes = {c for classes in labels for c in classes}
+            feasible = any(
+                set(parts) == {"train", "val", "test"}
+                and {c for classes, p in zip(labels, parts, strict=True) if p == "train" for c in classes}
+                == all_classes
+                for parts in product(("train", "val", "test"), repeat=size)
+            )
+            items = [
+                {"image_id": str(i), "asset_sha256": str(i), "group_key": None, "class_ids": classes}
+                for i, classes in enumerate(labels)
+            ]
+            try:
+                assigned, report = split_items(
+                    items,
+                    {
+                        "validation_percent": 20,
+                        "test_percent": 10,
+                        "seed": 4,
+                    },
+                )
+            except Problem as exc:
+                assert not feasible, labels
+                assert exc.code == "TRAIN_COVERAGE"
+            else:
+                assert feasible and set(assigned.values()) == {"train", "val", "test"}
+                assert {
+                    c for item in items if assigned[item["image_id"]] == "train" for c in item["class_ids"]
+                } == all_classes
+                assert sum(report["actual_counts"].values()) == size
+
+
 def test_reject_unlisted_archive_path(tmp_path):
     path = tmp_path / "bad.zip"
     with zipfile.ZipFile(path, "w") as bundle:
