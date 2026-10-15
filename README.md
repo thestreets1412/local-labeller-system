@@ -396,6 +396,8 @@ requests; dependency and notice downloads are provisioning-only utilities.
 - [Repository instructions](AGENTS.md)
 - [Accepted baseline / implementation decisions](docs/adr/0001-phase1-baseline.md)
 - [Requirement-to-test matrix](docs/phase1-verification.md)
+- [Image deletion, native acceleration and offline wheels](docs/image-deletion-navigation.md)
+- [Import performance improvements and version 0.1.1 installation](docs/import-performance.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 - [Dependency inventory and native review](docs/license_inventory/native-review.md)
 

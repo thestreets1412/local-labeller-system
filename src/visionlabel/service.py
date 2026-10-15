@@ -3,7 +3,9 @@ import hashlib
 import hmac
 import json
 import secrets
+import tempfile
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -18,6 +20,7 @@ from .imaging import (
     image_header,
     inspect_image,
 )
+from .import_work import ImportTimings, PairIndex
 from .legacy import parse_yolo
 from .operations import DirectoryLock
 from .review import EDITABLE, require_role
@@ -483,6 +486,51 @@ class Service:
         self.authorize(conn, user, image["project_id"], write)
         return image
 
+    def delete_image(self, user, image_id, body, headers, key, request_id):
+        """Irreversible project removal; immutable evidence remains addressable by snapshots."""
+        route = f"delete-image/{image_id}"
+        with self.db.transaction() as conn:
+            record = row(conn, "SELECT * FROM images WHERE id=?", (image_id,))
+            if not record:
+                raise Problem("NOT_FOUND", "Image not found.", 404)
+            self.maintain(conn, user, record["project_id"])
+            replay = self.replay(conn, user, route, key, body)
+            if replay:
+                return replay
+            image = self.image(conn, user, image_id, True)
+            if (image["current_revision"], image["state_revision"]) != (
+                body["expected_revision"],
+                body["expected_state_revision"],
+            ):
+                raise Problem("REVISION_CONFLICT", "Image changed. Reload before deleting it.", 409)
+            lease = row(conn, "SELECT * FROM task_claims WHERE image_id=?", (image_id,))
+            if lease and lease["expires_at"] > now():
+                self.check_claim(conn, user, image_id, headers)
+            conn.exec_driver_sql("UPDATE images SET archived=1 WHERE id=?", (image_id,))
+            conn.exec_driver_sql(
+                "UPDATE task_claims SET generation=generation+1,expires_at=? WHERE image_id=?",
+                (now(), image_id),
+            )
+            conn.exec_driver_sql(
+                "UPDATE annotation_heads SET state_revision=state_revision+1,updated_at=? WHERE image_id=?",
+                (now(), image_id),
+            )
+            conn.exec_driver_sql(
+                "UPDATE projects SET project_revision=project_revision+1 WHERE id=?", (image["project_id"],)
+            )
+            result = {"image_id": image_id, "deleted": True, "evidence_retained": True}
+            self.audit(
+                conn,
+                user,
+                "image.deleted",
+                image_id,
+                image["project_id"],
+                {**body, "asset_sha256": image["asset_sha256"], "evidence_retained": True},
+                request_id,
+            )
+            self.remember(conn, user, route, key, body, result)
+            return result
+
     def annotation(self, user, image_id):
         with self.db.engine.connect() as conn:
             image = self.image(conn, user, image_id)
@@ -656,7 +704,16 @@ class Service:
             self.audit(conn, user, "claim.released", image_id, image["project_id"], request_id=request_id)
 
     def save(
-        self, user, image_id, body, headers, key, request_id, import_provenance=None, remap_provenance=None
+        self,
+        user,
+        image_id,
+        body,
+        headers,
+        key,
+        request_id,
+        import_provenance=None,
+        remap_provenance=None,
+        import_outcome=None,
     ):
         route = f"remap/{image_id}" if remap_provenance is not None else f"save/{image_id}"
         request_body = body | {"remap": remap_provenance} if remap_provenance is not None else body
@@ -810,6 +867,14 @@ class Service:
                 detail["remap"] = remap_provenance
             self.audit(conn, user, "annotation.saved", image_id, image["project_id"], detail, request_id)
             self.remember(conn, user, route, key, request_body, result)
+            if import_outcome is not None:
+                assert import_provenance is not None
+                self.record_import_result(
+                    conn,
+                    import_provenance["job_id"],
+                    import_outcome["ordinal"],
+                    dict(import_outcome["result"], label_state=result["status"], revision=result["revision"]),
+                )
             self.fault("before_commit")
         self.fault("after_commit")
         return result
@@ -841,10 +906,22 @@ class Service:
         self.pool.submit(self.run_import, user, project_id, job_id, body, request_id)
         return result
 
+    def record_import_result(self, conn, job_id, ordinal, result):
+        conn.exec_driver_sql(
+            "INSERT INTO import_results VALUES (?,?,?)", (job_id, ordinal, canonical(result).decode())
+        )
+        conn.exec_driver_sql(
+            "UPDATE jobs SET progress_done=?,updated_at=? WHERE id=?", (ordinal, now(), job_id)
+        )
+
     def run_import(self, user, project_id, job_id, body, request_id):
-        results = []
-        decoder = DecoderSession()
+        results: list[dict] = []
+        decoder = None
+        scratch = None
+        index, timings = PairIndex(), ImportTimings()
         try:
+            scratch = tempfile.TemporaryDirectory(prefix="decode-job-", dir=self.root)
+            decoder = DecoderSession()
             with self.db.transaction() as conn:
                 conn.exec_driver_sql(
                     "UPDATE jobs SET state='running',updated_at=? WHERE id=?", (now(), job_id)
@@ -853,8 +930,8 @@ class Service:
                 if self.stop.is_set():
                     raise Problem("SERVER_STOPPING", "Import stopped during server shutdown.", 503)
                 try:
-                    results.append(
-                        self.ingest(
+                    with timings.measure("item_total"):
+                        result = self.ingest(
                             user,
                             project_id,
                             job_id,
@@ -863,27 +940,42 @@ class Service:
                             request_id,
                             decoder,
                             body.get("yolo"),
+                            pair_index=index,
+                            timings=timings,
+                            scratch=Path(scratch.name),
+                            outcome_ordinal=len(results) + 1,
                         )
-                    )
                 except (Problem, OSError) as exc:
-                    results.append(
-                        {
-                            "path": rel,
-                            "outcome": "invalid",
-                            "code": exc.code if isinstance(exc, Problem) else "STORAGE_UNAVAILABLE",
-                            "message": exc.message if isinstance(exc, Problem) else "File could not be read.",
-                            "details": exc.details if isinstance(exc, Problem) else {},
-                        }
-                    )
-                with self.db.transaction() as conn:
-                    conn.exec_driver_sql(
-                        "UPDATE jobs SET progress_done=?,result_json=?,updated_at=? WHERE id=?",
-                        (len(results), canonical({"items": results}).decode(), now(), job_id),
-                    )
+                    result = {
+                        "path": rel,
+                        "outcome": "invalid",
+                        "code": exc.code if isinstance(exc, Problem) else "STORAGE_UNAVAILABLE",
+                        "message": exc.message if isinstance(exc, Problem) else "File could not be read.",
+                        "details": exc.details if isinstance(exc, Problem) else {},
+                    }
+                # Successful canonical writes also commit their outcome atomically.
+                # Dry runs and rejected files have no canonical write and use a
+                # separate durable progress transaction instead.
+                with timings.measure("progress_commit"):
+                    with self.db.engine.connect() as conn:
+                        persisted = row(
+                            conn,
+                            "SELECT result_json FROM import_results WHERE job_id=? AND ordinal=?",
+                            (job_id, len(results) + 1),
+                        )
+                    if persisted:
+                        result = json.loads(persisted["result_json"])
+                    else:
+                        with self.db.transaction() as conn:
+                            self.record_import_result(conn, job_id, len(results) + 1, result)
+                results.append(result)
+                self.fault("after_import_result")
+            report = canonical({"items": results, "performance": timings.report(index)}).decode()
             with self.db.transaction() as conn:
                 self.maintain(conn, user, project_id)
                 conn.exec_driver_sql(
-                    "UPDATE jobs SET state='succeeded',updated_at=? WHERE id=?", (now(), job_id)
+                    "UPDATE jobs SET state='succeeded',result_json=?,updated_at=? WHERE id=?",
+                    (report, now(), job_id),
                 )
         except Exception as exc:
             error = {
@@ -892,13 +984,19 @@ class Service:
                 if isinstance(exc, Problem)
                 else "Import failed. See the local operator log.",
             }
+            # Failed/restarted jobs can read their durable per-image rows directly.
             with self.db.transaction() as conn:
                 conn.exec_driver_sql(
                     "UPDATE jobs SET state='failed',error_json=?,updated_at=? WHERE id=?",
                     (canonical(error).decode(), now(), job_id),
                 )
         finally:
-            decoder.close()
+            try:
+                if decoder is not None:
+                    decoder.close()
+            finally:
+                if scratch is not None:
+                    scratch.cleanup()
 
     def check_yolo_import(self, conn, user, project_id, options):
         project = self.maintain(conn, user, project_id)
@@ -921,7 +1019,31 @@ class Service:
         ):
             raise Problem("INVALID_MAPPING", "Map each YOLO integer class index to an active project class.")
 
-    def ingest(self, user, project_id, job_id, relative, dry_run, request_id, decoder=None, yolo=None):
+    def ingest(
+        self,
+        user,
+        project_id,
+        job_id,
+        relative,
+        dry_run,
+        request_id,
+        decoder=None,
+        yolo=None,
+        *,
+        pair_index=None,
+        timings=None,
+        scratch=None,
+        outcome_ordinal=None,
+    ):
+        last_stage = time.perf_counter()
+
+        def mark(stage):
+            nonlocal last_stage
+            current = time.perf_counter()
+            if timings is not None:
+                timings.seconds[stage] += current - last_stage
+            last_stage = current
+
         source = contained(self.inbox, relative, True)
         if source.suffix.lower() not in IMAGE_EXTENSIONS:
             raise Problem("INVALID_IMAGE", "Supported image formats: PNG, JPEG and BMP.")
@@ -934,6 +1056,7 @@ class Service:
             raise Problem("SOURCE_CHANGED", "Source changed while importing. Retry after the copy finishes.")
         width, height, extension = image_header(data)
         sha = digest(data)
+        mark("read_header_hash")
         candidate = None
         label_sha = None
         label_relative = None
@@ -941,18 +1064,8 @@ class Service:
         if yolo:
             with self.db.engine.connect() as conn:
                 self.check_yolo_import(conn, user, project_id, yolo)
-            siblings = [
-                p
-                for p in source.parent.iterdir()
-                if p.stem.casefold() == source.stem.casefold()
-                and p.suffix.lower() in IMAGE_EXTENSIONS
-                and p.is_file()
-            ]
-            if len(siblings) != 1:
-                raise Problem(
-                    "AMBIGUOUS_PAIR",
-                    "Multiple images share this filename stem. Rename image/label pairs before importing.",
-                )
+            pair_index = pair_index or PairIndex()
+            pair_index.check(source)
             if extension == "jpg" and exif_orientation(data) != 1:
                 raise Problem(
                     "ORIENTATION_AMBIGUOUS",
@@ -987,18 +1100,31 @@ class Service:
                 )
             except UnicodeError as exc:
                 raise Problem("INVALID_LABEL", "YOLO text must be UTF-8.") from exc
-        staging = self.root / f"decode-{uid()}.{extension}"
+        mark("label_preparation")
+        staging = scratch / f"input.{extension}" if scratch else self.root / f"decode-{uid()}.{extension}"
         try:
-            staging.write_bytes(data)
+            # Reuse a job-private scratch file after the sequential decoder has
+            # finished reading it. Avoid per-image create/delete metadata work.
+            with staging.open("r+b" if scratch and staging.exists() else "xb") as stream:
+                stream.write(data)
+                stream.truncate()
             w, h = decoder.inspect(staging) if decoder else inspect_image(staging)
             assert (w, h) == (width, height)
         finally:
-            staging.unlink(missing_ok=True)
+            if not scratch:
+                staging.unlink(missing_ok=True)
+        mark("staging_decode")
+        if yolo:
+            pair_index.check(source)
         with self.db.engine.connect() as conn:
             self.maintain(conn, user, project_id)
             existing = row(
-                conn, "SELECT id FROM images WHERE project_id=? AND asset_sha256=?", (project_id, sha)
+                conn,
+                "SELECT id,archived FROM images WHERE project_id=? AND asset_sha256=?",
+                (project_id, sha),
             )
+            if existing and existing["archived"]:
+                raise Problem("IMAGE_DELETED", "This image was permanently removed from this project.", 409)
             if yolo and existing:
                 head = self.image(conn, user, existing["id"], True)
                 if head["current_revision"] != 0:
@@ -1023,8 +1149,12 @@ class Service:
         with self.db.transaction() as conn:
             self.maintain(conn, user, project_id)
             existing = row(
-                conn, "SELECT id FROM images WHERE project_id=? AND asset_sha256=?", (project_id, sha)
+                conn,
+                "SELECT id,archived FROM images WHERE project_id=? AND asset_sha256=?",
+                (project_id, sha),
             )
+            if existing and existing["archived"]:
+                raise Problem("IMAGE_DELETED", "This image was permanently removed from this project.", 409)
             image_id = existing["id"] if existing else uid()
             if not existing:
                 conn.exec_driver_sql(
@@ -1061,29 +1191,35 @@ class Service:
                 {"duplicate": bool(existing), "asset_sha256": sha},
                 request_id,
             )
-        result = {
-            "path": relative,
-            "outcome": "duplicate" if existing else "imported",
-            "image_id": image_id,
-            "warnings": ["EXIF rotation ignored; annotations use original raster coordinates."]
-            if extension == "jpg" and exif_orientation(data) != 1
-            else [],
-        }
-        if yolo:
-            assert candidate is not None
-            result.update(
-                label_path=label_relative,
-                label_sha256=label_sha,
-                label_state="UNLABELED",
-                shape_count=len(candidate["shapes"]),
-            )
-            if label_state == "UNLABELED":
-                result["warnings"].append(
-                    "Missing or empty label was left unlabeled; no prediction revision was created."
+            result = {
+                "path": relative,
+                "outcome": "duplicate" if existing else "imported",
+                "image_id": image_id,
+                "warnings": ["EXIF rotation ignored; annotations use original raster coordinates."]
+                if extension == "jpg" and exif_orientation(data) != 1
+                else [],
+            }
+            if yolo:
+                assert candidate is not None
+                result.update(
+                    label_path=label_relative,
+                    label_sha256=label_sha,
+                    label_state="UNLABELED",
+                    shape_count=len(candidate["shapes"]),
                 )
+                if label_state == "UNLABELED":
+                    result["warnings"].append(
+                        "Missing or empty label was left unlabeled; no prediction revision was created."
+                    )
+            if outcome_ordinal is not None and (not yolo or label_state == "UNLABELED"):
+                self.record_import_result(conn, job_id, outcome_ordinal, result)
+        mark("asset_publication_and_commit")
+        if yolo:
+            if label_state == "UNLABELED":
                 return result
             lease = None
             try:
+                pair_index.check(source)
                 lease = self.claim(
                     user, image_id, {"mode": "edit", "client_instance_id": uid()}, uid(), request_id
                 )
@@ -1106,6 +1242,9 @@ class Service:
                     headers,
                     uid(),
                     request_id,
+                    import_outcome={"ordinal": outcome_ordinal, "result": result}
+                    if outcome_ordinal is not None
+                    else None,
                     import_provenance={
                         "format": "yolo-detection",
                         "job_id": job_id,
@@ -1132,6 +1271,7 @@ class Service:
                         self.release(user, image_id, headers, request_id)
                     except Problem:
                         pass
+            mark("annotation_claim_save_release")
         return result
 
 

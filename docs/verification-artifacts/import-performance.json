@@ -1,0 +1,84 @@
+{
+  "baseline_commit": "a96bbc59f4ea44c5e775cff99bb3d81a9af2d27c",
+  "baseline_method": "Isolated package copy with service.py and imaging.py from baseline commit; other modules/migrations identical to this working tree at comparison setup.",
+  "scope": "One local run per mode/version; synthetic 640x640 BMP, 200 unique images, seven boxes per YOLO file. Not an isolated repeated benchmark or the real 5400-image HDD dataset.",
+  "results": {
+    "inbox": {
+      "before": {
+        "mode": "inbox",
+        "images": 200,
+        "dimensions": [
+          640,
+          640
+        ],
+        "bytes_each": 1228854,
+        "seconds": 44.13409350000438,
+        "performance": null,
+        "scope": "Local synthetic service run; excludes fixture creation, UI and HTTP polling. Not the production HDD dataset."
+      },
+      "after": {
+        "mode": "inbox",
+        "images": 200,
+        "dimensions": [
+          640,
+          640
+        ],
+        "bytes_each": 1228854,
+        "seconds": 38.35622469999362,
+        "performance": {
+          "directory_scans": 0,
+          "elapsed_seconds": 38.261893,
+          "stage_seconds": {
+            "asset_publication_and_commit": 25.014814,
+            "item_total": 38.132264,
+            "label_preparation": 0.0009,
+            "progress_commit": 0.073767,
+            "read_header_hash": 5.546909,
+            "staging_decode": 7.359542
+          }
+        },
+        "scope": "Local synthetic service run; excludes fixture creation, UI and HTTP polling. Not the production HDD dataset."
+      },
+      "elapsed_reduction_percent": 13.09
+    },
+    "yolo": {
+      "before": {
+        "mode": "yolo",
+        "images": 200,
+        "dimensions": [
+          640,
+          640
+        ],
+        "bytes_each": 1228854,
+        "seconds": 81.84774779999861,
+        "performance": null,
+        "scope": "Local synthetic service run; excludes fixture creation, UI and HTTP polling. Not the production HDD dataset."
+      },
+      "after": {
+        "mode": "yolo",
+        "images": 200,
+        "dimensions": [
+          640,
+          640
+        ],
+        "bytes_each": 1228854,
+        "seconds": 67.84785400000692,
+        "performance": {
+          "directory_scans": 1,
+          "elapsed_seconds": 67.727806,
+          "stage_seconds": {
+            "annotation_claim_save_release": 35.458805,
+            "asset_publication_and_commit": 19.972333,
+            "item_total": 67.405126,
+            "label_preparation": 1.285163,
+            "progress_commit": 0.05496,
+            "read_header_hash": 4.469882,
+            "staging_decode": 6.021968
+          }
+        },
+        "scope": "Local synthetic service run; excludes fixture creation, UI and HTTP polling. Not the production HDD dataset."
+      },
+      "elapsed_reduction_percent": 17.1
+    }
+  }
+}

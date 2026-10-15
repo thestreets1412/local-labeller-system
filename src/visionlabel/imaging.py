@@ -85,7 +85,7 @@ def image_header(data):
     return width, height, extension
 
 
-def decode(path: Path, max_edge=0):
+def decode(path: Path, max_edge=0, *, pixels_required=True):
     if os.name != "nt":
         raise RuntimeError("WIC requires Windows.")
     data = path.read_bytes()
@@ -164,7 +164,7 @@ def decode(path: Path, max_edge=0):
         )
         pixels = (C.c_ubyte * (width * height * 4))()
         call(converter, 7, [C.c_void_p, C.c_uint, C.c_uint, C.c_void_p], None, width * 4, len(pixels), pixels)
-        return width, height, bytes(pixels), ext
+        return width, height, bytes(pixels) if pixels_required else b"", ext
     finally:
         for ref in reversed(refs):
             vtable = C.cast(ref, C.POINTER(C.POINTER(C.c_void_p))).contents
@@ -316,11 +316,11 @@ if __name__ == "__main__":
     if sys.argv[1] == "--worker":
         for line in sys.stdin:
             try:
-                width, height, _, _ = decode(Path(json.loads(line)))
+                width, height, _, _ = decode(Path(json.loads(line)), pixels_required=False)
                 result = {"width": width, "height": height}
             except (Problem, OSError) as exc:
                 result = {"error": exc.message if isinstance(exc, Problem) else "Image could not be decoded."}
             print(json.dumps(result), flush=True)
     else:
-        width, height, _, _ = decode(Path(sys.argv[1]))
+        width, height, _, _ = decode(Path(sys.argv[1]), pixels_required=False)
         print(json.dumps({"width": width, "height": height}))

@@ -1,0 +1,14 @@
+[build-system]
+requires = ["maturin==1.15.0"]
+build-backend = "maturin"
+
+[project]
+name = "visionlabel-native"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+description = "Optional native texture conversion for VisionLabel"
+
+[tool.maturin]
+module-name = "visionlabel_native"
+include = [{ path = "THIRD_PARTY_NOTICES.txt", format = "wheel" }]

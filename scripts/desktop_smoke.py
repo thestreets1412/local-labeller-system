@@ -607,10 +607,38 @@ def main():
                     != pred["schema"]["entries"][0]["class_id"]
                 )
                 assert not desktop.images
+                desktop.load_project(pred["id"])
+                pump_until(
+                    lambda: desktop.project["id"] == pred["id"] and bool(desktop.images) and not desktop.busy
+                )
+                desktop.open_image(edge["id"])
+                pump_until(
+                    lambda: (
+                        desktop.image is not None and desktop.image["id"] == edge["id"] and not desktop.busy
+                    )
+                )
+                deletion = desktop.image_deletion
+                deletion.request()
+                assert dpg.is_item_shown("delete_image_dialog") and desktop.busy
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                dpg.output_frame_buffer(str(args.output / "delete-image-confirmation.png"))
+                for _ in range(3):
+                    dpg.render_dearpygui_frame()
+                deletion.cancel()
+                assert not desktop.busy and desktop.image["id"] == edge["id"]
+                deletion.request()
+                deletion.confirm()
+                pump_until(lambda: desktop.image is None and not desktop.busy)
+                assert not any(i["id"] == edge["id"] for i in desktop.images)
+                assert not any(
+                    i["id"] == edge["id"] for i in client.list_all(f"/projects/{pred['id']}/images")
+                )
                 result = {
                     "result": "passed",
                     "checks": [
                         "rendered desktop",
+                        "delete image: rendered confirmation, No preserves image, Yes removes through HTTP and clears canvas",
                         "real HTTP login/import",
                         "rectangle drag",
                         "save revision 1",

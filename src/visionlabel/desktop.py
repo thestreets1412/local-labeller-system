@@ -7,7 +7,6 @@ import json
 import os
 import queue
 import time
-from array import array
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
@@ -21,15 +20,18 @@ from .canvas import Canvas
 from .client import Client, LocalStore
 from .domain import Editor, Problem, canonical, empty_content, uid
 from .export_ui import ExportPanel
+from .image_delete_ui import ImageDeletePanel
 from .polygon_canvas import PolygonCanvas
 from .project_ui import ProjectPanel, load_import_model
 from .review_ui import ReviewPanel
 from .statistics_ui import StatisticsPanel
 from .team_ui import TeamPanel
+from .texture import rgba_texture
 
 
 class Desktop:
     def __init__(self, url):
+        self.image_deletion = ImageDeletePanel(self)
         self.client = Client(url)
         self.editor = Editor()
         self.canvas = Canvas(self.editor)
@@ -246,6 +248,7 @@ class Desktop:
             with dpg.group(horizontal=True):
                 dpg.add_button(label="Previous [A]", callback=lambda: self.navigate(-1))
                 dpg.add_button(label="Next [D]", callback=lambda: self.navigate(1))
+                dpg.add_button(label="Delete image...", callback=self.image_deletion.request)
                 dpg.add_button(label="Save [Ctrl+S]", callback=lambda: self.save())
                 dpg.add_checkbox(label="Autosave (2 seconds)", default_value=True, tag="autosave")
                 dpg.add_button(label="Last import report", callback=lambda: dpg.show_item("import_report"))
@@ -273,6 +276,7 @@ class Desktop:
                     )
             dpg.add_text("", tag="review_counts")
             dpg.add_text(self.status, tag="status", wrap=1200, color=(182, 200, 218))
+        self.image_deletion.build()
         with dpg.window(
             label="Connect to DataTracking",
             tag="connection",
@@ -859,7 +863,7 @@ class Desktop:
                     image, client.request("GET", f"/images/{image_id}/content", raw=True)
                 )
             width, height, pixels, _ = store.decode_image(image, data)
-            texture = array("f", (component / 255 for component in pixels))
+            texture = rgba_texture(pixels)
             draft = store.load_draft(image_id)
             return image, claim, head, width, height, texture, draft, claim_error
 
@@ -1677,7 +1681,9 @@ class Desktop:
                 self.job_pending = False
                 self.error(exc)
 
-            self.submit(lambda: self.client.request("GET", f"/jobs/{job_id}"), job_result, job_error)
+            self.submit(
+                lambda: self.client.request("GET", f"/jobs/{job_id}?compact=true"), job_result, job_error
+            )
         height = max(450, dpg.get_viewport_client_height() - 220)
         width = max(380, dpg.get_item_rect_size("center")[0] - 28)
         for tag in ("sidebar", "center", "inspector"):

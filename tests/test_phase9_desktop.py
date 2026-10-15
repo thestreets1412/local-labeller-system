@@ -7,6 +7,7 @@ from visionlabel import desktop as module
 from visionlabel.canvas import Canvas
 from visionlabel.desktop import Desktop
 from visionlabel.domain import Editor, Problem
+from visionlabel.image_delete_ui import ImageDeletePanel
 from visionlabel.review_ui import ReviewPanel
 
 
@@ -53,6 +54,40 @@ def acknowledge(instance, callback):
             "status": "IN_PROGRESS",
         }
     )
+
+
+def test_image_deletion_cancel_keeps_edits_and_transport_retry_keeps_key(app):
+    instance, ui, shown, calls, requests, _ = app
+    instance.project["can_manage_members"] = True
+    instance.image["display_filename"] = "sample.png"
+    panel = ImageDeletePanel(instance)
+    panel.request()
+    assert instance.busy and shown[-1] == "delete_image_dialog"
+    panel.cancel()
+    assert instance.editor.dirty and not instance.busy and not calls
+    panel.request()
+    first = panel.pending.copy()
+    panel.confirm()
+    panel.confirm()
+    assert len(calls) == 1
+    calls[0][2](Problem("DISCONNECTED", "Connection lost.", 503))
+    assert instance.editor.dirty and not instance.busy
+    panel.request()
+    assert panel.pending["key"] == first["key"]
+    panel.confirm()
+    calls[-1][0]()
+    assert requests[-1][1]["key"] == first["key"]
+
+
+def test_image_deletion_requires_maintainer_and_ignores_busy_state(app):
+    instance, ui, shown, calls, _, _ = app
+    panel = ImageDeletePanel(instance)
+    panel.request()
+    assert not shown and not calls and "Maintainer" in ui["status"]
+    instance.project["can_manage_members"] = True
+    instance.saving = True
+    panel.request()
+    assert not shown and panel.pending is None
 
 
 def test_autosave_navigation_waits_and_first_destination_wins(app):

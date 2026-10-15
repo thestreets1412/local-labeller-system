@@ -21,6 +21,11 @@ class Save(StrictModel):
     content: Content
 
 
+class ImageDelete(StrictModel):
+    expected_revision: int = Field(ge=0, strict=True)
+    expected_state_revision: int = Field(ge=0, strict=True)
+
+
 class Login(StrictModel):
     username: str = Field(min_length=1, max_length=100)
     password: str = Field(min_length=1, max_length=1024)

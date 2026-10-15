@@ -17,6 +17,7 @@ from . import project_tools as pt
 from . import review
 from .contracts import (
     ClaimRequest,
+    ImageDelete,
     ImportRequest,
     Login,
     MemberRemove,
@@ -41,7 +42,7 @@ def create_app(root: Path):
         app.state.service.close()
 
     # Default Swagger/ReDoc pages fetch external CDN assets; keep runtime offline.
-    app = FastAPI(title="DataTracking", version="0.1.0", lifespan=lifespan, docs_url=None, redoc_url=None)
+    app = FastAPI(title="DataTracking", version="0.1.1", lifespan=lifespan, docs_url=None, redoc_url=None)
     login_attempts: dict[str, deque] = defaultdict(deque)
     throttle_lock = threading.Lock()
 
@@ -70,7 +71,7 @@ def create_app(root: Path):
     @app.middleware("http")
     async def protocol(request: Request, call_next):
         request.state.request_id = uid()
-        if request.method in ("POST", "PUT", "PATCH"):
+        if request.method in ("POST", "PUT", "PATCH", "DELETE"):
             try:
                 size = int(request.headers.get("content-length", "0"))
             except ValueError:
@@ -505,18 +506,32 @@ def create_app(root: Path):
         )
 
     @app.get("/api/v1/jobs/{job_id}")
-    def job(job_id: UUID, who=Depends(user), srv=Depends(service)):
+    def job(job_id: UUID, compact: bool = False, who=Depends(user), srv=Depends(service)):
         with srv.db.engine.connect() as conn:
+            conn.exec_driver_sql("BEGIN")
             job = row(conn, "SELECT * FROM jobs WHERE id=?", (str(job_id),))
             if not job:
                 raise Problem("NOT_FOUND", "Job not found.", 404)
             srv.authorize(conn, who, job["project_id"])
+            include_result = not compact or job["state"] not in ("queued", "running")
+            result = json.loads(job["result_json"]) if include_result and job["result_json"] else None
+            if include_result and result is None and job["type"] == "import":
+                result = {
+                    "items": [
+                        json.loads(r["result_json"])
+                        for r in rows(
+                            conn,
+                            "SELECT result_json FROM import_results WHERE job_id=? ORDER BY ordinal",
+                            (str(job_id),),
+                        )
+                    ]
+                }
         return {
             "id": job["id"],
             "type": job["type"],
             "state": job["state"],
             "progress": {"done": job["progress_done"], "total": job["progress_total"]},
-            "result": json.loads(job["result_json"]) if job["result_json"] else None,
+            "result": result,
             "error": json.loads(job["error_json"]) if job["error_json"] else None,
         }
 
@@ -553,6 +568,21 @@ def create_app(root: Path):
             str(image_id),
             payload,
             claim_headers(request),
+            key(request),
+            request.state.request_id,
+        )
+
+    @app.delete("/api/v1/images/{image_id}")
+    def delete_image(
+        image_id: UUID, body: ImageDelete, request: Request, who=Depends(user), srv=Depends(service)
+    ):
+        return srv.delete_image(
+            who,
+            str(image_id),
+            body.model_dump(),
+            claim_headers(request)
+            if any(h in request.headers for h in ("x-claim-id", "x-claim-token", "x-claim-generation"))
+            else {},
             key(request),
             request.state.request_id,
         )

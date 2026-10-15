@@ -1,0 +1,94 @@
+{
+  "progress_serialization_only": [
+    {
+      "images": 250,
+      "cumulative_seconds": 0.521775,
+      "total_serialized_bytes": 3548125,
+      "one_final_report_seconds": 0.007831
+    },
+    {
+      "images": 500,
+      "cumulative_seconds": 1.717143,
+      "total_serialized_bytes": 14158750,
+      "one_final_report_seconds": 0.009131
+    },
+    {
+      "images": 1000,
+      "cumulative_seconds": 6.471759,
+      "total_serialized_bytes": 56567500,
+      "one_final_report_seconds": 0.021944
+    }
+  ],
+  "sibling_lookup": {
+    "files": 1000,
+    "rescan_seconds": 5.78479,
+    "one_index_seconds": 0.084668,
+    "note": "One local directory, empty synthetic files; validation of concurrent mutations not implemented by index experiment."
+  },
+  "wic_bmp_2048": [
+    0.288046,
+    0.047868,
+    0.049388
+  ],
+  "yolo_parser": [
+    {
+      "files": 1000,
+      "boxes_each": 1,
+      "seconds": 0.107797
+    },
+    {
+      "files": 1000,
+      "boxes_each": 10,
+      "seconds": 0.730682
+    },
+    {
+      "files": 1000,
+      "boxes_each": 100,
+      "seconds": 6.820848
+    }
+  ],
+  "polygon_validation": [
+    {
+      "vertices": 128,
+      "seconds": 0.052681,
+      "valid": true
+    },
+    {
+      "vertices": 512,
+      "seconds": 0.757406,
+      "valid": true
+    },
+    {
+      "vertices": 1000,
+      "seconds": 2.849031,
+      "valid": true
+    }
+  ],
+  "scope": "Synthetic component timings only; no production data, database writes, import throughput or Rust speedup measured.",
+  "user_workload": {
+    "images": 5400,
+    "approx_bytes_each_decimal_kb": 901000,
+    "remembered_dimensions": [
+      640,
+      640
+    ],
+    "storage": "HDD",
+    "boxes_each_when_complete": 7,
+    "source_bytes_decimal_estimate": 4865400000
+  },
+  "matched_yolo_parser": {
+    "files": 5400,
+    "boxes_each": 7,
+    "dimensions": [
+      640,
+      640
+    ],
+    "seconds": 2.6680402000056347,
+    "scope": "Synthetic in-memory parsing and validation only; no reads, DB or saves."
+  },
+  "analytical_counts": {
+    "cumulative_report_item_encodings": 14582700,
+    "final_report_items": 5400,
+    "sibling_checks_if_all_images_and_labels_share_one_directory": 58320000
+  }
+}

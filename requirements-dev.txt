@@ -46,6 +46,7 @@ mako==1.4.3
     # via alembic
 markupsafe==3.0.4
     # via mako
+maturin==1.15.0
 mypy==1.15.0
 mypy-extensions==1.1.0
     # via mypy

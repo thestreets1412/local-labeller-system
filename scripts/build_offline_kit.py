@@ -19,7 +19,15 @@ def run(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--native-wheel", type=Path, help="Prebuilt optional CPython 3.12 Windows x64 accelerator"
+    )
     args = parser.parse_args()
+    if args.native_wheel and (
+        not args.native_wheel.is_file()
+        or args.native_wheel.name != "visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl"
+    ):
+        parser.error("Expected visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl.")
     destination = args.output.resolve()
     if destination.exists():
         parser.error("Output must be a new directory.")
@@ -62,7 +70,11 @@ def main():
         app = next(wheels.glob("visionlabel-*.whl"))
         app_hash = hashlib.sha256(app.read_bytes()).hexdigest()
         with requirements.open("a", encoding="utf-8", newline="\n") as stream:
-            stream.write(f"\nvisionlabel==0.1.0 --hash=sha256:{app_hash}\n")
+            stream.write(f"\nvisionlabel==0.1.1 --hash=sha256:{app_hash}\n")
+            if args.native_wheel:
+                shutil.copyfile(args.native_wheel, wheels / args.native_wheel.name)
+                native_hash = hashlib.sha256(args.native_wheel.read_bytes()).hexdigest()
+                stream.write(f"visionlabel-native==0.1.0 --hash=sha256:{native_hash}\n")
         shutil.copyfile(ROOT / "scripts/offline_install.py", stage / "install.py")
         shutil.copyfile(ROOT / "scripts/Start-VisionLabel.ps1", stage / "Start-VisionLabel.ps1")
         shutil.copyfile(ROOT / "docs/operations-guide.md", stage / "OPERATIONS.md")

@@ -235,15 +235,31 @@ def test_upgrade_from_phase2_preserves_project_and_annotation_bytes(tmp_path, mo
             ).json()
             client.headers["Authorization"] = "Bearer " + login["token"]
             proj = project(client)
-            image = import_files(client, root, proj["id"])[0]
-            # Seed an actual old-schema revision; current service writes require
+            # Seed an actual old-schema asset/revision; current import writes require
             # the current migration and must not run against a historical schema.
             from visionlabel.domain import canonical
+            from visionlabel.fixtures import png_bytes
             from visionlabel.service import now
 
             old = client.app.state.service
             actor = client.get("/api/v1/me").json()["id"]
             stamp = now()
+            raw = png_bytes(0, 100, 200)
+            image = {"id": uid(), "asset_sha256": digest(raw)}
+            asset_path = f"assets/sha256/{image['asset_sha256'][:2]}/{image['asset_sha256']}.png"
+            old.blobs.publish(asset_path, raw)
+            with old.db.transaction() as conn:
+                conn.exec_driver_sql(
+                    "INSERT INTO assets VALUES (?,?,?,?,?,?,?,?,?)",
+                    (image["asset_sha256"], len(raw), "image/png", "png", 100, 200, asset_path, stamp, actor),
+                )
+                conn.exec_driver_sql(
+                    "INSERT INTO images (id,project_id,asset_sha256,display_filename,created_at,created_by) VALUES (?,?,?,?,?,?)",
+                    (image["id"], proj["id"], image["asset_sha256"], "historical.png", stamp, actor),
+                )
+                conn.exec_driver_sql(
+                    "INSERT INTO annotation_heads (image_id,updated_at) VALUES (?,?)", (image["id"], stamp)
+                )
             doc = dict(
                 save_body(proj)["content"],
                 schema_version="1.0.0",

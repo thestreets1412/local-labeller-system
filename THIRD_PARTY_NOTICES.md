@@ -47,3 +47,9 @@ See [native component review](docs/license_inventory/native-review.md) for Dear 
 Runtime uses Windows Imaging Component and the Windows-installed Tahoma font; these OS files are not copied or redistributed.
 Python/SQLite retain the runtime exceptions in the specification. Release packaging must include the Python runtime notices and an audit of the final installer contents.
 Build frontends/backends are provisioning tools, not bundled runtime; they require their own toolchain inventory before the Phase 6 installer release.
+
+## Optional native texture acceleration
+
+The separately distributed `visionlabel-native` wheel uses PyO3 and MIT-licensed
+runtime dependencies. It includes `THIRD_PARTY_NOTICES.txt` with upstream notices;
+see `docs/license_inventory/native-texture.md` and `native/texture/Cargo.lock`.
