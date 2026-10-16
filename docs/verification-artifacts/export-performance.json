@@ -1,0 +1,41 @@
+{
+  "baseline_commit": "ecf3911",
+  "scope": "Single local diagnostic run per implementation, not company HDD/LAN acceptance. Final progress metadata column correction followed these runs.",
+  "before": {
+    "images": 200,
+    "dimensions": [
+      640,
+      640
+    ],
+    "bytes_each": 1228854,
+    "archive_bytes": 246103889,
+    "prepare_seconds": 16.53971250000177,
+    "save_seconds": 31.344564300001366,
+    "performance": null,
+    "scope": "One local synthetic run; excludes fixture setup. In-process HTTP transport, real service/files/hash/fsync. Not the company HDD/LAN dataset."
+  },
+  "after": {
+    "images": 200,
+    "dimensions": [
+      640,
+      640
+    ],
+    "bytes_each": 1228854,
+    "archive_bytes": 246103889,
+    "prepare_seconds": 8.643812800000887,
+    "save_seconds": 23.651827100024093,
+    "performance": {
+      "elapsed_seconds": 8.375,
+      "stage_seconds": {
+        "Assigning dataset splits": 0.046,
+        "Building dataset archive": 4.313,
+        "Checking saved annotations": 0.813,
+        "Flushing dataset archive": 2.047,
+        "Publishing prepared dataset": 0.063,
+        "Validating labels": 0.141,
+        "Verifying dataset archive": 0.89
+      }
+    },
+    "scope": "One local synthetic run; excludes fixture setup. In-process HTTP transport, real service/files/hash/fsync. Not the company HDD/LAN dataset."
+  }
+}

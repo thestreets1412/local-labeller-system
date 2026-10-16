@@ -2,6 +2,7 @@
 
 import csv
 import json
+import threading
 import time
 from pathlib import Path
 from urllib.parse import urlencode
@@ -56,6 +57,69 @@ class ExportPanel:
         self.history = {}
         self.history_cursor = None
         self.review_confirmation = None
+        self._progress_lock = threading.Lock()
+        self._progress_generation = 0
+        self._progress_value = None
+        self._progress_kind = None
+        self._progress_started = 0.0
+        self._progress_rendered = 0.0
+
+    def begin_progress(self, kind, phase):
+        with self._progress_lock:
+            self._progress_generation += 1
+            generation = self._progress_generation
+            self._progress_kind = kind
+            self._progress_started = time.monotonic()
+            self._progress_value = (phase, 0, 0, "steps")
+        self.tick_progress(force=True)
+
+        def update(phase, done, total, unit="images"):
+            # Worker threads only replace a single latest value. Dear PyGui
+            # updates run on the desktop thread, never the network/file worker.
+            with self._progress_lock:
+                if generation == self._progress_generation:
+                    self._progress_value = (phase, done, total, unit)
+
+        return update
+
+    def tick_progress(self, force=False):
+        current = time.monotonic()
+        if not force and current - self._progress_rendered < 0.1:
+            return
+        self._progress_rendered = current
+        with self._progress_lock:
+            kind, value = self._progress_kind, self._progress_value
+        if kind is None or value is None:
+            return
+        phase, done, total, unit = value
+        elapsed = int(current - self._progress_started)
+        fraction = min(1.0, max(0.0, done / total)) if total else 0.0
+        if total:
+            counts = (
+                f"{done / 1048576:,.1f} / {total / 1048576:,.1f} MiB"
+                if unit == "bytes"
+                else f"{done:,} / {total:,} {unit}"
+            )
+            overlay = f"{fraction:.0%} of this stage | {counts}"
+        else:
+            overlay = "Working..."
+        dpg.set_value(f"export_{kind}_progress", fraction)
+        dpg.configure_item(f"export_{kind}_progress", overlay=overlay)
+        dpg.set_value(f"export_{kind}_detail", f"{phase} | Elapsed {elapsed // 60}:{elapsed % 60:02}")
+
+    def finish_progress(self, success):
+        self.tick_progress(force=True)
+        with self._progress_lock:
+            kind = self._progress_kind
+            self._progress_generation += 1
+            self._progress_kind = None
+            self._progress_value = None
+        if kind is not None:
+            if success:
+                dpg.set_value(f"export_{kind}_progress", 1.0)
+            dpg.configure_item(
+                f"export_{kind}_progress", overlay="Complete" if success else "Stopped; see status"
+            )
 
     def build(self):
         with dpg.file_dialog(
@@ -132,6 +196,9 @@ class ExportPanel:
             dpg.add_button(
                 label="1. Prepare export / retry", tag="export_prepare", callback=lambda: self.prepare()
             )
+            dpg.add_text("Prepare checks saved labels and builds the full dataset archive.", wrap=760)
+            dpg.add_progress_bar(tag="export_prepare_progress", width=-1, overlay="Not started")
+            dpg.add_text("", tag="export_prepare_detail", wrap=760)
             dpg.add_button(
                 label="Export anyway", tag="export_confirm_review", show=False, callback=self.confirm_review
             )
@@ -182,6 +249,8 @@ class ExportPanel:
                 enabled=False,
                 callback=lambda: self.save(),
             )
+            dpg.add_progress_bar(tag="export_save_progress", width=-1, overlay="Not started")
+            dpg.add_text("", tag="export_save_detail", wrap=760)
             dpg.add_text("", tag="export_status", wrap=760)
             dpg.add_button(label="Close", callback=lambda: dpg.hide_item("export_dialog"))
 
@@ -207,6 +276,11 @@ class ExportPanel:
         self.cancel_folder()
 
     def invalidate(self, *args):
+        if not self.busy:
+            for kind in ("prepare", "save"):
+                dpg.set_value(f"export_{kind}_progress", 0.0)
+                dpg.configure_item(f"export_{kind}_progress", overlay="Not started")
+                dpg.set_value(f"export_{kind}_detail", "")
         self.review_confirmation = None
         if dpg.does_item_exist("export_confirm_review"):
             dpg.hide_item("export_confirm_review")
@@ -257,6 +331,7 @@ class ExportPanel:
         dpg.show_item("export_dialog")
 
     def failure(self, exc):
+        self.finish_progress(False)
         self.set_busy(False)
         dpg.set_value("export_status", exc.message if isinstance(exc, Problem) else f"Export failed: {exc}")
         dpg.set_value("export_report", failure_report(exc))
@@ -494,6 +569,10 @@ class ExportPanel:
         names["__empty__"] = "Verified empty"
         self.set_busy(True)
         dpg.set_value("export_report", "")
+        progress = self.begin_progress("prepare", "Capturing saved snapshot")
+        dpg.set_value("export_save_progress", 0.0)
+        dpg.configure_item("export_save_progress", overlay="Not started")
+        dpg.set_value("export_save_detail", "")
         dpg.set_value(
             "export_status", "Preparing saved snapshot and verifying files. Large datasets may take time..."
         )
@@ -504,6 +583,13 @@ class ExportPanel:
             ]
             while not self.app.exit_requested:
                 job = client.request("GET", f"/jobs/{job_id}")
+                status = job.get("progress", {})
+                progress(
+                    status.get("phase", "Preparing dataset"),
+                    status.get("done", 0),
+                    status.get("total", 0),
+                    status.get("unit", "images"),
+                )
                 if job["state"] == "failed":
                     error = job["error"]
                     raise Problem(
@@ -517,6 +603,7 @@ class ExportPanel:
             raise Problem("CANCELLED", "Desktop closed. Prepare again on the next run.")
 
         def done(prepared):
+            self.finish_progress(True)
             self.prepared = prepared
             self.request_key = None
             self.set_busy(False)
@@ -547,6 +634,7 @@ class ExportPanel:
 
         def failed(exc):
             if isinstance(exc, Problem) and exc.code == "REVIEW_CONFIRMATION_REQUIRED":
+                self.finish_progress(False)
                 self.set_busy(False)
                 self.review_confirmation = exc.details["confirmation"]
                 self.request_key = None
@@ -611,9 +699,11 @@ class ExportPanel:
         destination = Path(dpg.get_value("export_parent")) / name
         prepared = self.prepared
         self.set_busy(True)
+        progress = self.begin_progress("save", "Connecting to prepared dataset")
         dpg.set_value("export_status", "Downloading and verifying dataset files...")
 
         def done(path):
+            self.finish_progress(True)
             self.set_busy(False)
             dpg.set_value(
                 "export_status",
@@ -621,7 +711,9 @@ class ExportPanel:
             )
 
         self.app.submit(
-            lambda: prepared["client"].download_export(prepared["job_id"], destination, prepared["result"]),
+            lambda: prepared["client"].download_export(
+                prepared["job_id"], destination, prepared["result"], progress=progress
+            ),
             done,
             self.failure,
         )

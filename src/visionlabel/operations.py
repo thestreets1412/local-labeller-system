@@ -118,7 +118,7 @@ def _backup_snapshot(root: Path, destination: Path):
             "state": "COMPLETE",
             "database_sha256": digest(snapshot.read_bytes()),
             "files": files,
-            "app_version": "0.1.1",
+            "app_version": "0.1.2",
             "secrets_included": False,
         }
         with (destination / "backup_manifest.json").open("xb") as stream:

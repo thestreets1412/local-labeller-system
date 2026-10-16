@@ -42,7 +42,7 @@ def create_app(root: Path):
         app.state.service.close()
 
     # Default Swagger/ReDoc pages fetch external CDN assets; keep runtime offline.
-    app = FastAPI(title="DataTracking", version="0.1.1", lifespan=lifespan, docs_url=None, redoc_url=None)
+    app = FastAPI(title="DataTracking", version="0.1.2", lifespan=lifespan, docs_url=None, redoc_url=None)
     login_attempts: dict[str, deque] = defaultdict(deque)
     throttle_lock = threading.Lock()
 
@@ -499,11 +499,13 @@ def create_app(root: Path):
 
     @app.get("/api/v1/working-exports/{job_id}/download")
     def download_export(job_id: UUID, who=Depends(user), srv=Depends(service)):
-        return FileResponse(
+        response = FileResponse(
             export_archive(srv, who, str(job_id)),
             media_type="application/zip",
             filename=f"dataset-{job_id}.zip",
         )
+        response.chunk_size = 1024 * 1024
+        return response
 
     @app.get("/api/v1/jobs/{job_id}")
     def job(job_id: UUID, compact: bool = False, who=Depends(user), srv=Depends(service)):
@@ -526,11 +528,18 @@ def create_app(root: Path):
                         )
                     ]
                 }
+        progress = {"done": job["progress_done"], "total": job["progress_total"]}
+        if job["type"] == "working-export":
+            if job["state"] in ("queued", "running"):
+                detail = json.loads(job["progress_json"]) if job["progress_json"] else {}
+                progress.update(detail.get("progress", {"phase": "Queued", "unit": "images"}))
+            elif job["state"] == "succeeded":
+                progress.update(done=1, total=1, phase="Complete", unit="steps")
         return {
             "id": job["id"],
             "type": job["type"],
             "state": job["state"],
-            "progress": {"done": job["progress_done"], "total": job["progress_total"]},
+            "progress": progress,
             "result": result,
             "error": json.loads(job["error_json"]) if job["error_json"] else None,
         }

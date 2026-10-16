@@ -1,0 +1,3 @@
+13afdad7c3ae88e2a28240154f4ed8b5466bc271a1a44779fb78275a0ffcbfa0  visionlabel-0.1.1-py3-none-any.whl
+39b3c178e539ba6945f05b3c96f686ccad51a5644da3851f26e87a242fbe93bb  visionlabel-0.1.2-py3-none-any.whl
+f2049882a10067c3ab6639cf3c22ba4a92924c132767dd6ac96626336d023206  visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl

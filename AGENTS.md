@@ -46,6 +46,7 @@
 - Support end-user installation with Python's bundled pip; uv is optional on the destination machine. When changing dependencies, update `uv.lock` and regenerate both `requirements.txt` and `requirements-dev.txt` using the commands in README. Keep the local application entry so `pip install -r requirements.txt` installs the application as well as its dependencies.
 - `develop` is the integration branch. Inspect Git status before edits and preserve user changes. Use focused `codex/` branches for implementation work unless directed otherwise; do not merge or push without user authorization.
 - Keep confidential datasets, runtime databases, caches, recovery drafts, secrets, and build output outside tracked source. Use synthetic test data.
+- User distribution override (2026-10-16): deliver application/native wheels in `rush-wheel/` and include the requested distribution wheels in commits so Git clone/ZIP users receive them. Keep other intermediate build output outside tracked source. Update the wheel installation instructions when versions change.
 
 ## Architecture and integrity
 

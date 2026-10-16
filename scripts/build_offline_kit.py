@@ -70,7 +70,7 @@ def main():
         app = next(wheels.glob("visionlabel-*.whl"))
         app_hash = hashlib.sha256(app.read_bytes()).hexdigest()
         with requirements.open("a", encoding="utf-8", newline="\n") as stream:
-            stream.write(f"\nvisionlabel==0.1.1 --hash=sha256:{app_hash}\n")
+            stream.write(f"\nvisionlabel==0.1.2 --hash=sha256:{app_hash}\n")
             if args.native_wheel:
                 shutil.copyfile(args.native_wheel, wheels / args.native_wheel.name)
                 native_hash = hashlib.sha256(args.native_wheel.read_bytes()).hexdigest()

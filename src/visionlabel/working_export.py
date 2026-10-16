@@ -14,6 +14,7 @@ from .class_mapping import export_classes
 from .contracts import StrictModel
 from .database import row, rows
 from .domain import Problem, canonical, digest, uid, validate_content
+from .export_progress import JobProgress
 from .formats import FORMAT_VERSION, classification_mapping, yolo_config, yolo_labels
 from .imaging import exif_orientation
 from .splitting import PARTITIONS, effective_groups, targets
@@ -197,17 +198,16 @@ def start_export(srv, user, project_id, body, key, request_id):
                 "SELECT i.id AS image_id,i.asset_sha256,i.display_filename,i.group_key,a.width,a.height,a.extension,a.blob_path AS asset_path,h.status,h.current_revision,h.state_revision,r.schema_id,r.blob_path AS annotation_path,r.sha256 AS annotation_sha256 FROM images i JOIN assets a ON a.sha256=i.asset_sha256 JOIN annotation_heads h ON h.image_id=i.id LEFT JOIN annotation_revisions r ON r.image_id=i.id AND r.revision=h.current_revision WHERE i.project_id=? AND i.archived=0 ORDER BY i.id",
                 (project_id,),
             )
-            for record in records:
-                record["review"] = row(
+            reviews = {
+                r["image_id"]: {k: v for k, v in r.items() if k != "image_id"}
+                for r in rows(
                     conn,
-                    "SELECT id,decision,comment,reviewer_id,created_at,annotation_revision,annotation_sha256,schema_id,state_revision FROM working_reviews WHERE image_id=? AND state_revision=? AND annotation_revision=? AND annotation_sha256=?",
-                    (
-                        record["image_id"],
-                        record["state_revision"],
-                        record["current_revision"],
-                        record["annotation_sha256"],
-                    ),
+                    "SELECT w.image_id,w.id,w.decision,w.comment,w.reviewer_id,w.created_at,w.annotation_revision,w.annotation_sha256,w.schema_id,w.state_revision FROM working_reviews w JOIN annotation_heads h ON h.image_id=w.image_id AND h.state_revision=w.state_revision AND h.current_revision=w.annotation_revision JOIN annotation_revisions r ON r.image_id=h.image_id AND r.revision=h.current_revision AND r.sha256=w.annotation_sha256 JOIN images i ON i.id=w.image_id WHERE i.project_id=? AND i.archived=0",
+                    (project_id,),
                 )
+            }
+            for record in records:
+                record["review"] = reviews.get(record["image_id"])
                 if record["status"] in ("REVIEWED_PASS", "REVIEWED_NG") and not record["review"]:
                     raise Problem("INVALID_REVIEW", "Review evidence is missing for the saved state.", 409)
             counts = dict(Counter(r["status"] for r in records))
@@ -288,7 +288,7 @@ else:
 '''
 
 
-def prepare_snapshot(srv, snapshot):
+def prepare_snapshot(srv, snapshot, progress=None):
     schema = snapshot["schema"]
     document = srv.blobs.json(schema["blob_path"], schema["sha256"])
     classes = [
@@ -303,7 +303,9 @@ def prepare_snapshot(srv, snapshot):
     ]
     classes = export_classes(classes, snapshot["options"].get("class_mapping"))
     included, excluded = [], []
-    for record in snapshot["records"]:
+    for position, record in enumerate(snapshot["records"]):
+        if progress:
+            progress("Checking saved annotations", position, len(snapshot["records"]))
         if srv.stop.is_set():
             raise Problem("SERVER_STOPPING", "Export interrupted by server shutdown.", 503)
         if not record["current_revision"]:
@@ -362,16 +364,19 @@ def prepare_snapshot(srv, snapshot):
     return classes, included, excluded
 
 
-def validate_export_geometry(srv, snapshot, classes, items):
+def validate_export_geometry(srv, snapshot, classes, items, progress=None):
     """Scan every included shape before splitting or publishing; never omit bad labels."""
     if snapshot["task_type"] == "classification":
-        return
+        return {}
+    labels = {}
     issues = []
-    for item in items:
+    for position, item in enumerate(items):
+        if progress:
+            progress("Validating labels", position, len(items))
         if srv.stop.is_set():
             raise Problem("SERVER_STOPPING", "Export interrupted by server shutdown.", 503)
         try:
-            yolo_labels(
+            label, _ = yolo_labels(
                 item["content"],
                 item["width"],
                 item["height"],
@@ -381,6 +386,7 @@ def validate_export_geometry(srv, snapshot, classes, items):
                 collect_errors=True,
                 format_version=snapshot.get("format_version", "vl-formats-1"),
             )
+            labels[item["image_id"]] = label
         except Problem as exc:
             if exc.code != "UNREPRESENTABLE_GEOMETRY":
                 raise
@@ -409,6 +415,8 @@ def validate_export_geometry(srv, snapshot, classes, items):
             issues=issues,
         )
 
+    return labels
+
 
 def run_export(srv, user, job_id, snapshot, request_id):
     from .service import now
@@ -416,13 +424,16 @@ def run_export(srv, user, job_id, snapshot, request_id):
     archive = srv.root / "export-cache" / f"{job_id}.zip"
     archive.parent.mkdir(exist_ok=True)
     stage = archive.with_suffix(".partial")
+    progress = JobProgress(srv, job_id)
     try:
         with srv.db.transaction() as conn:
             srv.maintain(conn, user, snapshot["project_id"])
             conn.exec_driver_sql("UPDATE jobs SET state='running',updated_at=? WHERE id=?", (now(), job_id))
-        classes, items, excluded = prepare_snapshot(srv, snapshot)
-        validate_export_geometry(srv, snapshot, classes, items)
+        classes, items, excluded = prepare_snapshot(srv, snapshot, progress)
+        labels = validate_export_geometry(srv, snapshot, classes, items, progress)
+        progress("Assigning dataset splits", 0, 0)
         assignments, split = split_items(items, snapshot["options"])
+        progress("Building dataset archive", 0, len(items))
         classification = snapshot["task_type"] == "classification"
         folders = []
         if classification:
@@ -433,10 +444,10 @@ def run_export(srv, user, job_id, snapshot, request_id):
         files, outputs = [], []
         with zipfile.ZipFile(stage, "x", compression=zipfile.ZIP_STORED, allowZip64=True) as bundle:
 
-            def add(name, data):
+            def add(name, data, verified_sha=None):
                 info = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
                 bundle.writestr(info, data)
-                files.append({"path": name, "bytes": len(data), "sha256": digest(data)})
+                files.append({"path": name, "bytes": len(data), "sha256": verified_sha or digest(data)})
 
             for part in PARTITIONS:
                 if split["actual_counts"][part]:
@@ -459,18 +470,9 @@ def run_export(srv, user, job_id, snapshot, request_id):
                     if classification
                     else f"images/{part}/{name}"
                 )
-                add(image_path, raw)
+                add(image_path, raw, item["asset_sha256"])
                 if not classification:
-                    label, _ = yolo_labels(
-                        item["content"],
-                        item["width"],
-                        item["height"],
-                        snapshot["task_type"],
-                        classes,
-                        image_id=item["image_id"],
-                        format_version=snapshot.get("format_version", "vl-formats-1"),
-                    )
-                    add(f"labels/{part}/{item['image_id']}.txt", label)
+                    add(f"labels/{part}/{item['image_id']}.txt", labels[item["image_id"]])
                 outputs.append(
                     {
                         k: item[k]
@@ -486,10 +488,7 @@ def run_export(srv, user, job_id, snapshot, request_id):
                     }
                     | {"partition": part, "image_path": image_path}
                 )
-                with srv.db.transaction() as conn:
-                    conn.exec_driver_sql(
-                        "UPDATE jobs SET progress_done=?,updated_at=? WHERE id=?", (count, now(), job_id)
-                    )
+                progress("Building dataset archive", count, len(items))
             if not classification:
                 yaml, _ = yolo_config(classes, has_val=True, has_test=bool(split["actual_counts"]["test"]))
                 add("data.yaml", yaml)
@@ -543,14 +542,17 @@ def run_export(srv, user, job_id, snapshot, request_id):
                 "files": files,
             }
             bundle.writestr(zipfile.ZipInfo("manifest.json"), canonical(manifest))
+        progress("Flushing dataset archive", 0, 0)
         with stage.open("r+b") as stream:
             os.fsync(stream.fileno())
-        archive_hash = file_hash(stage)
+        archive_hash = file_hash(stage, progress, "Verifying dataset archive")
+        progress("Publishing prepared dataset", 0, 0)
         srv.fault("export_before_publish")
         with srv.db.transaction() as conn:
             srv.maintain(conn, user, snapshot["project_id"])
             stage.rename(archive)
             result = {
+                "performance": progress.report(),
                 "sha256": archive_hash,
                 "bytes": archive.stat().st_size,
                 "included": len(items),
@@ -590,9 +592,19 @@ def run_export(srv, user, job_id, snapshot, request_id):
             )
 
 
-def file_hash(path):
-    with Path(path).open("rb") as stream:
-        return hashlib.file_digest(stream, "sha256").hexdigest()
+def file_hash(path, progress=None, phase="Verifying downloaded archive"):
+    path = Path(path)
+    total, done = path.stat().st_size, 0
+    checksum = hashlib.sha256()
+    if progress:
+        progress(phase, 0, total, "bytes")
+    with path.open("rb") as stream:
+        while chunk := stream.read(1024 * 1024):
+            checksum.update(chunk)
+            done += len(chunk)
+            if progress:
+                progress(phase, done, total, "bytes")
+    return checksum.hexdigest()
 
 
 def export_archive(srv, user, job_id):
@@ -612,7 +624,7 @@ def export_archive(srv, user, job_id):
     return path
 
 
-def install_archive(archive, destination, expected_sha):
+def install_archive(archive, destination, expected_sha, progress=None):
     """Verify an untrusted archive, extract privately, publish only a complete new directory."""
     destination = Path(destination).absolute()
     if destination.exists():
@@ -621,8 +633,18 @@ def install_archive(archive, destination, expected_sha):
         )
     if not destination.parent.is_dir():
         raise Problem("INVALID_DESTINATION", "Choose an existing parent folder.")
-    if file_hash(archive) != expected_sha:
+    if file_hash(archive, progress) != expected_sha:
         raise Problem("CORRUPT_EXPORT", "Downloaded archive checksum does not match.")
+    return _extract_verified_archive(archive, destination, progress)
+
+
+def _extract_verified_archive(archive, destination, progress=None):
+    """Internal: caller has checked the full archive hash in its private staging area."""
+    destination = Path(destination).absolute()
+    if destination.exists():
+        raise Problem(
+            "DESTINATION_EXISTS", "Choose a new destination folder; existing folders are never overwritten."
+        )
     with tempfile.TemporaryDirectory(prefix=".visionlabel-export-", dir=destination.parent) as folder:
         stage = Path(folder) / "dataset"
         stage.mkdir()
@@ -641,6 +663,10 @@ def install_archive(archive, destination, expected_sha):
                 n for n in names if not n.endswith("/")
             }:
                 raise Problem("INVALID_EXPORT", "Archive does not match its manifest.")
+            total = sum(info.file_size for info in bundle.infolist() if not info.is_dir())
+            extracted = 0
+            if progress:
+                progress("Extracting and verifying files", 0, total, "bytes")
             for info in bundle.infolist():
                 name = info.filename.rstrip("/")
                 target = contained(stage, name)
@@ -650,16 +676,23 @@ def install_archive(archive, destination, expected_sha):
                 if info.filename != "manifest.json" and info.file_size != expected[info.filename]["bytes"]:
                     raise Problem("INVALID_EXPORT", "Export size mismatch.")
                 target.parent.mkdir(parents=True, exist_ok=True)
+                checksum = hashlib.sha256()
                 with bundle.open(info) as source, target.open("xb") as out:
                     while chunk := source.read(1024 * 1024):
                         out.write(chunk)
+                        checksum.update(chunk)
+                        extracted += len(chunk)
+                        if progress:
+                            progress("Extracting and verifying files", extracted, total, "bytes")
                     out.flush()
                     os.fsync(out.fileno())
                 if (
                     info.filename != "manifest.json"
-                    and file_hash(target) != expected[info.filename]["sha256"]
+                    and checksum.hexdigest() != expected[info.filename]["sha256"]
                 ):
                     raise Problem("CORRUPT_EXPORT", "Export file checksum mismatch.")
+        if progress:
+            progress("Finalizing dataset folder", 0, 0)
         if manifest["task_type"] != "classification":
             template = (stage / "data.yaml").read_text(encoding="utf-8")
             local = (

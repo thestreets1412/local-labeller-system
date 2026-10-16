@@ -1,6 +1,7 @@
 """HTTP-only client and private local cache/recovery files."""
 
 import ctypes as C
+import hashlib
 import json
 import os
 import tempfile
@@ -71,8 +72,8 @@ class Client:
         self.user = result["user"]
         return self.user
 
-    def download_export(self, job_id, destination, result):
-        from .working_export import install_archive
+    def download_export(self, job_id, destination, result, progress=None):
+        from .working_export import _extract_verified_archive
 
         destination = Path(destination).absolute()
         if destination.exists() or not destination.parent.is_dir():
@@ -80,6 +81,8 @@ class Client:
         with tempfile.TemporaryDirectory(prefix=".visionlabel-download-", dir=destination.parent) as folder:
             archive = Path(folder) / "dataset.zip"
             try:
+                if progress:
+                    progress("Waiting for server archive verification", 0, 0)
                 with self.http.stream("GET", f"/working-exports/{job_id}/download", timeout=120) as response:
                     if response.is_error:
                         response.read()
@@ -90,17 +93,27 @@ class Client:
                             response.status_code,
                         )
                     size = 0
+                    checksum = hashlib.sha256()
+                    if progress:
+                        progress("Downloading and verifying archive", 0, result["bytes"], "bytes")
                     with archive.open("xb") as stream:
                         for chunk in response.iter_bytes(1024 * 1024):
                             size += len(chunk)
                             if size > result["bytes"]:
                                 raise Problem("CORRUPT_EXPORT", "Archive exceeds its expected size.")
                             stream.write(chunk)
+                            checksum.update(chunk)
+                            if progress:
+                                progress("Downloading and verifying archive", size, result["bytes"], "bytes")
+                        if progress:
+                            progress("Flushing downloaded archive", 0, 0)
                         stream.flush()
                         os.fsync(stream.fileno())
                 if size != result["bytes"]:
                     raise Problem("CORRUPT_EXPORT", "Archive download was incomplete.")
-                return install_archive(archive, destination, result["sha256"])
+                if checksum.hexdigest() != result["sha256"]:
+                    raise Problem("CORRUPT_EXPORT", "Downloaded archive checksum does not match.")
+                return _extract_verified_archive(archive, destination, progress)
             except httpx.HTTPError as exc:
                 raise Problem(
                     "DISCONNECTED", "Export download interrupted. Retry saving the prepared dataset.", 503

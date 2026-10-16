@@ -1601,6 +1601,7 @@ class Desktop:
         self.render()
 
     def tick(self):
+        self.exports.tick_progress()
         self.review_keys = {key for key in self.review_keys if dpg.is_key_down(key)}
         while not self.completed.empty():
             callback, value, is_error = self.completed.get_nowait()

@@ -371,6 +371,8 @@ def main():
                 desktop.exports.prepare()
                 pump_until(lambda: not desktop.exports.busy)
                 assert desktop.exports.prepared, dpg.get_value("export_status")
+                assert dpg.get_value("export_prepare_progress") == 1.0
+                assert dpg.get_item_configuration("export_prepare_progress")["overlay"] == "Complete"
                 assert desktop.exports.prepared["result"]["included"] == 2
                 prepared = desktop.exports.prepared
                 previous_parent = dpg.get_value("export_parent")
@@ -408,6 +410,8 @@ def main():
                 desktop.exports.save()
                 pump_until(lambda: not desktop.exports.busy)
                 exported = Path(folder) / "exported-dataset"
+                assert dpg.get_value("export_save_progress") == 1.0
+                assert dpg.get_item_configuration("export_save_progress")["overlay"] == "Complete"
                 assert (exported / "data.local.yaml").is_file(), dpg.get_value("export_status")
                 manifest = json.loads((exported / "manifest.json").read_text(encoding="utf-8"))
                 assert manifest["split"]["actual_counts"] == {"train": 1, "val": 1, "test": 0}
@@ -655,6 +659,7 @@ def main():
                         "YOLO mapping dialog, preview and canonical prediction import over HTTP",
                         "BMP render and prediction correction/save/reload revision 2",
                         "YOLO export: real HTTP job, split summary, local download/hash verification and atomic dataset publication",
+                        "Prepare and Save progress bars reach Complete through real HTTP export and verified extraction",
                         "Export folder picker: exclusive modal, cancel/selection restore Export and preserve prepared dataset/settings",
                         "Export diagnostics: real HTTP failure, all bad shapes/names displayed, JSON report saved locally",
                         "Export report follow-up: CSV, open/select with lease, edit/save, historical job reload, stale revision warning and successful fresh export",
