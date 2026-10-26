@@ -243,9 +243,17 @@ class DatasetPanel:
         dpg.configure_item("ds_apply", enabled=False)
 
     def open(self):
-        if not self.manager.selected or self.manager.busy:
+        if self.manager.busy:
+            return
+        if not self.manager.selected:
+            self.manager.message("Select a project in Project Manager first.")
             return
         self.project = self.manager.selected
+        if not self.project.get("can_manage_members"):
+            self.manager.message(
+                "A project maintainer role is required to edit classes or dataset checkpoints."
+            )
+            return
         self.comparisons = {"Working data": None}
         self.invalidate()
         dpg.set_value("ds_project", self.project["name"])
@@ -258,7 +266,8 @@ class DatasetPanel:
         for entry in self.project["schema"]["entries"]:
             self.add_class(entry)
         dpg.hide_item("project_manager")
-        dpg.show_item("dataset_manager")
+        # Dear PyGui needs a rendered frame between hiding one modal and showing another.
+        self.app.exports.show_after_modal_closes("dataset_manager")
         self.refresh()
 
     def add_class(self, entry=None):
