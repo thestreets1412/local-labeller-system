@@ -88,6 +88,11 @@ HTTPX deprecation warning remains; no dependency changes were introduced.
 
 ## Remaining Phase 3 implementation
 
+Update (2026-10-27): [Phase 10](phase10-plan.md) implements the working-data
+schema editor/migration, checkpoint browser/diff and restore portions of PR02/
+PR12–14. Its evidence is recorded separately; this does not complete the
+approved-release prerequisites below.
+
 1. Integrate Phase 9 PR10 working-review evidence with approved-release prerequisites
    and reviewed segmentation; enforce self-review
    policy and stale approval rejection before exposing release actions.

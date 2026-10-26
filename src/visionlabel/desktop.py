@@ -525,7 +525,7 @@ class Desktop:
                 PolygonCanvas(self.editor) if project["task_type"] == "segmentation" else Canvas(self.editor)
             )
             self.busy = False
-            self.class_id = project["schema"]["entries"][0]["class_id"]
+            self.class_id = next(e["class_id"] for e in project["schema"]["entries"] if e["active"])
             self.populate_classes()
             dpg.configure_item("verified_empty", show=project["task_type"] != "classification")
             dpg.configure_item("rectangle_tool", show=project["task_type"] == "detection")
@@ -579,6 +579,8 @@ class Desktop:
         if not self.project:
             return
         for entry in self.project["schema"]["entries"]:
+            if not entry["active"]:
+                continue
             label = f"{entry['export_index']}: {entry['display_name']}"
             dpg.add_selectable(
                 label=label,
@@ -798,7 +800,7 @@ class Desktop:
                 raise
         self.pending_load_claim = None
 
-    def open_image(self, image_id, on_loaded=None):
+    def open_image(self, image_id, on_loaded=None, reuse_raster=False):
         if self.busy or self.saving or self.review.busy:
             return
         assert self.store is not None and self.project is not None
@@ -813,6 +815,12 @@ class Desktop:
         request_key = uid()
         client, store = self.client, self.store
         project_id = self.project["id"]
+        retained_asset = (
+            self.image.get("asset_sha256")
+            if reuse_raster and self.image and self.image["id"] == image_id and self.texture
+            else None
+        )
+        retained_selection = self.editor.selected
         editable = self.project.get("can_edit", False)
         reviewable = self.project.get("can_review", False)
 
@@ -857,13 +865,16 @@ class Desktop:
             head = client.request("GET", f"/images/{image_id}/annotation")
             decisions = client.request("GET", f"/images/{image_id}/reviews")["items"]
             head["review_comment"] = next((r["comment"] for r in decisions if r["applicable"]), "")
-            data = store.read_cached(image)
-            if data is None:
-                data = store.cached_image(
-                    image, client.request("GET", f"/images/{image_id}/content", raw=True)
-                )
-            width, height, pixels, _ = store.decode_image(image, data)
-            texture = rgba_texture(pixels)
+            if retained_asset and image["asset_sha256"] == retained_asset:
+                width, height, texture = image["width"], image["height"], None
+            else:
+                data = store.read_cached(image)
+                if data is None:
+                    data = store.cached_image(
+                        image, client.request("GET", f"/images/{image_id}/content", raw=True)
+                    )
+                width, height, pixels, _ = store.decode_image(image, data)
+                texture = rgba_texture(pixels)
             draft = store.load_draft(image_id)
             return image, claim, head, width, height, texture, draft, claim_error
 
@@ -893,15 +904,19 @@ class Desktop:
             self.canvas.cancel()
             self.canvas.width, self.canvas.height = self.image["width"], self.image["height"]
             dpg.delete_item("canvas", children_only=True)
-            if self.texture:
-                dpg.delete_item(self.texture)
-            self.texture_number += 1
-            self.texture = f"image_texture_{self.texture_number}"
-            dpg.add_static_texture(width, height, pixels, tag=self.texture, parent="textures")
+            if pixels is not None:
+                if self.texture:
+                    dpg.delete_item(self.texture)
+                self.texture_number += 1
+                self.texture = f"image_texture_{self.texture_number}"
+                dpg.add_static_texture(width, height, pixels, tag=self.texture, parent="textures")
+            elif any(s["id"] == retained_selection for s in self.editor.content["shapes"]):
+                self.editor.selected = retained_selection
             self.busy = False
             self.heartbeat_failures = 0
             self.heartbeat_time = time.monotonic()
-            self.fit()
+            if pixels is not None:
+                self.fit()
             self.populate_images()
             self.review.remember()
             self.review.refresh()
@@ -1268,6 +1283,8 @@ class Desktop:
                 "connection",
                 "new_project",
                 "project_manager",
+                "dataset_manager",
+                "checkpoint_browser",
                 "review_reject",
                 "review_settings",
                 "review_history",
@@ -1455,7 +1472,7 @@ class Desktop:
             actions[key]()
             self.render()
         if self.project:
-            for i, entry in enumerate(self.project["schema"]["entries"][:9]):
+            for i, entry in enumerate([e for e in self.project["schema"]["entries"] if e["active"]][:9]):
                 if key == getattr(dpg, f"mvKey_{i + 1}"):
                     self.select_class(entry["class_id"])
 
@@ -1602,6 +1619,7 @@ class Desktop:
 
     def tick(self):
         self.exports.tick_progress()
+        self.project_manager.datasets.tick()
         self.review_keys = {key for key in self.review_keys if dpg.is_key_down(key)}
         while not self.completed.empty():
             callback, value, is_error = self.completed.get_nowait()

@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.exc import OperationalError
 from starlette.concurrency import run_in_threadpool
 
+from . import checkpoints as cp
 from . import project_tools as pt
 from . import review
 from .contracts import (
@@ -42,7 +43,7 @@ def create_app(root: Path):
         app.state.service.close()
 
     # Default Swagger/ReDoc pages fetch external CDN assets; keep runtime offline.
-    app = FastAPI(title="DataTracking", version="0.1.2", lifespan=lifespan, docs_url=None, redoc_url=None)
+    app = FastAPI(title="DataTracking", version="0.1.3", lifespan=lifespan, docs_url=None, redoc_url=None)
     login_attempts: dict[str, deque] = defaultdict(deque)
     throttle_lock = threading.Lock()
 
@@ -314,6 +315,83 @@ def create_app(root: Path):
     ):
         return pt.update_project(
             srv, who, str(project_id), body.model_dump(), key(request), request.state.request_id
+        )
+
+    @app.get("/api/v1/projects/{project_id}/checkpoints")
+    def checkpoints(
+        project_id: UUID,
+        before: int = Query(2147483647, ge=1),
+        limit: int = Query(50, ge=1, le=100),
+        who=Depends(user),
+        srv=Depends(service),
+    ):
+        return cp.list_checkpoints(srv, who, str(project_id), before, limit)
+
+    @app.get("/api/v1/projects/{project_id}/class-usage")
+    def class_usage(project_id: UUID, who=Depends(user), srv=Depends(service)):
+        return cp.class_usage(srv, who, str(project_id))
+
+    @app.get("/api/v1/projects/{project_id}/dataset-operations")
+    def pending_datasets(project_id: UUID, who=Depends(user), srv=Depends(service)):
+        return cp.pending(srv, who, str(project_id))
+
+    @app.delete("/api/v1/projects/{project_id}/dataset-operations/{operation_id}")
+    def cancel_dataset(
+        project_id: UUID, operation_id: UUID, request: Request, who=Depends(user), srv=Depends(service)
+    ):
+        return cp.cancel(srv, who, str(project_id), str(operation_id), request.state.request_id)
+
+    @app.post("/api/v1/projects/{project_id}/dataset-preview")
+    def dataset_preview(
+        project_id: UUID, body: cp.PreviewRequest, request: Request, who=Depends(user), srv=Depends(service)
+    ):
+        return cp.preview(
+            srv, who, str(project_id), body.model_dump(), key(request), request.state.request_id
+        )
+
+    @app.post("/api/v1/projects/{project_id}/dataset-operations/{operation_id}/apply", status_code=202)
+    def dataset_apply(
+        project_id: UUID, operation_id: UUID, request: Request, who=Depends(user), srv=Depends(service)
+    ):
+        return cp.start_apply(
+            srv, who, str(project_id), str(operation_id), key(request), request.state.request_id
+        )
+
+    @app.get("/api/v1/projects/{project_id}/checkpoints/{checkpoint_id}")
+    def checkpoint(
+        project_id: UUID,
+        checkpoint_id: UUID,
+        offset: int = Query(0, ge=0),
+        limit: int = Query(100, ge=1, le=500),
+        who=Depends(user),
+        srv=Depends(service),
+    ):
+        return cp.inspect(srv, who, str(project_id), str(checkpoint_id), offset, limit)
+
+    @app.get("/api/v1/projects/{project_id}/checkpoints/{checkpoint_id}/diff")
+    def checkpoint_diff(
+        project_id: UUID,
+        checkpoint_id: UUID,
+        other: UUID | None = None,
+        who=Depends(user),
+        srv=Depends(service),
+    ):
+        return cp.diff(srv, who, str(project_id), str(checkpoint_id), str(other) if other else None)
+
+    @app.get("/api/v1/projects/{project_id}/checkpoints/{checkpoint_id}/images/{image_id}")
+    def checkpoint_image(
+        project_id: UUID, checkpoint_id: UUID, image_id: UUID, who=Depends(user), srv=Depends(service)
+    ):
+        return cp.historical_image(srv, who, str(project_id), str(checkpoint_id), str(image_id))
+
+    @app.get("/api/v1/projects/{project_id}/checkpoints/{checkpoint_id}/images/{image_id}/content")
+    def checkpoint_image_content(
+        project_id: UUID, checkpoint_id: UUID, image_id: UUID, who=Depends(user), srv=Depends(service)
+    ):
+        item = cp.historical_image(srv, who, str(project_id), str(checkpoint_id), str(image_id))["image"]
+        return Response(
+            content=srv.blobs.read(item["asset_path"], item["asset_sha256"]),
+            media_type="application/octet-stream",
         )
 
     @app.get("/api/v1/project-folders")

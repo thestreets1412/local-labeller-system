@@ -25,6 +25,7 @@ SPLIT_ALGORITHM = "working-group-split-2"
 
 
 class ExportRequest(StrictModel):
+    checkpoint_id: str | None = Field(default=None, pattern=r"^[0-9a-f-]{36}$")
     confirmation: str | None = Field(default=None, pattern=r"^[0-9a-f-]{36}$")
     class_mapping: dict[str, StrictInt] | None = None
     validation_percent: int = Field(default=20, ge=1, le=99, strict=True)
@@ -163,7 +164,10 @@ def start_export(srv, user, project_id, body, key, request_id):
     from .service import now
 
     body = ExportRequest.model_validate(body).model_dump()
-    options = {k: v for k, v in body.items() if k != "confirmation"}
+    checkpoint_id = body.pop("checkpoint_id")
+    if checkpoint_id is not None:
+        body["checkpoint_id"] = checkpoint_id
+    options = {k: v for k, v in body.items() if k not in ("confirmation", "checkpoint_id")}
     warning = None
     with srv.db.transaction() as conn:
         project = srv.maintain(conn, user, project_id)
@@ -179,16 +183,35 @@ def start_export(srv, user, project_id, body, key, request_id):
             if not candidate:
                 raise Problem("INVALID_CONFIRMATION", "Prepare a new review summary.", 409)
             snapshot = json.loads(candidate["snapshot_json"])
-            if snapshot["options"] != options:
+            if snapshot["options"] != options or snapshot.get("checkpoint", {}).get("id") != checkpoint_id:
                 raise Problem(
                     "INVALID_CONFIRMATION", "Export options changed. Prepare a new review summary.", 409
                 )
+        elif checkpoint_id:
+            from .checkpoints import get_checkpoint
+
+            checkpoint, snapshot = get_checkpoint(srv, user, project_id, checkpoint_id, conn)
+            snapshot["options"] = options
+            snapshot["format_version"] = FORMAT_VERSION
+            snapshot["checkpoint"] = {k: checkpoint[k] for k in ("id", "label", "sha256")}
+            if any(r["status"] != "REVIEWED_PASS" for r in snapshot["records"]):
+                token = uid()
+                conn.exec_driver_sql(
+                    "INSERT INTO export_candidates VALUES (?,?,?,?,?)",
+                    (token, project_id, user["id"], canonical(snapshot).decode(), now()),
+                )
+                warning = {
+                    "confirmation": token,
+                    "counts": snapshot["review_counts"],
+                    "snapshot_sha256": digest(canonical(snapshot)),
+                    "captured_at": now(),
+                }
         else:
             schema = row(conn, "SELECT * FROM class_schemas WHERE id=?", (project["active_schema_id"],))
             export_classes(
                 rows(
                     conn,
-                    "SELECT class_id,export_index FROM class_schema_entries WHERE schema_id=?",
+                    "SELECT class_id,export_index,active FROM class_schema_entries WHERE schema_id=?",
                     (schema["id"],),
                 ),
                 options["class_mapping"],
@@ -541,6 +564,9 @@ def run_export(srv, user, job_id, snapshot, request_id):
                 "excluded": excluded,
                 "files": files,
             }
+            if snapshot.get("checkpoint"):
+                manifest["source"] = "working_dataset_checkpoint"
+                manifest["checkpoint"] = snapshot["checkpoint"]
             bundle.writestr(zipfile.ZipInfo("manifest.json"), canonical(manifest))
         progress("Flushing dataset archive", 0, 0)
         with stage.open("r+b") as stream:

@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "journey": [
+    "checkpoint",
+    "historical raster and annotations",
+    "class removal",
+    "diff",
+    "frozen export",
+    "restore"
+  ],
+  "images": 4,
+  "review_after_restore": "IN_PROGRESS",
+  "company_acceptance": false
+}

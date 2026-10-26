@@ -95,3 +95,13 @@ Build tooling references: [PyO3](https://pyo3.rs/v0.27.2/),
   this increment does not change.
 - Wheel hashes and sizes: `dist/native/artifacts.json`. Native notices are
   included and wheel files inspected. These artifacts are local build outputs.
+
+
+## Phase 10 controlled restoration (2026-10-27)
+
+Version 0.1.3 adds a deliberate exception to the original deletion policy above:
+a maintainer can restore image membership from an accessible same-project dataset
+checkpoint. Restore previews the full change, creates a safety checkpoint, fences
+old claims and appends new annotation revisions requiring review. It does not
+remove tombstone/history evidence or provide a general undelete endpoint. Ordinary
+reimport of a deleted image still reports IMAGE_DELETED. See phase10-plan.md.

@@ -6,6 +6,7 @@ from pathlib import Path
 import dearpygui.dearpygui as dpg
 
 from .class_mapping import model_names
+from .dataset_ui import DatasetPanel
 from .domain import Problem, uid
 
 
@@ -23,6 +24,7 @@ class ProjectPanel:
         self.preview_generation = 0
         self.image_items = []
         self.image_choices = {}
+        self.datasets = DatasetPanel(self)
 
     def build(self):
         with dpg.window(
@@ -83,6 +85,10 @@ class ProjectPanel:
                                 label="Delete empty folder", callback=lambda: self.save_folder(False, True)
                             )
                         with dpg.tab(label="Classes / templates"):
+                            dpg.add_button(
+                                label="Edit classes / dataset checkpoints",
+                                callback=lambda: self.datasets.open(),
+                            )
                             dpg.add_input_text(
                                 tag="pm_classes", multiline=True, readonly=True, width=650, height=210
                             )
@@ -101,6 +107,10 @@ class ProjectPanel:
                                 wrap=640,
                             )
                         with dpg.tab(label="Versions"):
+                            dpg.add_button(
+                                label="Checkpoints: create / browse / export / restore",
+                                callback=lambda: self.datasets.open(),
+                            )
                             dpg.add_button(
                                 label="Refresh working / schema / export history", callback=self.load_versions
                             )
@@ -152,6 +162,7 @@ class ProjectPanel:
                             )
             dpg.add_text("", tag="pm_status", wrap=990)
             dpg.add_button(label="Close", callback=lambda: dpg.hide_item("project_manager"))
+        self.datasets.build()
 
     def message(self, value):
         dpg.set_value("pm_status", value)

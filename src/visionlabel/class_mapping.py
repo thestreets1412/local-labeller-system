@@ -115,6 +115,7 @@ def model_names(text):
 
 
 def parse_mapping(text, entries, *, complete=False):
+    entries = [e for e in entries if e.get("active", True)]
     names = {e["display_name"]: e["class_id"] for e in entries}
     result = {}
     for line in text.splitlines():
@@ -142,8 +143,14 @@ def parse_mapping(text, entries, *, complete=False):
 
 
 def export_classes(classes, mapping):
+    classes = [c for c in classes if c.get("active", True)]
     if mapping is None:
-        return classes
+        if {c["export_index"] for c in classes} == set(range(len(classes))):
+            return classes
+        return [
+            c | {"schema_export_index": c["export_index"], "export_index": i}
+            for i, c in enumerate(sorted(classes, key=lambda c: c["export_index"]))
+        ]
     if (
         set(mapping) != {c["class_id"] for c in classes}
         or any(type(i) is not int for i in mapping.values())

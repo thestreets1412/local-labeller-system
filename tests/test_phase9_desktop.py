@@ -316,3 +316,41 @@ def test_review_hotkeys_ignore_text_modifiers_and_repeats(app, monkeypatch):
     monkeypatch.setattr(module.dpg, "is_key_down", lambda key: key == module.dpg.mvKey_LShift)
     instance.key_press(None, module.dpg.mvKey_X)
     assert calls == ["accept"]
+
+
+def test_post_review_reuses_raster_but_refreshes_head_and_claim(app):
+    instance, _, _, calls, _, _ = app
+    instance.editor.load({"shapes": [], "image_labels": [], "verified_empty": True})
+    instance.image.update(asset_sha256="unchanged", project_id="project")
+    instance.texture = "retained"
+    instance.project["can_edit"] = True
+    instance.claim = None
+    requests = []
+
+    def request(method, path, *args, **kwargs):
+        requests.append((method, path))
+        if method == "POST":
+            return {"claim_id": "fresh", "mode": "edit"}
+        if path.endswith("/annotation"):
+            return {"revision": 3, "state_revision": 4}
+        if path.endswith("/reviews"):
+            return {"items": []}
+        return {
+            "id": "one",
+            "project_id": "project",
+            "asset_sha256": "unchanged",
+            "width": 100,
+            "height": 200,
+        }
+
+    instance.client = SimpleNamespace(request=request, instance="client")
+
+    def unwanted(*args):
+        pytest.fail("Unchanged raster must not be decoded again")
+
+    instance.store = SimpleNamespace(read_cached=unwanted, decode_image=unwanted, load_draft=lambda _: None)
+    Desktop.open_image(instance, "one", reuse_raster=True)
+    result = calls[-1][0]()
+    assert result[5] is None and result[2]["revision"] == 3
+    assert ("POST", "/images/one/claim") in requests
+    assert ("GET", "/images/one/annotation") in requests

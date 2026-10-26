@@ -1,7 +1,9 @@
 # VisionLabel + DataTracking
 
 English-only Windows annotation desktop with a local FastAPI service.
-Current milestone: **[Phase 9 — high-volume annotation and review](docs/phase9-plan.md)**.
+Current milestone: **[Phase 10 — editable classes, responsive review and dataset checkpoints](docs/phase10-plan.md)**.
+Version 0.1.3 adds named working dataset checkpoints, class editing and restore.
+Use the [pip/PyPI installer](rush-wheel/README.md) after cloning this branch.
 Working YOLO export from Phase 8 remains available; approved releases are separate.
 Use **Import YOLO labels** in a detection project to preview/import same-stem `.txt`
 files, then edit their saved rectangles directly. See [Phase 7 instructions](docs/phase7-plan.md).
@@ -405,3 +407,27 @@ requests; dependency and notice downloads are provisioning-only utilities.
 
 Source is MIT licensed. Dependency exceptions were explicitly approved by the user;
 the final production installer still requires a complete artifact/license audit.
+
+
+## Phase 10 dataset workflow (0.1.3)
+
+In Project Manager, open **Classes/templates** or **Versions**, then **Dataset tools**.
+Maintainers can create a named checkpoint with a message after saving annotations.
+A checkpoint freezes image membership, source bytes, classes, annotations and review
+evidence. Select a checkpoint to inspect images, compare datasets or export its
+frozen contents. These are working datasets, not approved releases.
+
+The class editor supports adding/renaming classes and deactivating unnecessary
+classes. For used classes, explicitly keep, remove or map annotations to another
+active class. Preview reports affected counts before Apply. Stable class identities
+are retained; exported model indices are mapped separately. Schema changes and
+restore create safety checkpoints and invalidate prior working review.
+
+To return to an earlier dataset, select its checkpoint, enter a **new** version
+label/message, preview restore, then apply. Newer checkpoints remain in history,
+so you can restore them later too. Release other active editing claims first. Save
+or recover unsaved work before opening dataset tools. Pending saved previews can be
+resumed after restart for up to 24 hours; stale mutation previews must be recreated.
+
+For installation from Git clone/ZIP with pinned PyPI dependencies and the committed
+wheels, use [the Phase 10 installer instructions](rush-wheel/README.md).

@@ -194,14 +194,13 @@ class ReviewPanel:
             for image in app.images:
                 if image["id"] == iid:
                     image["status"] = result["status"]
-            self.refresh()
-            app.populate_images()
             app.message(result["status"] + (": " + comment if comment else ""))
             if advance and target:
                 app.open_image(target)
             else:
                 app.open_image(
                     iid,
+                    reuse_raster=True,
                     on_loaded=lambda: app.message(
                         "Review saved. No further pending image in this queue."
                         if advance

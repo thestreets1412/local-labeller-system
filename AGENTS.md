@@ -14,6 +14,14 @@
 
 ## Product language
 
+- Phase 10 implementation was authorized after plan review on 2026-10-26 and
+  resumed on 2026-10-27, including commit/push and wheel delivery. See
+  `docs/phase10-plan.md` for editable class schemas, measured Accept performance,
+  named working dataset checkpoints, historical export and restore as new
+  revisions. Controlled restoration from same-project checkpoints is the approved
+  exception to deletion tombstones; ordinary reimport still refuses tombstones. Retain
+  approved-release and earlier company acceptance gates.
+
 - Phase 9 P9-A through P9-F implementation was authorized after the 2026-10-09
   plan and resumed on 2026-10-10. Use `docs/phase9-plan.md`: working review states,
   review-only reviewer, annotation by annotator/maintainer, navigation autosave,

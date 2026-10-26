@@ -57,6 +57,8 @@ class ExportPanel:
         self.history = {}
         self.history_cursor = None
         self.review_confirmation = None
+        self.source_checkpoint = None
+        self.source_schema = None
         self._progress_lock = threading.Lock()
         self._progress_generation = 0
         self._progress_value = None
@@ -147,6 +149,12 @@ class ExportPanel:
                 wrap=760,
             )
             dpg.add_text("", tag="export_project")
+            dpg.add_text("Source: Current saved working data", tag="export_source")
+            dpg.add_button(
+                label="Use current saved working data",
+                tag="export_current_source",
+                callback=lambda: self.use_working_source(),
+            )
             with dpg.collapsing_header(label="Model class mapping (optional)"):
                 dpg.add_text(
                     "Empty uses the project schema. Otherwise include every class: index=project class name.",
@@ -298,7 +306,14 @@ class ExportPanel:
 
     def set_busy(self, value):
         self.busy = value
-        for tag in ("export_val", "export_test", "export_seed", "export_mapping", "export_prepare"):
+        for tag in (
+            "export_val",
+            "export_test",
+            "export_seed",
+            "export_mapping",
+            "export_prepare",
+            "export_current_source",
+        ):
             dpg.configure_item(tag, enabled=not value)
         for tag in ("export_history_refresh", "export_history_load"):
             dpg.configure_item(tag, enabled=not value)
@@ -322,6 +337,9 @@ class ExportPanel:
             self.app.message("Finish polygons and save your changes before opening Export YOLO.")
             return
         if not self.busy and self.project_id != self.app.project["id"]:
+            self.source_checkpoint = None
+            self.source_schema = None
+            dpg.set_value("export_source", "Source: Current saved working data")
             self.project_id = self.app.project["id"]
             self.invalidate()
             self.clear_history()
@@ -329,6 +347,29 @@ class ExportPanel:
             dpg.set_value("export_mapping", "")
         dpg.set_value("export_project", f"{self.app.project['name']} / {self.app.project['task_type']}")
         dpg.show_item("export_dialog")
+        return True
+
+    def use_working_source(self):
+        if self.busy:
+            return
+        self.source_checkpoint = self.source_schema = None
+        dpg.set_value("export_source", "Source: Current saved working data")
+        dpg.set_value("export_mapping", "")
+        self.invalidate()
+
+    def open_checkpoint(self, checkpoint, schema):
+        if self.busy:
+            self.app.message("Wait for the current export to finish.")
+            return
+        if not self.open():
+            return
+        self.source_checkpoint, self.source_schema = checkpoint, schema
+        dpg.set_value(
+            "export_source",
+            "Source: Checkpoint " + checkpoint["label"] + " (frozen, not an approved release)",
+        )
+        dpg.set_value("export_mapping", "")
+        self.invalidate()
 
     def failure(self, exc):
         self.finish_progress(False)
@@ -538,11 +579,14 @@ class ExportPanel:
         try:
             mapping_text = dpg.get_value("export_mapping") or ""
             mapping = (
-                parse_mapping(mapping_text, self.app.project["schema"]["entries"], complete=True)
+                parse_mapping(
+                    mapping_text, (self.source_schema or self.app.project["schema"])["entries"], complete=True
+                )
                 if mapping_text.strip()
                 else None
             )
             body = ExportRequest(
+                checkpoint_id=self.source_checkpoint["id"] if self.source_checkpoint else None,
                 confirmation=confirmation,
                 class_mapping={cid: index for index, cid in mapping.items()} if mapping is not None else None,
                 validation_percent=dpg.get_value("export_val"),
@@ -565,7 +609,10 @@ class ExportPanel:
         if body != self.request_body or self.request_key is None:
             self.request_body, self.request_key = body, uid()
         key, project_id, client = self.request_key, self.project_id, self.app.client
-        names = {e["class_id"]: e["display_name"] for e in self.app.project["schema"]["entries"]}
+        names = {
+            e["class_id"]: e["display_name"]
+            for e in (self.source_schema or self.app.project["schema"])["entries"]
+        }
         names["__empty__"] = "Verified empty"
         self.set_busy(True)
         dpg.set_value("export_report", "")
@@ -676,7 +723,7 @@ class ExportPanel:
             text = "\n".join(f"{i}={name}" for i, name in sorted(names.items()))
             dpg.set_value("export_mapping", text)
             self.invalidate()
-            parse_mapping(text, self.app.project["schema"]["entries"], complete=True)
+            parse_mapping(text, (self.source_schema or self.app.project["schema"])["entries"], complete=True)
             dpg.set_value(
                 "export_status",
                 "Model names loaded. Inspect the index-to-class mapping before preparing export.",

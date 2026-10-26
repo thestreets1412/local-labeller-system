@@ -299,6 +299,7 @@ def test_upgrade_from_phase2_preserves_project_and_annotation_bytes(tmp_path, mo
                 assert record.pop("archived") == 0
                 assert record.pop("folder_id") is None
                 assert record.pop("allow_self_review") == 0
+                assert record.pop("dataset_generation") == 0
             assert after == before
             assert conn.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
             assert conn.exec_driver_sql("PRAGMA foreign_key_check").fetchall() == []
