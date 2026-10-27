@@ -3,6 +3,7 @@
 import dearpygui.dearpygui as dpg
 
 from .domain import canonical, empty_content, uid
+from .feedback import BUSY, IMAGE
 
 
 class ImageDeletePanel:
@@ -13,7 +14,7 @@ class ImageDeletePanel:
 
     def build(self):
         with dpg.window(
-            label="Delete image permanently?",
+            label="Delete image from working dataset?",
             tag="delete_image_dialog",
             modal=True,
             show=False,
@@ -28,10 +29,24 @@ class ImageDeletePanel:
 
     def request(self):
         app = self.app
-        if app.busy or app.saving or app.review.busy or app.blocked or not app.image or not app.head:
+        if app.busy or app.saving or app.review.busy:
+            app.message(BUSY)
+            return
+        if not app.image or not app.head:
+            app.message(IMAGE)
+            return
+        if app.blocked:
+            app.message(
+                "The image has an unresolved recovery or conflict state. Resolve it before deleting the image."
+            )
+            return
+        if app.project and app.project.get("archived"):
+            app.message("This project is archived. Open an active project before deleting images.")
             return
         if not app.project or not app.project.get("can_manage_members") or app.project.get("archived"):
-            app.message("Maintainer permission is required to delete images.")
+            app.message(
+                "Maintainer permission is required to delete images. Ask a project maintainer for access, then refresh the project."
+            )
             return
         self.pending = {
             "image_id": app.image["id"],
@@ -48,7 +63,7 @@ class ImageDeletePanel:
         dpg.set_value(
             "delete_image_message",
             f"Delete {app.image['display_filename']} from this project?\n\n"
-            "This cannot be undone in the application. Unsaved edits will be discarded. "
+            "Unsaved edits will be discarded. A checkpoint containing this image can restore its saved state through dataset restore. "
             "The image will be excluded from future working exports. "
             "Historical evidence and existing snapshots retain their files. "
             "Original files in the import folder are not deleted.",

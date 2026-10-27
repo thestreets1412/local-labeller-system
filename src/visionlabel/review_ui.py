@@ -5,6 +5,7 @@ from typing import Any
 import dearpygui.dearpygui as dpg
 
 from .domain import Problem, uid
+from .feedback import BUSY, IMAGE, failure_text
 
 
 class ReviewPanel:
@@ -19,22 +20,26 @@ class ReviewPanel:
         with dpg.window(
             tag="review_reject", label="Reject annotation", modal=True, show=False, width=470, height=220
         ):
-            dpg.add_combo(
-                ["Wrong class", "Missing object", "Box needs adjustment", "Other"],
-                default_value="Wrong class",
-                tag="review_reason",
-                width=300,
-            )
-            dpg.add_input_text(label="Details", tag="review_comment", width=350)
-            dpg.add_button(label="Reject and save reason", callback=lambda: self.reject())
-            dpg.add_button(label="Cancel", callback=lambda: dpg.hide_item("review_reject"))
+            dpg.add_text("", tag="review_reject_status", wrap=440)
+            with dpg.child_window(tag="review_reject_feedback_body", width=-1, height=-1, border=False):
+                dpg.add_combo(
+                    ["Wrong class", "Missing object", "Box needs adjustment", "Other"],
+                    default_value="Wrong class",
+                    tag="review_reason",
+                    width=300,
+                )
+                dpg.add_input_text(label="Details", tag="review_comment", width=350)
+                dpg.add_button(label="Reject and save reason", callback=lambda: self.reject())
+                dpg.add_button(label="Cancel", callback=lambda: dpg.hide_item("review_reject"))
         with dpg.window(
             tag="review_settings", label="Review settings", modal=True, show=False, width=500, height=220
         ):
-            dpg.add_checkbox(label="Allow self-review for this project", tag="review_self")
-            dpg.add_input_text(label="Reason (required)", tag="review_setting_reason", width=320)
-            dpg.add_button(label="Save setting", callback=self.save_setting)
-            dpg.add_button(label="Cancel", callback=lambda: dpg.hide_item("review_settings"))
+            dpg.add_text("", tag="review_settings_status", wrap=460)
+            with dpg.child_window(tag="review_settings_feedback_body", width=-1, height=-1, border=False):
+                dpg.add_checkbox(label="Allow self-review for this project", tag="review_self")
+                dpg.add_input_text(label="Reason (required)", tag="review_setting_reason", width=320)
+                dpg.add_button(label="Save setting", callback=self.save_setting)
+                dpg.add_button(label="Cancel", callback=lambda: dpg.hide_item("review_settings"))
         with dpg.window(tag="review_history", label="Review history", show=False, width=700, height=450):
             dpg.add_input_text(tag="review_history_text", multiline=True, readonly=True, width=-1, height=-1)
         self.app.text_inputs.extend(["review_comment", "review_setting_reason"])
@@ -94,6 +99,9 @@ class ReviewPanel:
     def resume(self):
         app = self.app
         if not app.store or not app.project:
+            app.message(
+                "No connected project is available. Connect and open a project, then resume the queue."
+            )
             return
         iid = app.store.review_cursor(app.project["id"], dpg.get_value("filter"), dpg.get_value("search"))
         ids = [i["id"] for i in app.images if not i.get("pinned_outside_queue")]
@@ -106,25 +114,33 @@ class ReviewPanel:
             iid = next((x for x in order[after + 1 :] if x in candidates), ids[0] if ids else None)
         if iid:
             app.guard(lambda: app.open_image(iid))
+        else:
+            app.message("No images match this queue. Change the filter or select another project.")
+
+    def unavailable_reason(self):
+        app = self.app
+        if not app.project:
+            return "No project is selected. Open a project to review images."
+        if not app.project.get("can_review"):
+            return "Your project role cannot review. Ask a maintainer for reviewer or maintainer access, then refresh the project."
+        if not app.head:
+            return "No saved image is open. Open a saved IN_PROGRESS image to review."
+        if app.busy or self.busy:
+            return BUSY
+        if app.blocked:
+            return "The image has an unresolved conflict or recovery draft. Resolve it before reviewing."
+        if app.canvas.gesture or getattr(app.canvas, "draft", None):
+            return "An annotation is unfinished. Finish or cancel it before reviewing."
+        if app.head["status"] != "IN_PROGRESS":
+            return "This image is not IN_PROGRESS. Open a saved IN_PROGRESS image to review."
+        return ""
 
     def eligible(self):
-        app = self.app
-        return bool(
-            app.project
-            and app.project.get("can_review")
-            and app.head
-            and app.head["status"] == "IN_PROGRESS"
-            and not app.blocked
-            and not app.busy
-            and not self.busy
-            and not app.canvas.gesture
-        )
+        return not self.unavailable_reason()
 
     def request(self, decision):
         if not self.eligible():
-            self.app.message(
-                "Review requires a saved IN_PROGRESS image and reviewer or maintainer permission."
-            )
+            self.app.message(self.unavailable_reason())
             return
         if decision == "reject":
             dpg.show_item("review_reject")
@@ -134,7 +150,10 @@ class ReviewPanel:
     def reject(self):
         reason, detail = dpg.get_value("review_reason"), dpg.get_value("review_comment").strip()
         if reason == "Other" and not detail:
-            self.app.message("Enter a rejection reason.")
+            dpg.set_value(
+                "review_reject_status",
+                "Cannot reject: Other requires a reason. Enter Details, then choose Reject and save reason.",
+            )
             return
         dpg.hide_item("review_reject")
         self.app.guard(
@@ -145,7 +164,11 @@ class ReviewPanel:
 
     def decide(self, decision, comment):
         app = self.app
-        if not self.eligible() or app.editor.dirty:
+        if not self.eligible():
+            app.message(self.unavailable_reason())
+            return
+        if app.editor.dirty:
+            app.message("This image has unsaved changes. Save it before reviewing.")
             return
         iid, client, head = app.image["id"], app.client, dict(app.head)
         body = {
@@ -213,12 +236,18 @@ class ReviewPanel:
             app.claim = pending["claim"]
             if isinstance(exc, Problem) and exc.code not in ("DISCONNECTED", "SERVER_STOPPING"):
                 self.pending = None
-            app.error(exc)
+            if isinstance(exc, Problem) and exc.code == "SELF_REVIEW_DISABLED":
+                app.message(
+                    "Cannot review your own annotation: self-review is disabled. Ask another project reviewer to review this image."
+                )
+            else:
+                app.error(exc)
 
         app.submit(work, done, failed)
 
     def show_history(self):
         if not self.app.image:
+            self.app.message(IMAGE)
             return
         iid = self.app.image["id"]
 
@@ -245,10 +274,24 @@ class ReviewPanel:
         if self.app.project and self.app.project.get("can_manage_members"):
             dpg.set_value("review_self", bool(self.app.project["allow_self_review"]))
             dpg.show_item("review_settings")
+        else:
+            self.app.message(
+                "Review settings require a selected project with maintainer access. Select a project or ask its maintainer for access."
+            )
 
     def save_setting(self):
         app = self.app
         if self.busy or not app.project:
+            dpg.set_value(
+                "review_settings_status",
+                BUSY if self.busy else "No project is selected. Close this window and open a project first.",
+            )
+            return
+        if not dpg.get_value("review_setting_reason").strip():
+            dpg.set_value(
+                "review_settings_status",
+                "A reason is required. Enter the reason for this setting change, then choose Save setting.",
+            )
             return
         body = {
             "expected_project_revision": app.project["project_revision"],
@@ -257,16 +300,21 @@ class ReviewPanel:
         }
         pid = app.project["id"]
         self.busy = True
+        dpg.set_value("review_settings_status", "Saving review settings. Wait for confirmation.")
 
         def done(result):
             self.busy = False
             if app.project and app.project["id"] == pid:
                 app.project.update(result)
             dpg.hide_item("review_settings")
+            app.message("Review settings saved. You can continue reviewing images.")
 
         def failed(exc):
             self.busy = False
-            app.error(exc)
+            dpg.set_value(
+                "review_settings_status",
+                failure_text(exc, "Check the project settings and reason before submitting again."),
+            )
 
         app.submit(
             lambda: app.client.request("PUT", f"/projects/{pid}/review-settings", body, key=uid()),

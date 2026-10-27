@@ -130,7 +130,9 @@ def main():
             def open_tools():
                 manager.selected = app.project
                 manager.datasets.open()
-                pump(lambda: not manager.busy)
+                pump(lambda: not manager.busy and dpg.is_item_shown("dataset_manager"))
+                frame = dpg.get_frame_count()
+                pump(lambda: dpg.get_frame_count() >= frame + 3)
                 return manager.datasets
 
             panel = open_tools()
@@ -151,12 +153,16 @@ def main():
             v1 = next(v for v in versions if v["label"] == "v1")
             panel.inspect()
             pump(lambda: not manager.busy)
+            pump(lambda: dpg.is_item_shown("checkpoint_browser"))
             panel.view_image()
             pump(lambda: not manager.busy)
+            frame = dpg.get_frame_count()
+            pump(lambda: dpg.get_frame_count() >= frame + 3)
             assert "rectangle" in dpg.get_value("ds_annotation")
             dpg.output_frame_buffer(str(args.output / "checkpoint-browser.png"))
             pump(lambda: (args.output / "checkpoint-browser.png").exists())
-            dpg.hide_item("checkpoint_browser")
+            panel.close_browser()
+            pump(lambda: dpg.is_item_shown("dataset_manager"))
             row = panel.class_rows[1]
             dpg.set_value(row[1], False)
             dpg.set_value(row[3], "Remove")

@@ -20,6 +20,7 @@ from .canvas import Canvas
 from .client import Client, LocalStore
 from .domain import Editor, Problem, canonical, empty_content, uid
 from .export_ui import ExportPanel
+from .feedback import BUSY, IMAGE, active_surface, failure_text, resize_messages
 from .image_delete_ui import ImageDeletePanel
 from .polygon_canvas import PolygonCanvas
 from .project_ui import ProjectPanel, load_import_model
@@ -97,28 +98,49 @@ class Desktop:
             "yolo_mapping",
         ]
 
-    def submit(self, work, success, failure=None):
+    def submit(self, work, success, failure=None, *, feedback_owner=None):
+        owner = feedback_owner or getattr(self, "_feedback_owner", None) or active_surface()
+
+        def owned(callback):
+            def deliver(value):
+                previous = getattr(self, "_feedback_owner", None)
+                self._feedback_owner = owner
+                try:
+                    callback(value)
+                finally:
+                    self._feedback_owner = previous
+
+            return deliver
+
         future = self.pool.submit(work)
 
         def finished(result):
             try:
-                self.completed.put((success, result.result(), False))
+                self.completed.put((owned(success), result.result(), False))
             except Exception as exc:
-                self.completed.put((failure or self.error, exc, True))
+                self.completed.put((owned(failure or self.error), exc, True))
 
         future.add_done_callback(finished)
 
-    def message(self, text):
+    def message(self, text, *, background=False):
+        if background and getattr(self, "_feedback_error", False):
+            return
+        self._feedback_error = False
         self.status = text
         dpg.set_value("status", text)
+        owner = getattr(self, "_feedback_owner", None) or active_surface()
+        if owner != "status":
+            dpg.set_value(owner, text)
 
     def error(self, exc):
         self.busy = False
         self.message(
-            exc.message
-            if isinstance(exc, Problem)
-            else f"Operation failed: {type(exc).__name__}. Your draft is preserved."
+            failure_text(
+                exc,
+                "Check the current state before repeating this action. Resolve the reported issue, then try again.",
+            )
         )
+        self._feedback_error = True
 
     def build(self):
         # Give the Windows taskbar a stable application identity instead of Python's.
@@ -167,6 +189,13 @@ class Desktop:
                 dpg.add_button(label="Reload / reconnect", callback=lambda: self.guard(self.reload))
                 dpg.add_button(label="Team & users", callback=lambda: self.guard(self.team.open))
             dpg.add_separator()
+            dpg.add_text(self.status, tag="status", wrap=1200, color=(182, 200, 218))
+            dpg.add_text("", tag="import_progress_status", wrap=1200)
+            dpg.add_text(
+                "Review unavailable: open a saved IN_PROGRESS image with reviewer or maintainer access.",
+                tag="review_availability",
+                wrap=1200,
+            )
             with dpg.group(horizontal=True, tag="workspace"):
                 with dpg.child_window(width=240, tag="sidebar"):
                     dpg.add_text("PROJECT")
@@ -275,7 +304,6 @@ class Desktop:
                         wrap=350,
                     )
             dpg.add_text("", tag="review_counts")
-            dpg.add_text(self.status, tag="status", wrap=1200, color=(182, 200, 218))
         self.image_deletion.build()
         with dpg.window(
             label="Connect to DataTracking",
@@ -283,41 +311,54 @@ class Desktop:
             modal=True,
             show=True,
             width=460,
+            height=350,
             no_resize=True,
             pos=(360, 180),
             no_close=True,
         ):
-            dpg.add_text("Local annotation service", color=(76, 201, 166))
-            dpg.add_input_text(label="Server", tag="server", default_value=self.client.url, width=320)
-            dpg.add_input_text(label="Username", tag="username", default_value="admin", width=320)
-            dpg.add_input_text(
-                label="Password",
-                tag="password",
-                password=True,
-                width=320,
-                on_enter=True,
-                callback=lambda: self.connect(),
-            )
-            dpg.add_button(label="Connect", callback=lambda: self.connect())
-            dpg.add_button(label="Cancel", callback=lambda: dpg.hide_item("connection"))
-            dpg.add_text(
-                "Run datatracking init and datatracking serve first.", wrap=420, color=(160, 173, 190)
-            )
+            dpg.add_text("", tag="connection_status", wrap=440)
+            with dpg.child_window(tag="connection_feedback_body", width=-1, height=-1, border=False):
+                dpg.add_text("Local annotation service", color=(76, 201, 166))
+                dpg.add_input_text(label="Server", tag="server", default_value=self.client.url, width=320)
+                dpg.add_input_text(label="Username", tag="username", default_value="admin", width=320)
+                dpg.add_input_text(
+                    label="Password",
+                    tag="password",
+                    password=True,
+                    width=320,
+                    on_enter=True,
+                    callback=lambda: self.connect(),
+                )
+                dpg.add_button(label="Connect", tag="connection_connect", callback=lambda: self.connect())
+                dpg.add_button(
+                    label="Cancel", tag="connection_cancel", callback=lambda: dpg.hide_item("connection")
+                )
+                dpg.add_text(
+                    "Run datatracking init and datatracking serve first.", wrap=420, color=(160, 173, 190)
+                )
         with dpg.window(
-            label="Create project", tag="new_project", modal=True, show=False, width=480, pos=(360, 180)
+            label="Create project",
+            tag="new_project",
+            modal=True,
+            show=False,
+            width=480,
+            height=350,
+            pos=(360, 180),
         ):
-            dpg.add_input_text(label="Name", tag="project_name", width=330)
-            dpg.add_input_text(label="Slug", tag="project_slug", hint="example-project", width=330)
-            dpg.add_combo(
-                ["detection", "classification", "segmentation"],
-                label="Task",
-                default_value="detection",
-                tag="project_task",
-                width=330,
-            )
-            dpg.add_input_text(label="Classes", tag="project_classes", hint="part, defect", width=330)
-            dpg.add_text("Separate class names with commas. Class IDs stay stable.", wrap=430)
-            dpg.add_button(label="Create", callback=lambda: self.create_project())
+            dpg.add_text("", tag="new_project_status", wrap=440)
+            with dpg.child_window(tag="new_project_feedback_body", width=-1, height=-1, border=False):
+                dpg.add_input_text(label="Name", tag="project_name", width=330)
+                dpg.add_input_text(label="Slug", tag="project_slug", hint="example-project", width=330)
+                dpg.add_combo(
+                    ["detection", "classification", "segmentation"],
+                    label="Task",
+                    default_value="detection",
+                    tag="project_task",
+                    width=330,
+                )
+                dpg.add_input_text(label="Classes", tag="project_classes", hint="part, defect", width=330)
+                dpg.add_text("Separate class names with commas. Class IDs stay stable.", wrap=430)
+                dpg.add_button(label="Create", callback=lambda: self.create_project())
         with dpg.window(
             label="Unsaved changes",
             tag="dirty_dialog",
@@ -327,6 +368,7 @@ class Desktop:
             pos=(350, 200),
             no_close=True,
         ):
+            dpg.add_text("", tag="dirty_status", wrap=440)
             dpg.add_text("Choose how to preserve your edits before continuing.")
             dpg.add_button(
                 label="Save and continue", tag="dirty_save", callback=lambda: self.save_then_continue()
@@ -344,6 +386,7 @@ class Desktop:
             pos=(350, 190),
             no_close=True,
         ):
+            dpg.add_text("", tag="recovery_status", wrap=440)
             dpg.add_text("", tag="recovery_message", wrap=500)
             dpg.add_input_text(tag="recovery_compare", multiline=True, readonly=True, width=-1, height=210)
             dpg.add_button(
@@ -356,7 +399,8 @@ class Desktop:
         with dpg.window(
             label="Save conflict", tag="conflict_dialog", modal=True, show=False, width=530, pos=(350, 190)
         ):
-            dpg.add_text("The server rejected this save. Your draft is preserved.", wrap=480)
+            dpg.add_text("", tag="conflict_status", wrap=440)
+            dpg.add_text("The save was not confirmed. Resolve the conflict before saving again.", wrap=480)
             dpg.add_text("Reload to compare with the server. No automatic overwrite is performed.", wrap=480)
             dpg.add_button(label="Reload and compare", callback=lambda: self.keep_then_reload())
             dpg.add_button(label="Keep editing locally", callback=lambda: dpg.hide_item("conflict_dialog"))
@@ -381,25 +425,27 @@ class Desktop:
             height=470,
             pos=(280, 140),
         ):
-            dpg.add_text("Place image.txt beside image.bmp / .png / .jpg in the server inbox.", wrap=600)
-            dpg.add_text(
-                "Map model class indices to project class names, one index=name per line.\nCheck this against the model's class order before importing.",
-                wrap=600,
-            )
-            dpg.add_input_text(tag="yolo_mapping", multiline=True, width=-1, height=200)
-            dpg.add_input_text(label="Local model data.yaml", tag="yolo_model_path", width=450)
-            dpg.add_button(label="Load model names", callback=lambda: load_import_model(self))
-            dpg.add_checkbox(
-                label="Treat empty .txt files as verified empty", tag="yolo_empty", default_value=False
-            )
-            dpg.add_text(
-                "Missing labels remain unlabeled. Existing annotations are never overwritten.\nImported predictions open as IN_PROGRESS for correction.",
-                wrap=600,
-            )
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="Preview", callback=lambda: self.start_yolo_import(True))
-                dpg.add_button(label="Import predictions", callback=lambda: self.start_yolo_import(False))
-                dpg.add_button(label="Cancel", callback=lambda: dpg.hide_item("yolo_dialog"))
+            dpg.add_text("", tag="yolo_status", wrap=440)
+            with dpg.child_window(tag="yolo_dialog_feedback_body", width=-1, height=-1, border=False):
+                dpg.add_text("Place image.txt beside image.bmp / .png / .jpg in the server inbox.", wrap=600)
+                dpg.add_text(
+                    "Map model class indices to project class names, one index=name per line.\nCheck this against the model's class order before importing.",
+                    wrap=600,
+                )
+                dpg.add_input_text(tag="yolo_mapping", multiline=True, width=-1, height=200)
+                dpg.add_input_text(label="Local model data.yaml", tag="yolo_model_path", width=450)
+                dpg.add_button(label="Load model names", callback=lambda: load_import_model(self))
+                dpg.add_checkbox(
+                    label="Treat empty .txt files as verified empty", tag="yolo_empty", default_value=False
+                )
+                dpg.add_text(
+                    "Missing labels remain unlabeled. Existing annotations are never overwritten.\nImported predictions open as IN_PROGRESS for correction.",
+                    wrap=600,
+                )
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="Preview", callback=lambda: self.start_yolo_import(True))
+                    dpg.add_button(label="Import predictions", callback=lambda: self.start_yolo_import(False))
+                    dpg.add_button(label="Cancel", callback=lambda: dpg.hide_item("yolo_dialog"))
         self.review.build()
         self.team.build()
         self.statistics.build()
@@ -436,6 +482,7 @@ class Desktop:
 
     def connect(self):
         if self.busy or self.saving or self.review.busy:
+            self.message(BUSY)
             return
         url, username, password = (dpg.get_value(t) for t in ("server", "username", "password"))
         self.busy = True
@@ -542,8 +589,13 @@ class Desktop:
         self.submit(lambda: self.client.request("GET", "/projects/" + project_id), success)
 
     def create_project(self):
-        if not self.client.user or self.busy:
-            self.message("Connect before creating a project.")
+        if self.busy:
+            self.message(BUSY)
+            return
+        if not self.client.user:
+            self.message(
+                "Cannot create a project: you are not connected. Close this window, open Connection and sign in first."
+            )
             return
         classes_text = dpg.get_value("project_classes")
         try:
@@ -718,7 +770,11 @@ class Desktop:
         dpg.show_item("yolo_dialog")
 
     def start_yolo_import(self, dry_run):
+        if self.job:
+            self.message("An import is already running. Wait for it to finish, then try again.")
+            return
         if not self.project:
+            self.message("No project is selected. Close this window and open a detection project first.")
             return
         names = {e["display_name"]: e["class_id"] for e in self.project["schema"]["entries"] if e["active"]}
         mapping = {}
@@ -749,8 +805,11 @@ class Desktop:
         self.import_inbox(options, dry_run)
 
     def import_inbox(self, yolo=None, dry_run=False):
-        if not self.project or self.job:
-            self.message("Choose a project first, and wait for any active import.")
+        if not self.project:
+            self.message("No project is selected. Open a project before importing images.")
+            return
+        if self.job:
+            self.message("An import is already running. Wait for it to finish, then try again.")
             return
         project_id = self.project["id"]
         request_key = uid()
@@ -960,6 +1019,12 @@ class Desktop:
                 }
                 dpg.set_value("recovery_compare", json.dumps(compare, indent=2, ensure_ascii=False))
                 dpg.configure_item("restore_draft", enabled=same and bool(self.claim) and self.can_edit())
+                dpg.set_value(
+                    "recovery_status",
+                    "Restore unavailable: the draft base differs from the current image or an editing claim/role is missing. Compare the versions below, then choose the server version or keep this dialog open while checking access."
+                    if not (same and bool(self.claim) and self.can_edit())
+                    else "Compare the versions below, then restore the draft for editing or use the server version.",
+                )
                 dpg.show_item("recovery_dialog")
             if on_loaded:
                 on_loaded()
@@ -991,23 +1056,49 @@ class Desktop:
 
     def dismiss_recovery(self):
         if self.store and self.image:
-            self.store.archive_draft(self.image["id"])
+            try:
+                self.store.archive_draft(self.image["id"])
+            except OSError as exc:
+                self.message(
+                    f"Could not archive the recovery draft ({type(exc).__name__}). Check folder access and free space, then try again."
+                )
+                return
         self.recovery = None
         self.blocked = False
         dpg.hide_item("recovery_dialog")
 
     def discard_recovery(self):
         assert self.store is not None and self.image is not None
-        self.store.remove_draft(self.image["id"])
+        try:
+            self.store.remove_draft(self.image["id"])
+        except OSError as exc:
+            self.message(
+                f"Could not discard the recovery draft ({type(exc).__name__}). Check folder access, then try again."
+            )
+            return
         self.recovery = None
-        self.dismiss_recovery()
+        self.blocked = False
+        dpg.hide_item("recovery_dialog")
 
     def reload(self):
         if self.image:
             self.open_image(self.image["id"])
+        else:
+            self.message("No image is open to reload. Open an image, or use Connection to sign in again.")
+
+    def keep_draft(self):
+        try:
+            self.persist_draft()
+            return True
+        except OSError as exc:
+            self.message(
+                f"Could not store the recovery draft ({type(exc).__name__}). Check folder access and free space, then try again before leaving this image."
+            )
+            return False
 
     def keep_then_reload(self):
-        self.persist_draft()
+        if not self.keep_draft():
+            return
         dpg.hide_item("conflict_dialog")
         self.reload()
 
@@ -1029,6 +1120,12 @@ class Desktop:
                     self.save(continue_after=True)
             else:
                 dpg.configure_item("dirty_save", enabled=save_available)
+                dpg.set_value(
+                    "dirty_status",
+                    "Save is unavailable: no valid editing claim or unresolved conflict. Keep a local recovery draft to continue, or cancel navigation and reconcile the image."
+                    if not save_available
+                    else "This image has unsaved changes. Save, keep a local recovery draft, or cancel navigation.",
+                )
                 dpg.show_item("dirty_dialog")
         else:
             action()
@@ -1039,7 +1136,8 @@ class Desktop:
 
     def keep_then_continue(self):
         self.navigation_save = False
-        self.persist_draft()
+        if not self.keep_draft():
+            return
         dpg.hide_item("dirty_dialog")
         action, self.next_action = self.next_action, None
         if action:
@@ -1052,6 +1150,7 @@ class Desktop:
 
     def navigate(self, delta):
         if not self.images:
+            self.message("No images match the current list. Change the filter or import images to continue.")
             return
         current_id = self.image["id"] if self.image else None
         index = next((i for i, img in enumerate(self.images) if img["id"] == current_id), -1)
@@ -1059,6 +1158,12 @@ class Desktop:
         if target != index:
             target_id = self.images[target]["id"]
             self.guard(lambda: self.open_image(target_id))
+        else:
+            self.message(
+                "This is the first image in the list. Choose Next or change the filter."
+                if delta < 0
+                else "This is the last image in the list. Choose Previous or change the filter."
+            )
 
     def persist_draft(self):
         if not self.image or not self.store or not self.head or not self.project:
@@ -1094,8 +1199,14 @@ class Desktop:
                 self.error(exc)
         self.render()
 
-    def save(self, continue_after=False):
-        if not self.image or self.busy or self.saving:
+    def save(self, continue_after=False, *, background=False):
+        if not self.image:
+            if not background:
+                self.message(IMAGE)
+            return
+        if self.busy or self.saving or self.review.busy:
+            if not background:
+                self.message(BUSY)
             return
         if isinstance(self.canvas, PolygonCanvas) and self.canvas.draft:
             self.message("Finish the polygon with Enter before saving. Escape cancels unfinished points.")
@@ -1109,6 +1220,8 @@ class Desktop:
         if not self.editor.dirty and not self.pending_save:
             if continue_after:
                 self.keep_then_continue()
+            elif not background:
+                self.message("No changes to save. Continue editing or open another image.")
             return
         if not self.pending_save:
             self.pending_save = {
@@ -1122,9 +1235,11 @@ class Desktop:
             }
         pending = copy.deepcopy(self.pending_save)
         image_id, claim = self.image["id"], self.claim
-        self.persist_draft()
+        if not self.keep_draft():
+            return
         self.saving = True
-        self.message("Saving...")
+        if not background or not getattr(self, "_feedback_error", False):
+            self.message("Saving...")
 
         def success(result):
             if not self.image or self.image["id"] != image_id:
@@ -1172,7 +1287,15 @@ class Desktop:
                 self.blocked = True
                 self.next_action = None
                 self.navigation_save = False
-                dpg.show_item("conflict_dialog")
+                dpg.set_value(
+                    "conflict_status",
+                    failure_text(exc, "Choose Reload and compare to reconcile this draft with the server."),
+                )
+                if dpg.is_item_shown("dirty_dialog"):
+                    dpg.hide_item("dirty_dialog")
+                    self.exports.show_after_modal_closes("conflict_dialog")
+                else:
+                    dpg.show_item("conflict_dialog")
             elif isinstance(exc, Problem) and exc.status == 422:
                 self.pending_save = None
                 self.next_action = None
@@ -1181,7 +1304,7 @@ class Desktop:
                 self.message(exc.message + " Correct the annotation and save again. Autosave is paused.")
             else:
                 self.edit_time = time.monotonic() + 3
-            self.persist_draft()
+            self.keep_draft()
 
         self.submit(
             lambda: self.client.request(
@@ -1195,6 +1318,9 @@ class Desktop:
         if self.project:
             allowed = "polygon" if self.project["task_type"] == "segmentation" else "rectangle"
             if mode not in (allowed, "select") or self.project["task_type"] == "classification":
+                self.message(
+                    "This tool is unavailable for the project task. Use its supported annotation tool or choose another project."
+                )
                 return
         if isinstance(self.canvas, PolygonCanvas) and self.canvas.draft:
             self.message("Finish with Enter or cancel with Escape before switching tools.")
@@ -1210,6 +1336,9 @@ class Desktop:
         )
 
     def fit(self):
+        if not self.image:
+            self.message(IMAGE)
+            return
         if self.image:
             self.canvas.transform.fit(
                 self.canvas.width,
@@ -1232,8 +1361,21 @@ class Desktop:
         self.editor.change(data)
         self.edited()
 
+    def editing_available(self):
+        if not self.image:
+            self.message(IMAGE)
+        elif self.busy or self.saving or self.review.busy:
+            self.message(BUSY)
+        elif not self.can_edit() or self.blocked:
+            self.message(
+                "Editing is unavailable. Resolve any recovery/conflict dialog and check your annotator or maintainer role before editing."
+            )
+        else:
+            return True
+        return False
+
     def delete_selected(self, whole_shape=False):
-        if not self.image or self.busy or not self.can_edit():
+        if not self.editing_available():
             return
         if self.canvas.gesture:
             self.canvas.cancel()
@@ -1251,6 +1393,9 @@ class Desktop:
                     self.message(exc.message)
                     return
             self.canvas.selected_vertex = None
+        if not self.editor.selected:
+            self.message("No shape is selected. Select a shape on the image, then choose Delete shape.")
+            return
         data = copy.deepcopy(self.editor.content)
         data["shapes"] = [s for s in data["shapes"] if s["id"] != self.editor.selected]
         self.editor.change(data)
@@ -1258,23 +1403,29 @@ class Desktop:
         self.edited()
 
     def undo(self):
-        if self.image and not self.busy and self.can_edit():
+        if self.editing_available():
             if isinstance(self.canvas, PolygonCanvas) and self.canvas.draft:
                 self.canvas.draft.pop()
                 self.render()
                 return
             self.canvas.cancel()
+            before = canonical(self.editor.content)
             self.editor.undo()
             self.edited()
+            if canonical(self.editor.content) == before:
+                self.message("Nothing to undo for this image. Continue editing or open another image.")
 
     def redo(self):
-        if self.image and not self.busy and self.can_edit():
+        if self.editing_available():
             if isinstance(self.canvas, PolygonCanvas) and self.canvas.draft:
                 self.message("Finish or cancel the unfinished polygon before redo.")
                 return
             self.canvas.cancel()
+            before = canonical(self.editor.content)
             self.editor.redo()
             self.edited()
+            if canonical(self.editor.content) == before:
+                self.message("Nothing to redo for this image. Continue editing or open another image.")
 
     def modal_open(self):
         return any(
@@ -1439,9 +1590,29 @@ class Desktop:
         fresh_review_key = key not in self.review_keys
         if key in (dpg.mvKey_S, dpg.mvKey_X):
             self.review_keys.add(key)
-        if self.modal_open() or any(dpg.is_item_active(tag) for tag in self.text_inputs) or self.busy:
+        if self.modal_open() or any(dpg.is_item_active(tag) for tag in self.text_inputs):
             return
         control = dpg.is_key_down(dpg.mvKey_LControl) or dpg.is_key_down(dpg.mvKey_RControl)
+        if self.busy:
+            recognized = (
+                (dpg.mvKey_S, dpg.mvKey_Z, dpg.mvKey_Y)
+                if control
+                else (
+                    dpg.mvKey_S,
+                    dpg.mvKey_X,
+                    dpg.mvKey_R,
+                    dpg.mvKey_P,
+                    dpg.mvKey_V,
+                    dpg.mvKey_F,
+                    dpg.mvKey_Delete,
+                    dpg.mvKey_A,
+                    dpg.mvKey_D,
+                    dpg.mvKey_Return,
+                )
+            )
+            if key in recognized:
+                self.message(BUSY)
+            return
         if control:
             if key == dpg.mvKey_S:
                 self.save()
@@ -1578,6 +1749,12 @@ class Desktop:
             if self.head
             else "",
         )
+        dpg.set_value(
+            "review_availability",
+            "Review unavailable: " + self.review.unavailable_reason()
+            if not self.review.eligible()
+            else "Review available. Accept or Reject reviews the saved image; unsaved edits must be saved first.",
+        )
         dpg.configure_item("review_accept", enabled=self.review.eligible())
         dpg.configure_item("review_reject_button", enabled=self.review.eligible())
         if self.editor.dirty and self.head and self.head["status"] in ("REVIEWED_PASS", "REVIEWED_NG"):
@@ -1618,6 +1795,7 @@ class Desktop:
         self.render()
 
     def tick(self):
+        resize_messages()
         self.exports.tick_progress()
         self.project_manager.datasets.tick()
         self.review_keys = {key for key in self.review_keys if dpg.is_key_down(key)}
@@ -1659,6 +1837,7 @@ class Desktop:
                 lambda: self.client.request("POST", f"/images/{image_id}/claim/heartbeat", claim=claim),
                 success,
                 failure,
+                feedback_owner="status",
             )
         if self.claim and self.claim["expires_at"] <= datetime.now(UTC).isoformat(
             timespec="microseconds"
@@ -1674,7 +1853,7 @@ class Desktop:
             and dpg.get_value("autosave")
             and current - self.edit_time >= 2
         ):
-            self.save()
+            self.save(background=True)
         if self.job and not self.job_pending and current - self.job_time > 0.75:
             self.job_time = current
             self.job_pending = True
@@ -1683,7 +1862,10 @@ class Desktop:
             def job_result(result):
                 self.job_pending = False
                 progress = result["progress"]
-                self.message(f"Import {result['state']}: {progress['done']}/{progress['total']}")
+                dpg.set_value(
+                    "import_progress_status",
+                    f"Import {result['state']}: {progress['done']}/{progress['total']}",
+                )
                 if result["state"] in ("succeeded", "failed", "cancelled"):
                     self.job = None
                     self.refresh_images()
@@ -1693,7 +1875,8 @@ class Desktop:
                     if self.yolo_job or failed or result["state"] == "failed":
                         dpg.show_item("import_report")
                     self.message(
-                        f"Import {result['state']}: {len(items)} checked, {failed} invalid. Full report: job {job_id}"
+                        f"Import {result['state']}: {len(items)} checked, {failed} invalid. Choose Last import report for details.",
+                        background=True,
                     )
 
             def job_error(exc):
@@ -1701,9 +1884,16 @@ class Desktop:
                 self.error(exc)
 
             self.submit(
-                lambda: self.client.request("GET", f"/jobs/{job_id}?compact=true"), job_result, job_error
+                lambda: self.client.request("GET", f"/jobs/{job_id}?compact=true"),
+                job_result,
+                job_error,
+                feedback_owner="status",
             )
-        height = max(450, dpg.get_viewport_client_height() - 220)
+        feedback_height = sum(
+            dpg.get_item_rect_size(tag)[1]
+            for tag in ("status", "review_availability", "import_progress_status")
+        )
+        height = max(240, dpg.get_viewport_client_height() - 250 - feedback_height)
         width = max(380, dpg.get_item_rect_size("center")[0] - 28)
         for tag in ("sidebar", "center", "inspector"):
             if dpg.get_item_height(tag) != height:

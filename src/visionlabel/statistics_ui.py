@@ -2,7 +2,7 @@
 
 import dearpygui.dearpygui as dpg
 
-from .domain import Problem
+from .feedback import BUSY, failure_text
 
 
 class StatisticsPanel:
@@ -39,6 +39,12 @@ class StatisticsPanel:
 
     def refresh(self):
         if self.busy or not self.app.project:
+            dpg.set_value(
+                "statistics_status",
+                BUSY
+                if self.busy
+                else "No project is open. Close this window and open a project, then view Statistics / QC.",
+            )
             return
         self.busy = True
         project_id, client = self.app.project["id"], self.app.client
@@ -47,12 +53,13 @@ class StatisticsPanel:
         def failure(exc):
             self.busy = False
             dpg.set_value(
-                "statistics_status", exc.message if isinstance(exc, Problem) else "Could not load statistics."
+                "statistics_status",
+                failure_text(exc, "Check the connection and project access, then Refresh statistics."),
             )
 
         def done(result):
             self.busy = False
-            if not self.app.project or self.app.project["id"] != project_id:
+            if client is not self.app.client or not self.app.project or self.app.project["id"] != project_id:
                 dpg.set_value("statistics_status", "Project changed. Refresh to load the current project.")
                 return
             self.result = result

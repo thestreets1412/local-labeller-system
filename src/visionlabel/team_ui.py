@@ -3,6 +3,7 @@
 import dearpygui.dearpygui as dpg
 
 from .domain import Problem, uid
+from .feedback import BUSY, failure_text
 
 
 class TeamPanel:
@@ -27,73 +28,89 @@ class TeamPanel:
             pos=(230, 90),
         ):
             dpg.add_text("Loading...", tag="team_status", wrap=765)
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="Refresh", callback=lambda: self.refresh())
-                dpg.add_button(
-                    label="Retry last request", tag="team_retry", enabled=False, callback=lambda: self.retry()
-                )
-                dpg.add_button(label="Close", callback=lambda: self.close())
-            with dpg.tab_bar():
-                with dpg.tab(label="Project members"):
-                    dpg.add_text("Choose a project in the workspace first.", tag="team_project")
-                    dpg.add_text("1. Choose a user    2. Choose a role    3. Add / update role")
-                    dpg.add_combo(
-                        [], label="User", tag="team_member_picker", width=430, callback=self.pick_member
+            dpg.add_text(
+                "Retry is available only after a retryable request failure. Account controls require a system administrator; membership controls require a project maintainer.",
+                wrap=765,
+            )
+            dpg.add_text("", tag="team_availability", wrap=765)
+            with dpg.child_window(tag="team_feedback_body", width=-1, height=-1, border=False):
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="Refresh", callback=lambda: self.refresh())
+                    dpg.add_button(
+                        label="Retry last request",
+                        tag="team_retry",
+                        enabled=False,
+                        callback=lambda: self.retry(),
                     )
-                    with dpg.child_window(tag="team_members", height=160):
-                        pass
-                    dpg.add_input_text(label="User ID", tag="team_member_id", width=430)
-                    dpg.add_text(
-                        "Administrators can choose any enabled account above. Maintainers can also paste a supplied user ID.",
-                        wrap=740,
-                    )
-                    dpg.add_combo(
-                        ["viewer", "annotator", "reviewer", "maintainer"],
-                        default_value="annotator",
-                        label="Project role",
-                        tag="team_role",
-                        width=240,
-                    )
-                    dpg.add_text(
-                        "Viewer: read only. Annotator: edit. Reviewer: review only.\nMaintainer: manage this project and its members.",
-                        wrap=740,
-                    )
-                    with dpg.group(horizontal=True):
-                        dpg.add_button(
-                            label="Add / update role",
-                            tag="team_set_role",
-                            callback=lambda: self.member(False),
+                    dpg.add_button(label="Close", callback=lambda: self.close())
+                with dpg.tab_bar():
+                    with dpg.tab(label="Project members"):
+                        dpg.add_text("Choose a project in the workspace first.", tag="team_project")
+                        dpg.add_text("1. Choose a user    2. Choose a role    3. Add / update role")
+                        dpg.add_combo(
+                            [], label="User", tag="team_member_picker", width=430, callback=self.pick_member
                         )
-                        dpg.add_button(
-                            label="Remove from project",
-                            tag="team_remove_role",
-                            callback=lambda: self.member(True),
+                        with dpg.child_window(tag="team_members", height=160):
+                            pass
+                        dpg.add_input_text(label="User ID", tag="team_member_id", width=430)
+                        dpg.add_text(
+                            "Administrators can choose any enabled account above. Maintainers can also paste a supplied user ID.",
+                            wrap=740,
                         )
-                    dpg.add_text("Role changes revoke the user's current leases in this project.", wrap=740)
-                with dpg.tab(label="Accounts (administrator)", tag="team_accounts"):
-                    dpg.add_combo([], label="Account", tag="team_user", width=470, callback=self.select_user)
-                    dpg.add_input_text(label="User ID", tag="team_user_id", readonly=True, width=430)
-                    dpg.add_input_text(label="Username (new account)", tag="team_username", width=350)
-                    dpg.add_input_text(label="Display name", tag="team_display", width=350)
-                    dpg.add_input_text(
-                        label="Password (12+ characters)", tag="team_password", password=True, width=350
-                    )
-                    dpg.add_text(
-                        "Leave password empty to keep it when updating. Resetting it revokes sessions.",
-                        wrap=740,
-                    )
-                    dpg.add_checkbox(label="Account disabled", tag="team_disabled")
-                    dpg.add_checkbox(label="Revoke all sessions and editing leases", tag="team_revoke")
-                    with dpg.group(horizontal=True):
-                        dpg.add_button(label="New account form", callback=lambda: self.clear_user())
-                        dpg.add_button(label="Create account", callback=lambda: self.create_user())
-                        dpg.add_button(label="Update selected account", callback=lambda: self.update_user())
-                        dpg.add_button(
-                            label="Use selected account for project role", callback=lambda: self.use_user()
+                        dpg.add_combo(
+                            ["viewer", "annotator", "reviewer", "maintainer"],
+                            default_value="annotator",
+                            label="Project role",
+                            tag="team_role",
+                            width=240,
                         )
-                    dpg.add_text(
-                        "New accounts have no project access until a project role is assigned.", wrap=740
-                    )
+                        dpg.add_text(
+                            "Viewer: read only. Annotator: edit. Reviewer: review only.\nMaintainer: manage this project and its members.",
+                            wrap=740,
+                        )
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(
+                                label="Add / update role",
+                                tag="team_set_role",
+                                callback=lambda: self.member(False),
+                            )
+                            dpg.add_button(
+                                label="Remove from project",
+                                tag="team_remove_role",
+                                callback=lambda: self.member(True),
+                            )
+                        dpg.add_text(
+                            "Role changes revoke the user's current leases in this project.", wrap=740
+                        )
+                    with dpg.tab(label="Accounts (administrator)", tag="team_accounts"):
+                        dpg.add_combo(
+                            [], label="Account", tag="team_user", width=470, callback=self.select_user
+                        )
+                        dpg.add_input_text(label="User ID", tag="team_user_id", readonly=True, width=430)
+                        dpg.add_input_text(label="Username (new account)", tag="team_username", width=350)
+                        dpg.add_input_text(label="Display name", tag="team_display", width=350)
+                        dpg.add_input_text(
+                            label="Password (12+ characters)", tag="team_password", password=True, width=350
+                        )
+                        dpg.add_text(
+                            "Leave password empty to keep it when updating. Resetting it revokes sessions.",
+                            wrap=740,
+                        )
+                        dpg.add_checkbox(label="Account disabled", tag="team_disabled")
+                        dpg.add_checkbox(label="Revoke all sessions and editing leases", tag="team_revoke")
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(label="New account form", callback=lambda: self.clear_user())
+                            dpg.add_button(label="Create account", callback=lambda: self.create_user())
+                            dpg.add_button(
+                                label="Update selected account", callback=lambda: self.update_user()
+                            )
+                            dpg.add_button(
+                                label="Use selected account for project role",
+                                callback=lambda: self.use_user(),
+                            )
+                        dpg.add_text(
+                            "New accounts have no project access until a project role is assigned.", wrap=740
+                        )
 
     def message(self, text):
         dpg.set_value("team_status", text)
@@ -115,6 +132,7 @@ class TeamPanel:
 
     def refresh(self):
         if self.busy:
+            self.message(BUSY)
             return
         self.busy = True
         self.message("Loading accounts and project membership...")
@@ -147,6 +165,12 @@ class TeamPanel:
             self.clear_user()
             dpg.delete_item("team_members", children_only=True)
             manage = bool(self.project and self.project["can_manage_members"])
+            dpg.set_value(
+                "team_availability",
+                "Membership controls are available. Choose a user and role to continue."
+                if manage
+                else "Membership controls unavailable: select a project with maintainer access. Close this window, choose the project or ask its maintainer for access, then reopen Team & users.",
+            )
             for tag in ("team_set_role", "team_remove_role"):
                 dpg.configure_item(tag, enabled=manage)
             if self.project:
@@ -178,7 +202,10 @@ class TeamPanel:
     def failed(self, exc):
         self.busy = False
         self.message(
-            exc.message if isinstance(exc, Problem) else "Request failed. Refresh before continuing."
+            failure_text(
+                exc,
+                "Refresh to inspect the account or membership state. Use Retry last request if enabled to resolve the pending request with its original key.",
+            )
         )
         retryable = bool(self.pending and isinstance(exc, Problem) and exc.status >= 500)
         dpg.configure_item("team_retry", enabled=retryable)
@@ -187,12 +214,17 @@ class TeamPanel:
 
     def mutate(self, method, path, body):
         if self.busy:
+            self.message(BUSY)
             return
         self.pending = (self.app.client, method, path, body, uid())
         self.retry()
 
     def retry(self):
-        if self.busy or not self.pending:
+        if self.busy:
+            self.message(BUSY)
+            return
+        if not self.pending:
+            self.message("No request is pending for retry. Choose an account or membership action first.")
             return
         self.busy = True
         client, method, path, body, key = self.pending
@@ -233,6 +265,10 @@ class TeamPanel:
         if self.selected_user:
             dpg.set_value("team_member_id", self.selected_user["id"])
             self.message("Account selected for Project members. Choose the role and Add / update role.")
+        else:
+            self.message(
+                "No account is selected. Select an account, then choose Use selected account for project role."
+            )
 
     def select_member(self, sender, value, item):
         dpg.set_value("team_member_id", item["id"])
@@ -280,7 +316,14 @@ class TeamPanel:
 
     def member(self, remove):
         if not self.project:
-            self.message("Choose a project first.")
+            self.message(
+                "No project is selected. Close this window, open a project, then reopen Team & users."
+            )
+            return
+        if not self.project.get("can_manage_members"):
+            self.message(
+                "Membership changes require a project maintainer. Ask a maintainer for access, then Refresh."
+            )
             return
         ident = dpg.get_value("team_member_id").strip()
         if not ident:

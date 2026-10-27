@@ -61,13 +61,13 @@ def test_failed_job_details_reach_desktop_and_local_report(monkeypatch, tmp_path
         export_ui.dpg, "configure_item", lambda tag, **kw: configs.setdefault(tag, {}).update(kw)
     )
     app = SimpleNamespace(
-        project={"schema": {"entries": []}},
+        project={"id": "project", "schema": {"entries": []}},
         client=SimpleNamespace(request=request),
         exit_requested=False,
         submit=submit,
     )
     panel = ExportPanel(app)
-    panel.project_id = "project-1"
+    panel.project_id = "project"
     panel.prepare()
     assert "ภาพ.png" in values["export_report"]
     assert "shape-1" in values["export_report"]
@@ -103,7 +103,7 @@ def test_prepare_locks_class_mapping_until_response(monkeypatch):
     )
     panel = ExportPanel(
         SimpleNamespace(
-            project={"schema": {"entries": []}},
+            project={"id": "project", "schema": {"entries": []}},
             client=object(),
             submit=lambda *callbacks: pending.append(callbacks),
             exit_requested=False,
@@ -152,7 +152,7 @@ def test_review_warning_cancel_and_confirm_bind_exact_candidate(monkeypatch):
 
     panel = ExportPanel(
         SimpleNamespace(
-            project={"schema": {"entries": []}},
+            project={"id": "project", "schema": {"entries": []}},
             client=SimpleNamespace(request=request),
             exit_requested=False,
             submit=submit,

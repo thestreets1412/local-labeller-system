@@ -127,7 +127,9 @@ def test_manager_keeps_editor_locked_until_operation_finishes(monkeypatch):
     panel.run(lambda: None, completed.append)
     calls[1][2](Problem("DISCONNECTED", "Connection lost"))
     assert not app.busy and not panel.busy
-    assert messages[-1] == "Connection lost"
+    assert "Connection lost" in messages[-1]
+    assert "result is unknown" in messages[-1]
+    assert "Refresh and inspect" in messages[-1]
 
 
 def test_export_mapping_is_explicit_and_frozen(environment):

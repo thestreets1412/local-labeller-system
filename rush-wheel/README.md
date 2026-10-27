@@ -1,4 +1,4 @@
-# Install Phase 10 (VisionLabel 0.1.3)
+# Install VisionLabel 0.1.4
 
 Use Windows x64 and Python **3.12.10**. Close VisionLabel/DataTracking and back up
 server data before upgrading. Upgrade both desktop and service environments when
@@ -36,7 +36,7 @@ this does not uninstall an extension already present.
 
 Included wheels:
 
-- **visionlabel-0.1.3-py3-none-any.whl**: Phase 10 application, API and migration.
+- **visionlabel-0.1.4-py3-none-any.whl**: Application, API and migration, including button feedback and the login layout fix.
 - **visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl**: existing Rust/PyO3 texture
   accelerator, unchanged. Phase 10 creates no new native extension. Accept avoids
   redundant same-image raster decoding/upload while refreshing annotation state.
@@ -46,7 +46,7 @@ Included wheels:
 If pinned dependencies are already installed, a direct pip upgrade is:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install --no-index --no-deps --force-reinstall .\rush-wheel\visionlabel-0.1.3-py3-none-any.whl .\rush-wheel\visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl
+.\.venv\Scripts\python.exe -m pip install --no-index --no-deps --force-reinstall .\rush-wheel\visionlabel-0.1.4-py3-none-any.whl .\rush-wheel\visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl
 ```
 
 See [Phase 10 evidence](../docs/phase10-plan.md) for behavior and remaining company

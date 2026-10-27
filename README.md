@@ -2,7 +2,7 @@
 
 English-only Windows annotation desktop with a local FastAPI service.
 Current milestone: **[Phase 10 — editable classes, responsive review and dataset checkpoints](docs/phase10-plan.md)**.
-Version 0.1.3 adds named working dataset checkpoints, class editing and restore.
+Version 0.1.4 adds clearer button feedback and fixes the login layout. Version 0.1.3 added named working dataset checkpoints, class editing and restore.
 Use the [pip/PyPI installer](rush-wheel/README.md) after cloning this branch.
 Working YOLO export from Phase 8 remains available; approved releases are separate.
 Use **Import YOLO labels** in a detection project to preview/import same-stem `.txt`

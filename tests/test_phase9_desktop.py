@@ -20,6 +20,7 @@ def app(monkeypatch):
     monkeypatch.setattr(module.dpg, "get_value", lambda tag: ui.get(tag))
     monkeypatch.setattr(module.dpg, "set_value", lambda tag, value: ui.__setitem__(tag, value))
     monkeypatch.setattr(module.dpg, "show_item", shown.append)
+    monkeypatch.setattr(module.dpg, "is_item_shown", lambda tag: tag in shown)
     instance = Desktop.__new__(Desktop)
     instance.editor = Editor()
     instance.canvas = Canvas(instance.editor)

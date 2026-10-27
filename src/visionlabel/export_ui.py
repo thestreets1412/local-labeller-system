@@ -11,6 +11,7 @@ import dearpygui.dearpygui as dpg
 
 from .class_mapping import model_names, parse_mapping
 from .domain import Problem, uid
+from .feedback import BUSY, failure_text
 from .working_export import ExportRequest
 
 
@@ -144,125 +145,151 @@ class ExportPanel:
             height=650,
             pos=(180, 60),
         ):
-            dpg.add_text(
-                "Export saved labels from this project, including unreviewed predictions.\nUnlabeled images are excluded. Review predictions and save edits first.",
-                wrap=760,
-            )
-            dpg.add_text("", tag="export_project")
-            dpg.add_text("Source: Current saved working data", tag="export_source")
-            dpg.add_button(
-                label="Use current saved working data",
-                tag="export_current_source",
-                callback=lambda: self.use_working_source(),
-            )
-            with dpg.collapsing_header(label="Model class mapping (optional)"):
-                dpg.add_text(
-                    "Empty uses the project schema. Otherwise include every class: index=project class name.",
-                    wrap=740,
-                )
-                dpg.add_text(
-                    "Classification folder consumers number observed classes consecutively; check consumer_order in class_mapping.json.",
-                    wrap=740,
-                )
-                dpg.add_input_text(
-                    tag="export_mapping", multiline=True, height=95, width=700, callback=self.invalidate
-                )
-                dpg.add_input_text(label="Local model data.yaml", tag="export_model_path", width=550)
-                dpg.add_button(label="Load model names / compare", callback=self.load_model)
-            with dpg.group(horizontal=True):
-                dpg.add_button(
-                    label="Previous failures",
-                    tag="export_history_refresh",
-                    callback=lambda: self.load_history(),
-                )
-                dpg.add_button(
-                    label="Older",
-                    tag="export_history_older",
-                    enabled=False,
-                    callback=lambda: self.load_history(True),
-                )
-            dpg.add_combo([], tag="export_history", width=700, label="Failed job")
-            dpg.add_button(label="Load selected report", tag="export_history_load", callback=self.load_report)
-            with dpg.group(horizontal=True):
-                dpg.add_input_int(
-                    label="Validation %",
-                    tag="export_val",
-                    default_value=20,
-                    width=95,
-                    callback=self.invalidate,
-                )
-                dpg.add_input_int(
-                    label="Test %", tag="export_test", default_value=10, width=95, callback=self.invalidate
-                )
-                dpg.add_input_int(
-                    label="Seed", tag="export_seed", default_value=42, width=120, callback=self.invalidate
-                )
-            dpg.add_text(
-                "Train receives the remainder. Validation must be at least 1%; test can be 0%.\nGroups, class coverage and rounding may change actual counts.",
-                wrap=760,
-            )
-            dpg.add_button(
-                label="1. Prepare export / retry", tag="export_prepare", callback=lambda: self.prepare()
-            )
-            dpg.add_text("Prepare checks saved labels and builds the full dataset archive.", wrap=760)
-            dpg.add_progress_bar(tag="export_prepare_progress", width=-1, overlay="Not started")
-            dpg.add_text("", tag="export_prepare_detail", wrap=760)
-            dpg.add_button(
-                label="Export anyway", tag="export_confirm_review", show=False, callback=self.confirm_review
-            )
-            dpg.add_button(
-                label="Cancel review confirmation",
-                tag="export_cancel_review",
-                show=False,
-                callback=self.cancel_review,
-            )
-            dpg.add_input_text(tag="export_report", multiline=True, readonly=True, width=-1, height=230)
-            with dpg.group(horizontal=True):
-                dpg.add_input_int(
-                    label="Error number",
-                    tag="export_issue_number",
-                    default_value=1,
-                    min_value=1,
-                    min_clamped=True,
-                    width=100,
-                )
-                dpg.add_button(
-                    label="Open image / select shape",
-                    tag="export_open_issue",
-                    enabled=False,
-                    callback=self.open_issue,
-                )
-                dpg.add_combo(["JSON", "CSV"], default_value="JSON", tag="export_report_format", width=80)
-            dpg.add_button(
-                label="Save error report to parent folder",
-                tag="export_save_report",
-                enabled=False,
-                callback=self.save_error_report,
-            )
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="Browse parent folder...", callback=self.browse_folder)
-                dpg.add_input_text(
-                    label="New folder name", tag="export_name", default_value="yolo-dataset", width=230
-                )
-            dpg.add_input_text(
-                label="Parent folder", tag="export_parent", default_value=str(Path.home()), width=600
-            )
-            dpg.add_text(
-                "A new folder will be created here on this computer. Existing folders are never overwritten.",
-                wrap=760,
-            )
-            dpg.add_button(
-                label="2. Save dataset to folder",
-                tag="export_save",
-                enabled=False,
-                callback=lambda: self.save(),
-            )
-            dpg.add_progress_bar(tag="export_save_progress", width=-1, overlay="Not started")
-            dpg.add_text("", tag="export_save_detail", wrap=760)
             dpg.add_text("", tag="export_status", wrap=760)
-            dpg.add_button(label="Close", callback=lambda: dpg.hide_item("export_dialog"))
+            dpg.add_text("", tag="export_availability", wrap=760)
+            with dpg.child_window(tag="export_dialog_feedback_body", width=-1, height=-1, border=False):
+                dpg.add_text(
+                    "Export saved labels from this project, including unreviewed predictions.\nUnlabeled images are excluded. Review predictions and save edits first.",
+                    wrap=760,
+                )
+                dpg.add_text("", tag="export_project")
+                dpg.add_text("Source: Current saved working data", tag="export_source")
+                dpg.add_button(
+                    label="Use current saved working data",
+                    tag="export_current_source",
+                    callback=lambda: self.use_working_source(),
+                )
+                with dpg.collapsing_header(label="Model class mapping (optional)"):
+                    dpg.add_text(
+                        "Empty uses the project schema. Otherwise include every class: index=project class name.",
+                        wrap=740,
+                    )
+                    dpg.add_text(
+                        "Classification folder consumers number observed classes consecutively; check consumer_order in class_mapping.json.",
+                        wrap=740,
+                    )
+                    dpg.add_input_text(
+                        tag="export_mapping", multiline=True, height=95, width=700, callback=self.invalidate
+                    )
+                    dpg.add_input_text(label="Local model data.yaml", tag="export_model_path", width=550)
+                    dpg.add_button(label="Load model names / compare", callback=self.load_model)
+                with dpg.group(horizontal=True):
+                    dpg.add_button(
+                        label="Previous failures",
+                        tag="export_history_refresh",
+                        callback=lambda: self.load_history(),
+                    )
+                    dpg.add_button(
+                        label="Older",
+                        tag="export_history_older",
+                        enabled=False,
+                        callback=lambda: self.load_history(True),
+                    )
+                dpg.add_combo([], tag="export_history", width=700, label="Failed job")
+                dpg.add_button(
+                    label="Load selected report", tag="export_history_load", callback=self.load_report
+                )
+                with dpg.group(horizontal=True):
+                    dpg.add_input_int(
+                        label="Validation %",
+                        tag="export_val",
+                        default_value=20,
+                        width=95,
+                        callback=self.invalidate,
+                    )
+                    dpg.add_input_int(
+                        label="Test %",
+                        tag="export_test",
+                        default_value=10,
+                        width=95,
+                        callback=self.invalidate,
+                    )
+                    dpg.add_input_int(
+                        label="Seed", tag="export_seed", default_value=42, width=120, callback=self.invalidate
+                    )
+                dpg.add_text(
+                    "Train receives the remainder. Validation must be at least 1%; test can be 0%.\nGroups, class coverage and rounding may change actual counts.",
+                    wrap=760,
+                )
+                dpg.add_button(
+                    label="1. Prepare export / retry", tag="export_prepare", callback=lambda: self.prepare()
+                )
+                dpg.add_text("Prepare checks saved labels and builds the full dataset archive.", wrap=760)
+                dpg.add_progress_bar(tag="export_prepare_progress", width=-1, overlay="Not started")
+                dpg.add_text("", tag="export_prepare_detail", wrap=760)
+                dpg.add_button(
+                    label="Export anyway",
+                    tag="export_confirm_review",
+                    show=False,
+                    callback=self.confirm_review,
+                )
+                dpg.add_button(
+                    label="Cancel review confirmation",
+                    tag="export_cancel_review",
+                    show=False,
+                    callback=self.cancel_review,
+                )
+                dpg.add_input_text(tag="export_report", multiline=True, readonly=True, width=-1, height=230)
+                with dpg.group(horizontal=True):
+                    dpg.add_input_int(
+                        label="Error number",
+                        tag="export_issue_number",
+                        default_value=1,
+                        min_value=1,
+                        min_clamped=True,
+                        width=100,
+                    )
+                    dpg.add_button(
+                        label="Open image / select shape",
+                        tag="export_open_issue",
+                        enabled=False,
+                        callback=self.open_issue,
+                    )
+                    dpg.add_combo(["JSON", "CSV"], default_value="JSON", tag="export_report_format", width=80)
+                dpg.add_button(
+                    label="Save error report to parent folder",
+                    tag="export_save_report",
+                    enabled=False,
+                    callback=self.save_error_report,
+                )
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="Browse parent folder...", callback=self.browse_folder)
+                    dpg.add_input_text(
+                        label="New folder name", tag="export_name", default_value="yolo-dataset", width=230
+                    )
+                dpg.add_input_text(
+                    label="Parent folder", tag="export_parent", default_value=str(Path.home()), width=600
+                )
+                dpg.add_text(
+                    "A new folder will be created here on this computer. Existing folders are never overwritten.",
+                    wrap=760,
+                )
+                dpg.add_button(
+                    label="2. Save dataset to folder",
+                    tag="export_save",
+                    enabled=False,
+                    callback=lambda: self.save(),
+                )
+                dpg.add_progress_bar(tag="export_save_progress", width=-1, overlay="Not started")
+                dpg.add_text("", tag="export_save_detail", wrap=760)
+                dpg.add_button(label="Close", callback=lambda: dpg.hide_item("export_dialog"))
+
+    def ready(self):
+        if self.busy:
+            dpg.set_value("export_status", BUSY)
+            return False
+        if not self.app.project or self.app.project["id"] != self.project_id:
+            dpg.set_value(
+                "export_status",
+                "The workspace project changed. Close this window and reopen Export YOLO for the current project.",
+            )
+            return False
+        return True
 
     def browse_folder(self, *args):
+        if self.busy:
+            dpg.set_value("export_status", BUSY)
+            return
         # Only one modal can own input: suspend Export until the picker returns.
         parent = Path(dpg.get_value("export_parent"))
         if parent.is_dir():
@@ -306,6 +333,12 @@ class ExportPanel:
 
     def set_busy(self, value):
         self.busy = value
+        dpg.set_value(
+            "export_availability",
+            "Export controls are unavailable while the operation runs. Wait for the result; closing this window does not cancel the service job."
+            if value
+            else "Save dataset requires a prepared export. Report actions require a failed report; Older requires another history page. Prepare an export or load Previous failures to continue.",
+        )
         for tag in (
             "export_val",
             "export_test",
@@ -321,9 +354,14 @@ class ExportPanel:
         dpg.configure_item("export_open_issue", enabled=not value and self.failed_report is not None)
         dpg.configure_item("export_save", enabled=not value and self.prepared is not None)
 
-    def open(self):
-        if not self.app.project or not self.app.project.get("can_manage_members"):
-            self.app.message("Select a project where you are a maintainer.")
+    def open(self, *, show=True):
+        if not self.app.project:
+            self.app.message("No project is open. Open a project before exporting.")
+            return
+        if not self.app.project.get("can_manage_members"):
+            self.app.message(
+                "Export requires the project maintainer role. Ask a maintainer for access, then refresh the project."
+            )
             return
         if self.busy and self.project_id != self.app.project["id"]:
             self.app.message("Wait for the export of the previous project to finish.")
@@ -333,8 +371,18 @@ class ExportPanel:
         ):
             self.invalidate()
             self.clear_history()
-        if self.app.saving or self.app.editor.dirty or getattr(self.app.canvas, "draft", None):
-            self.app.message("Finish polygons and save your changes before opening Export YOLO.")
+        if self.app.saving:
+            self.app.message("An annotation save is running. Wait for it to finish, then open Export YOLO.")
+            return
+        if getattr(self.app.canvas, "gesture", None) or getattr(self.app.canvas, "draft", None):
+            self.app.message(
+                "An annotation is unfinished. Finish or cancel the drawing and save your edits before opening Export YOLO."
+            )
+            return
+        if self.app.editor.dirty:
+            self.app.message(
+                "The current image has unsaved changes. Save it before opening Export YOLO. If a dataset window is open, close it first to reach Save."
+            )
             return
         if not self.busy and self.project_id != self.app.project["id"]:
             self.source_checkpoint = None
@@ -346,22 +394,25 @@ class ExportPanel:
             dpg.set_value("export_report", "")
             dpg.set_value("export_mapping", "")
         dpg.set_value("export_project", f"{self.app.project['name']} / {self.app.project['task_type']}")
-        dpg.show_item("export_dialog")
+        self.set_busy(self.busy)
+        if show:
+            dpg.show_item("export_dialog")
         return True
 
     def use_working_source(self):
         if self.busy:
+            dpg.set_value("export_status", BUSY)
             return
         self.source_checkpoint = self.source_schema = None
         dpg.set_value("export_source", "Source: Current saved working data")
         dpg.set_value("export_mapping", "")
         self.invalidate()
 
-    def open_checkpoint(self, checkpoint, schema):
+    def open_checkpoint(self, checkpoint, schema, *, show=True):
         if self.busy:
             self.app.message("Wait for the current export to finish.")
             return
-        if not self.open():
+        if not self.open(show=show):
             return
         self.source_checkpoint, self.source_schema = checkpoint, schema
         dpg.set_value(
@@ -370,11 +421,18 @@ class ExportPanel:
         )
         dpg.set_value("export_mapping", "")
         self.invalidate()
+        return True
 
     def failure(self, exc):
         self.finish_progress(False)
         self.set_busy(False)
-        dpg.set_value("export_status", exc.message if isinstance(exc, Problem) else f"Export failed: {exc}")
+        dpg.set_value(
+            "export_status",
+            failure_text(
+                exc,
+                "Inspect the report and correct the indicated input. Prepare export / retry reuses the pending request after a lost response; choose a new folder if the destination already exists.",
+            ),
+        )
         dpg.set_value("export_report", failure_report(exc))
         self.failed_report = (
             {"code": exc.code, "message": exc.message, "details": exc.details}
@@ -393,7 +451,13 @@ class ExportPanel:
         dpg.configure_item("export_history_older", enabled=False)
 
     def load_history(self, older=False):
-        if self.busy or not self.app.project or self.app.project["id"] != self.project_id:
+        if not self.ready():
+            return
+        if older and not self.history_cursor:
+            dpg.set_value(
+                "export_status",
+                "No older failure page is available. Choose a listed job or refresh Previous failures.",
+            )
             return
         client, pid = self.app.client, self.project_id
         cursor = self.history_cursor if older else None
@@ -431,9 +495,19 @@ class ExportPanel:
             or not self.app.project
             or self.app.project["id"] != self.project_id
         ):
+            dpg.set_value(
+                "export_status",
+                BUSY
+                if self.busy
+                else "The report context changed or is empty. Choose Previous failures for this project, then select a job.",
+            )
             return
         job_id = self.history.get(dpg.get_value("export_history"))
         if not job_id:
+            dpg.set_value(
+                "export_status",
+                "No failed job is selected. Choose Previous failures, select a job and load its report.",
+            )
             return
         client, pid = self.app.client, self.project_id
         self.set_busy(True)
@@ -453,7 +527,12 @@ class ExportPanel:
         self.app.submit(lambda: client.request("GET", f"/jobs/{job_id}"), done, self.failure)
 
     def open_issue(self, *args):
-        if self.busy or not self.failed_report:
+        if not self.ready():
+            return
+        if not self.failed_report:
+            dpg.set_value(
+                "export_status", "No issue report is loaded. Open Previous failures and load a report first."
+            )
             return
         if (
             self.report_client is not self.app.client
@@ -506,6 +585,9 @@ class ExportPanel:
 
     def save_error_report(self, *args):
         if self.failed_report is None:
+            dpg.set_value(
+                "export_status", "No error report is loaded. Load a failed export report before saving it."
+            )
             return
         kind = dpg.get_value("export_report_format") or "JSON"
         path = Path(dpg.get_value("export_parent")) / f"export-errors-{uid()}.{kind.lower()}"
@@ -558,11 +640,15 @@ class ExportPanel:
         dpg.set_value("export_status", f"Error report saved: {path}")
 
     def confirm_review(self):
-        token = self.review_confirmation
-        self.review_confirmation = None
-        dpg.hide_item("export_confirm_review")
-        dpg.hide_item("export_cancel_review")
-        self.prepare(confirmation=token)
+        if not self.ready():
+            return
+        if not self.review_confirmation:
+            dpg.set_value(
+                "export_status",
+                "No review confirmation is pending. Prepare the export again to inspect its review summary.",
+            )
+            return
+        self.prepare(confirmation=self.review_confirmation)
 
     def cancel_review(self):
         self.review_confirmation = None
@@ -571,11 +657,8 @@ class ExportPanel:
         dpg.set_value("export_status", "Export cancelled. Prepare again to capture fresh data.")
 
     def prepare(self, confirmation=None):
-        if self.busy or not self.app.project:
+        if not self.ready():
             return
-        self.review_confirmation = None
-        dpg.hide_item("export_confirm_review")
-        dpg.hide_item("export_cancel_review")
         try:
             mapping_text = dpg.get_value("export_mapping") or ""
             mapping = (
@@ -602,6 +685,9 @@ class ExportPanel:
                 "Use whole percentages: validation 1-99, test 0-98, sum below 100; seed 0-2147483647.",
             )
             return
+        self.review_confirmation = None
+        dpg.hide_item("export_confirm_review")
+        dpg.hide_item("export_cancel_review")
         self.prepared = None
         self.failed_report = None
         self.report_client = self.app.client
@@ -713,7 +799,7 @@ class ExportPanel:
         self.app.submit(work, done, failed)
 
     def load_model(self, *args):
-        if self.busy:
+        if not self.ready():
             return
         try:
             path = Path(dpg.get_value("export_model_path"))
@@ -732,7 +818,16 @@ class ExportPanel:
             self.failure(exc)
 
     def save(self):
-        if self.busy or self.prepared is None:
+        if not self.ready():
+            return
+        if self.prepared is None:
+            dpg.set_value(
+                "export_status",
+                "No prepared export is ready. Choose Prepare export / retry and inspect the result before saving.",
+            )
+            return
+        if self.prepared["client"] is not self.app.client:
+            dpg.set_value("export_status", "The connection changed. Prepare a new export before saving.")
             return
         name = dpg.get_value("export_name").strip()
         if (
