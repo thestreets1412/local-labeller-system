@@ -126,3 +126,54 @@ mode. Never put the SQLite DB on SMB; any future SMB source is read-only ingesti
 Then verify on two PCs: user journeys, stale save/reconnect/revocation, Unicode/DPI,
 restore on a fresh PC, blocked external egress, certificate failure/rotation, and
 10-client performance. Local wheel/backup tests are not evidence of these gates.
+# Phase 11 storage management (0.1.5)
+
+Open **Project Manager → Storage usage** as a service administrator. The displayed
+absolute path is the service root: all scans, reports, receipt files and cache
+cleanup stay within it. This screen never inspects AppData client caches, saved
+datasets, external backups or other project roots. It does not delete images,
+annotations, checkpoints or database history. Changing the connection invalidates
+pending UI previews; server tokens also bind actor, root identity and policy generation.
+
+1. **Refresh usage** shows logical bytes by directory. **Inspect assets / create
+   report** verifies hashes and historical references. Reports are stored under
+   `reports/storage/`; **Open report** reads them into this window without making
+   a client-side copy. Incomplete references are reported as unknown, never as
+   permission to delete an image. Shared images count once in root totals.
+2. **Inspect and register legacy exports** verifies old job archives and creates
+   durable receipts. It does not delete them. Invalid or unexplained files remain
+   protected. Registering does not certify an export as an approved release.
+3. Choose an archive, **Add selected**, then **Preview cleanup**. Review eligible
+   bytes, blocked files and the root. **Apply reviewed cleanup** removes only those
+   verified ZIPs; previews expire after ten minutes. Pin, concurrent download,
+   policy changes and file changes can prevent removal. Refresh and preview again
+   after resolving an error; do not manually delete managed files.
+4. **Pin** preserves an exact archive. Eviction retains immutable receipts, frozen
+   inputs and old job results. **Prepare selected snapshot again** requires its
+   project to be open and maintainer permission; it uses the current converter,
+   so a future converter version may produce different ZIP bytes. The old hash is
+   not rewritten. Review the export result before **Save dataset**.
+5. Defaults are **4 GiB**, **7 days since last use**, with **automatic retention
+   disabled**. Preview and apply a policy to enable it. Legacy archives remain
+   protected until explicitly selected for manual cleanup. Pinned and active
+   downloads are always protected. A full budget blocks a new archive even while
+   automatic retention is off: clean eligible archives or increase the budget.
+   New builds reserve estimated size plus 1 GiB free-disk headroom. Repeating the
+   same frozen inputs and converter reuses a verified ZIP instead of copying images.
+
+Hash scans run in the background and may take several minutes. Closing the panel
+does not cancel an in-progress server request. After a timeout, refresh status
+before retrying. Periodic retention runs at startup and then every 15 minutes;
+the default disabled policy never automatically removes existing archives.
+
+Offline diagnostic alternative (stop the service first):
+
+```powershell
+.\.venv\Scripts\python.exe -m visionlabel.cli storage-report --root D:\VisionLabel --deep
+```
+
+The explicit root is required; the report destination cannot be overridden outside
+it. File sizes are logical bytes, not allocated filesystem clusters. Company HDD,
+LAN throughput and actual savings from the reported 13.9 GB cache remain acceptance
+tasks on that machine. Backups and user-requested Save dataset retain their existing
+explicit workflows; storage management does not discover or clean their destinations.

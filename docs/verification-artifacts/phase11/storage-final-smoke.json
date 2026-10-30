@@ -1,0 +1,101 @@
+{
+  "images": 30,
+  "source_bytes": 8319060,
+  "dimensions": [
+    304,
+    304
+  ],
+  "exports": [
+    {
+      "seconds": 0.6164869000203907,
+      "bytes": 8363431,
+      "reused": false
+    },
+    {
+      "seconds": 0.3750340999686159,
+      "bytes": 8363431,
+      "reused": false
+    },
+    {
+      "seconds": 0.3812082000076771,
+      "bytes": 8363431,
+      "reused": false
+    },
+    {
+      "seconds": 0.056235099968034774,
+      "bytes": 8363431,
+      "reused": true
+    }
+  ],
+  "scan_seconds": 0.4073524000123143,
+  "cache_before_bytes": 25090293,
+  "cache_after_bytes": 16726862,
+  "reclaimed_bytes": 8363431,
+  "budget_bytes": 16727886,
+  "before_categories": [
+    {
+      "name": "db",
+      "count": 3,
+      "bytes": 4623840
+    },
+    {
+      "name": "export-cache",
+      "count": 3,
+      "bytes": 25090293
+    },
+    {
+      "name": "managed/assets",
+      "count": 30,
+      "bytes": 8319060
+    },
+    {
+      "name": "managed/export-receipts",
+      "count": 3,
+      "bytes": 160490
+    },
+    {
+      "name": "managed/projects",
+      "count": 31,
+      "bytes": 18840
+    },
+    {
+      "name": "other",
+      "count": 2,
+      "bytes": 33
+    }
+  ],
+  "after_categories": [
+    {
+      "name": "db",
+      "count": 3,
+      "bytes": 4623840
+    },
+    {
+      "name": "export-cache",
+      "count": 2,
+      "bytes": 16726862
+    },
+    {
+      "name": "managed/assets",
+      "count": 30,
+      "bytes": 8319060
+    },
+    {
+      "name": "managed/export-receipts",
+      "count": 3,
+      "bytes": 160490
+    },
+    {
+      "name": "managed/projects",
+      "count": 31,
+      "bytes": 18840
+    },
+    {
+      "name": "other",
+      "count": 2,
+      "bytes": 33
+    }
+  ],
+  "warnings": [],
+  "scope": "Synthetic local disk only. File-size totals, not allocated clusters or measured transient peak; no company data or LAN acceptance."
+}

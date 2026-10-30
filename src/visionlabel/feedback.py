@@ -15,6 +15,7 @@ SURFACES = (
     ("connection", "connection_status"),
     ("new_project", "new_project_status"),
     ("yolo_dialog", "yolo_status"),
+    ("storage_manager", "storage_status"),
     ("dataset_manager", "ds_status"),
     ("project_manager", "pm_status"),
     ("export_dialog", "export_status"),

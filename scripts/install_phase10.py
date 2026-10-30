@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-APPLICATION = "visionlabel-0.1.4-py3-none-any.whl"
+APPLICATION = "visionlabel-0.1.5-py3-none-any.whl"
 NATIVE = "visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl"
 
 

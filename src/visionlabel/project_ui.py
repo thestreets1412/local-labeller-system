@@ -9,6 +9,7 @@ from .class_mapping import model_names
 from .dataset_ui import DatasetPanel
 from .domain import Problem, uid
 from .feedback import BUSY, PROJECT, failure_text
+from .storage_ui import StoragePanel
 
 
 class ProjectPanel:
@@ -26,6 +27,7 @@ class ProjectPanel:
         self.image_items = []
         self.image_choices = {}
         self.datasets = DatasetPanel(self)
+        self.storage = StoragePanel(app)
 
     def build(self):
         with dpg.window(
@@ -41,6 +43,7 @@ class ProjectPanel:
             with dpg.child_window(tag="project_manager_feedback_body", width=-1, height=-1, border=False):
                 with dpg.group(horizontal=True):
                     dpg.add_button(label="Refresh", callback=lambda: self.refresh())
+                    dpg.add_button(label="Storage usage", callback=lambda: self.storage.show())
                     dpg.add_input_text(
                         label="Search", tag="pm_search", width=260, callback=lambda: self.render_tree()
                     )
@@ -178,6 +181,7 @@ class ProjectPanel:
                                 )
                 dpg.add_button(label="Close", callback=lambda: dpg.hide_item("project_manager"))
         self.datasets.build()
+        self.storage.build()
 
     def message(self, value):
         dpg.set_value("pm_status", value)

@@ -34,7 +34,7 @@ class Client:
     def close(self):
         self.http.close()
 
-    def request(self, method, path, body=None, claim=None, key=None, raw=False):
+    def request(self, method, path, body=None, claim=None, key=None, raw=False, timeout=30):
         headers = {}
         if key:
             headers["Idempotency-Key"] = key
@@ -47,7 +47,7 @@ class Client:
                 }
             )
         try:
-            response = self.http.request(method, path, json=body, headers=headers)
+            response = self.http.request(method, path, json=body, headers=headers, timeout=timeout)
         except httpx.HTTPError as exc:
             raise Problem(
                 "DISCONNECTED", "Cannot reach the server. Your local draft is preserved.", 503

@@ -1,0 +1,8 @@
+{
+  "version": "0.1.5",
+  "schema": "0009",
+  "native_compatible": true,
+  "storage_ui_built": true,
+  "isolated_target_install": true,
+  "wheel_sha256": "90a0502e591bef4b7478c6f7108613c386f94ac8ca973a2966f6b75ec546043b"
+}

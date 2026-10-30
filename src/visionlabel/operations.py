@@ -48,7 +48,9 @@ class DirectoryLock:
 def references(connection):
     tables = ["assets", "class_schemas", "annotation_revisions"]
     available = {item[0] for item in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    tables += [name for name in ("dataset_checkpoints", "dataset_operations") if name in available]
+    tables += [
+        name for name in ("dataset_checkpoints", "dataset_operations", "export_receipts") if name in available
+    ]
     return sorted(
         {
             (path, sha)

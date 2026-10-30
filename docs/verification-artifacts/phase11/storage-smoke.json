@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "window_size": [
+    700,
+    570
+  ],
+  "checks": [
+    "exact root",
+    "current-window missing-selection feedback",
+    "root report create/read",
+    "policy preview/apply",
+    "HTTP background completion"
+  ],
+  "company_acceptance": false
+}

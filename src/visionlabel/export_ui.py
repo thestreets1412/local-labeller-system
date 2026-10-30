@@ -744,6 +744,9 @@ class ExportPanel:
             counts = result["split"]["actual_counts"]
             split = result["split"]
             lines = [
+                "Reused verified cached archive; no additional image copy was created."
+                if result.get("reused")
+                else "Created a new cached archive.",
                 f"Included: {result['included']} images    Excluded: {result['excluded_count']}",
                 "",
                 "Set        Images    Requested %    Actual %",

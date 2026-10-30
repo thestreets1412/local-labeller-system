@@ -432,7 +432,9 @@ def test_pre_phase10_backup_remains_restorable(tmp_path, monkeypatch):
     service = Service(tmp_path / "restored")
     try:
         with service.db.engine.connect() as conn:
-            assert conn.exec_driver_sql("SELECT version_num FROM alembic_version").scalar() == "0008"
+            from visionlabel.database import SCHEMA_REVISION
+
+            assert conn.exec_driver_sql("SELECT version_num FROM alembic_version").scalar() == SCHEMA_REVISION
             assert conn.exec_driver_sql("SELECT count(*) FROM dataset_checkpoints").scalar() == 0
     finally:
         service.close()

@@ -311,9 +311,19 @@ else:
 '''
 
 
+def read_export_blob(srv, relative, expected):
+    with srv.export_cache.boundary.open_read("managed/" + relative) as stream:
+        raw = stream.read()
+    if digest(raw) != expected:
+        raise Problem(
+            "CORRUPT_BLOB", "Saved export input checksum mismatch. Inspect storage before retrying.", 503
+        )
+    return raw
+
+
 def prepare_snapshot(srv, snapshot, progress=None):
     schema = snapshot["schema"]
-    document = srv.blobs.json(schema["blob_path"], schema["sha256"])
+    document = json.loads(read_export_blob(srv, schema["blob_path"], schema["sha256"]))
     classes = [
         {
             "class_id": e["class_id"],
@@ -342,7 +352,7 @@ def prepare_snapshot(srv, snapshot, progress=None):
             continue
         if not record["annotation_path"] or record["schema_id"] != schema["id"]:
             raise Problem("SCHEMA_MISMATCH", "A saved annotation is missing or uses another class schema.")
-        doc = srv.blobs.json(record["annotation_path"], record["annotation_sha256"])
+        doc = json.loads(read_export_blob(srv, record["annotation_path"], record["annotation_sha256"]))
         expected = {
             "image_id": record["image_id"],
             "project_id": snapshot["project_id"],
@@ -444,9 +454,42 @@ def validate_export_geometry(srv, snapshot, classes, items, progress=None):
 def run_export(srv, user, job_id, snapshot, request_id):
     from .service import now
 
-    archive = srv.root / "export-cache" / f"{job_id}.zip"
-    archive.parent.mkdir(exist_ok=True)
-    stage = archive.with_suffix(".partial")
+    cache = srv.export_cache
+    try:
+        # The existing single-worker service queue serializes equivalent builds.
+        if cache.reuse(user, job_id, snapshot):
+            return
+        estimate = len(canonical(snapshot)) * 4 + 65536
+        for record in snapshot["records"]:
+            estimate += cache.boundary.inventory_entry("managed/" + record["asset_path"])["bytes"] + 4096
+            if record.get("annotation_path"):
+                estimate += (
+                    cache.boundary.inventory_entry("managed/" + record["annotation_path"])["bytes"] * 4
+                )
+        cache.boundary.mkdir("export-cache")
+        with cache.admission(estimate, job_id), cache.boundary.directory("export-cache"):
+            _run_export(srv, user, job_id, snapshot, request_id)
+    except Exception as exc:
+        error = {
+            "code": exc.code if isinstance(exc, Problem) else "EXPORT_FAILED",
+            "message": exc.message
+            if isinstance(exc, Problem)
+            else "Export failed. Inspect root storage and retry.",
+            "details": exc.details if isinstance(exc, Problem) else {},
+        }
+        with srv.db.transaction() as conn:
+            conn.exec_driver_sql(
+                "UPDATE jobs SET state='failed',error_json=?,updated_at=? WHERE id=?",
+                (canonical(error).decode(), now(), job_id),
+            )
+
+
+def _run_export(srv, user, job_id, snapshot, request_id):
+    from .service import now
+
+    boundary = srv.export_cache.boundary
+    stage_name, archive_name = f"export-cache/{job_id}.partial", f"export-cache/{job_id}.zip"
+    owned_identity = None
     progress = JobProgress(srv, job_id)
     try:
         with srv.db.transaction() as conn:
@@ -465,7 +508,11 @@ def run_export(srv, user, job_id, snapshot, request_id):
             folders = classification_mapping(selected, observed, observed)
         folder_by_class = {f["internal_class_id"]: f["folder_name"] for f in folders}
         files, outputs = [], []
-        with zipfile.ZipFile(stage, "x", compression=zipfile.ZIP_STORED, allowZip64=True) as bundle:
+        with (
+            boundary.open_new(stage_name) as stage_stream,
+            zipfile.ZipFile(stage_stream, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as bundle,
+        ):
+            owned_identity = boundary.inventory_entry(stage_name)["identity"]
 
             def add(name, data, verified_sha=None):
                 info = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
@@ -480,7 +527,7 @@ def run_export(srv, user, job_id, snapshot, request_id):
             for count, item in enumerate(items, 1):
                 if srv.stop.is_set():
                     raise Problem("SERVER_STOPPING", "Export interrupted by server shutdown.", 503)
-                raw = srv.blobs.read(item["asset_path"], item["asset_sha256"])
+                raw = read_export_blob(srv, item["asset_path"], item["asset_sha256"])
                 if exif_orientation(raw) != 1:
                     raise Problem(
                         "ORIENTATION_AMBIGUOUS",
@@ -569,18 +616,18 @@ def run_export(srv, user, job_id, snapshot, request_id):
                 manifest["checkpoint"] = snapshot["checkpoint"]
             bundle.writestr(zipfile.ZipInfo("manifest.json"), canonical(manifest))
         progress("Flushing dataset archive", 0, 0)
-        with stage.open("r+b") as stream:
-            os.fsync(stream.fileno())
-        archive_hash = file_hash(stage, progress, "Verifying dataset archive")
+        progress("Verifying dataset archive", 0, 0)
+        stage_identity = boundary.inventory_entry(stage_name)
+        archive_hash = boundary.hash(stage_name)
         progress("Publishing prepared dataset", 0, 0)
         srv.fault("export_before_publish")
-        with srv.db.transaction() as conn:
+        with srv.export_cache.lock, srv.db.transaction() as conn:
             srv.maintain(conn, user, snapshot["project_id"])
-            stage.rename(archive)
+            boundary.publish(stage_name, archive_name, stage_identity)
             result = {
                 "performance": progress.report(),
                 "sha256": archive_hash,
-                "bytes": archive.stat().st_size,
+                "bytes": stage_identity["bytes"],
                 "included": len(items),
                 "excluded_count": len(excluded),
                 "excluded": excluded,
@@ -588,6 +635,7 @@ def run_export(srv, user, job_id, snapshot, request_id):
                 "task_type": snapshot["task_type"],
                 "approved_release": False,
             }
+            srv.export_cache.register(conn, job_id, snapshot, result, manifest)
             conn.exec_driver_sql(
                 "UPDATE jobs SET state='succeeded',result_json=?,progress_done=progress_total,updated_at=? WHERE id=?",
                 (canonical(result).decode(), now(), job_id),
@@ -602,8 +650,13 @@ def run_export(srv, user, job_id, snapshot, request_id):
                 request_id,
             )
     except Exception as exc:
-        stage.unlink(missing_ok=True)
-        archive.unlink(missing_ok=True)
+        for relative in (stage_name, archive_name):
+            try:
+                entry = boundary.inventory_entry(relative)
+                if entry["identity"] == owned_identity:
+                    boundary.unlink_registered(relative, entry)
+            except (OSError, Problem):
+                pass  # Unknown or locked files remain protected, never guessed away.
         with srv.db.transaction() as conn:
             error = {
                 "code": exc.code if isinstance(exc, Problem) else "EXPORT_FAILED",
@@ -634,6 +687,16 @@ def file_hash(path, progress=None, phase="Verifying downloaded archive"):
 
 
 def export_archive(srv, user, job_id):
+    """Compatibility path lookup; streaming callers must use cache.download()."""
+    if srv.export_cache:
+        with srv.export_cache.download(user, job_id):
+            with srv.db.engine.connect() as conn:
+                artifact = row(
+                    conn,
+                    "SELECT a.path FROM export_artifacts a JOIN export_job_artifacts l ON l.artifact_id=a.id WHERE l.job_id=?",
+                    (job_id,),
+                )
+            return srv.root / (artifact["path"] if artifact else f"export-cache/{job_id}.zip")
     with srv.db.engine.connect() as conn:
         job = row(conn, "SELECT * FROM jobs WHERE id=? AND type='working-export'", (job_id,))
         if not job:

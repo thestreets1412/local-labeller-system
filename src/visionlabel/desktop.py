@@ -1434,6 +1434,7 @@ class Desktop:
                 "connection",
                 "new_project",
                 "project_manager",
+                "storage_manager",
                 "dataset_manager",
                 "checkpoint_browser",
                 "review_reject",

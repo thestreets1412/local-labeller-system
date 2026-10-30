@@ -1,10 +1,21 @@
-# Install VisionLabel 0.1.4
+# Install VisionLabel 0.1.5
 
 Use Windows x64 and Python **3.12.10**. Close VisionLabel/DataTracking and back up
 server data before upgrading. Upgrade both desktop and service environments when
-separate. Service startup automatically applies migration **0008**.
+separate. Service startup automatically applies migration **0009**.
 
-From the repository root in PowerShell:
+From the repository root in PowerShell, install or upgrade with pip (dependencies
+come from PyPI; the application wheel is included in this repository):
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install .\rush-wheel\visionlabel-0.1.5-py3-none-any.whl
+.\.venv\Scripts\python.exe -m pip install --upgrade .\rush-wheel\visionlabel-0.1.5-py3-none-any.whl
+```
+
+Phase 11 adds no new Python extension. The optional existing
+`visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl` is unchanged.
+
+The existing installer remains available:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Phase10.ps1
@@ -36,7 +47,7 @@ this does not uninstall an extension already present.
 
 Included wheels:
 
-- **visionlabel-0.1.4-py3-none-any.whl**: Application, API and migration, including button feedback and the login layout fix.
+- **visionlabel-0.1.5-py3-none-any.whl**: Application, API and migration, including root-bound storage management and button feedback and the login layout fix.
 - **visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl**: existing Rust/PyO3 texture
   accelerator, unchanged. Phase 10 creates no new native extension. Accept avoids
   redundant same-image raster decoding/upload while refreshing annotation state.
@@ -46,7 +57,7 @@ Included wheels:
 If pinned dependencies are already installed, a direct pip upgrade is:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install --no-index --no-deps --force-reinstall .\rush-wheel\visionlabel-0.1.4-py3-none-any.whl .\rush-wheel\visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl
+.\.venv\Scripts\python.exe -m pip install --no-index --no-deps --force-reinstall .\rush-wheel\visionlabel-0.1.5-py3-none-any.whl .\rush-wheel\visionlabel_native-0.1.0-cp312-cp312-win_amd64.whl
 ```
 
 See [Phase 10 evidence](../docs/phase10-plan.md) for behavior and remaining company

@@ -1,8 +1,9 @@
 # VisionLabel + DataTracking
 
 English-only Windows annotation desktop with a local FastAPI service.
-Current milestone: **[Phase 10 — editable classes, responsive review and dataset checkpoints](docs/phase10-plan.md)**.
-Version 0.1.4 adds clearer button feedback and fixes the login layout. Version 0.1.3 added named working dataset checkpoints, class editing and restore.
+Current implementation: **[Phase 11 — storage efficiency and retention](docs/phase11-plan.md)**.
+Storage management is confined to the configured service root. Assets and dataset history are retained; only reviewed cached export archives can be reclaimed.
+Version 0.1.5 adds storage reports, export archive reuse, pinning and reviewed retention. Version 0.1.4 adds clearer button feedback and fixes the login layout. Version 0.1.3 added named working dataset checkpoints, class editing and restore.
 Use the [pip/PyPI installer](rush-wheel/README.md) after cloning this branch.
 Working YOLO export from Phase 8 remains available; approved releases are separate.
 Use **Import YOLO labels** in a detection project to preview/import same-stem `.txt`

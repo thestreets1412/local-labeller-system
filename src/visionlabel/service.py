@@ -83,8 +83,24 @@ class Service:
                 ),
             )
 
+        from .export_cache import ExportCache
+
+        with self.db.engine.connect() as conn:
+            has_cache = conn.exec_driver_sql(
+                "SELECT name FROM sqlite_master WHERE name='export_artifacts'"
+            ).scalar()
+        self.export_cache = ExportCache(self) if has_cache else None
+        self.storage_thread = None
+        if self.export_cache:
+            self.storage_thread = threading.Thread(
+                target=self.export_cache.periodic, daemon=True, name="storage-retention"
+            )
+            self.storage_thread.start()
+
     def close(self):
         self.stop.set()
+        if self.storage_thread:
+            self.storage_thread.join()
         self.pool.shutdown(wait=True)
         self.db.engine.dispose()
         self.directory_lock.close()

@@ -9,7 +9,7 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
 from starlette.concurrency import run_in_threadpool
 
@@ -32,7 +32,8 @@ from .database import SCHEMA_REVISION, row, rows
 from .domain import Problem, digest, uid
 from .imaging import IMAGE_EXTENSIONS
 from .service import Service, decode_cursor, encode_cursor, now
-from .working_export import ExportRequest, export_archive, start_export
+from .storage_api import ProtectedDownload, install_storage_routes
+from .working_export import ExportRequest, start_export
 
 
 def create_app(root: Path):
@@ -43,7 +44,7 @@ def create_app(root: Path):
         app.state.service.close()
 
     # Default Swagger/ReDoc pages fetch external CDN assets; keep runtime offline.
-    app = FastAPI(title="DataTracking", version="0.1.3", lifespan=lifespan, docs_url=None, redoc_url=None)
+    app = FastAPI(title="DataTracking", version="0.1.5", lifespan=lifespan, docs_url=None, redoc_url=None)
     login_attempts: dict[str, deque] = defaultdict(deque)
     throttle_lock = threading.Lock()
 
@@ -577,13 +578,7 @@ def create_app(root: Path):
 
     @app.get("/api/v1/working-exports/{job_id}/download")
     def download_export(job_id: UUID, who=Depends(user), srv=Depends(service)):
-        response = FileResponse(
-            export_archive(srv, who, str(job_id)),
-            media_type="application/zip",
-            filename=f"dataset-{job_id}.zip",
-        )
-        response.chunk_size = 1024 * 1024
-        return response
+        return ProtectedDownload(srv.export_cache, who, str(job_id))
 
     @app.get("/api/v1/jobs/{job_id}")
     def job(job_id: UUID, compact: bool = False, who=Depends(user), srv=Depends(service)):
@@ -704,4 +699,5 @@ def create_app(root: Path):
             "annotation_sha256": record["sha256"],
         }
 
+    install_storage_routes(app, user, service)
     return app
